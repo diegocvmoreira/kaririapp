@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#F8F9FA"/>
+  
+  <g filter="url(#shadow)" transform="translate(64, 40) scale(0.75)">
+    <!-- Pin Body (Charcoal with bird beak) -->
+    <path d="M 256 460 C 256 460 76 290 76 190 C 76 175 79 160 84 146 L 40 180 L 84 210 C 95 245 120 285 160 335 L 256 460 Z" fill="#1F2024" />
+    <path d="M 256 460 C 256 460 436 290 436 190 C 436 90 355 10 256 10 C 215 10 178 24 148 48 C 172 65 210 95 256 95 C 310 95 354 139 354 193 C 354 247 310 291 256 291 C 202 291 158 247 158 193 C 158 178 161 164 167 151 C 120 180 96 220 96 260 C 96 280 110 310 135 340 L 256 460 Z" fill="#1F2024" />
+    
+    <!-- Red Crest / Top Flame (Soldadinho do Araripe) -->
+    <path d="M 148 48 C 120 20 60 25 70 75 C 75 100 110 115 130 95 C 145 80 148 60 148 48 Z" fill="#D9262E" />
+    <path d="M 148 48 C 180 22 216 10 256 10 C 355 10 436 90 436 190 C 436 225 420 260 395 295 C 410 255 415 220 415 190 C 415 102 344 32 256 32 C 205 32 165 52 148 48 Z" fill="#D9262E" />
+    <path d="M 80 75 C 90 50 140 30 180 40 C 240 20 340 40 380 110 C 390 80 340 30 260 20 C 180 10 110 40 80 75 Z" fill="#D9262E" />
+
+    <!-- Center pupil / circle -->
+    <circle cx="256" cy="190" r="54" fill="#1F2024" />
+  </g>
+</svg>

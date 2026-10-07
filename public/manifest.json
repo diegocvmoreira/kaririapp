@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "KARIRI - Descoberta Local",
+  "short_name": "Kariri",
+  "description": "Guia digital e plataforma de descoberta local do Cariri cearense: Crato, Juazeiro do Norte e Barbalha.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F8F9FA",
+  "theme_color": "#D9262E",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["lifestyle", "travel", "navigation"]
+}

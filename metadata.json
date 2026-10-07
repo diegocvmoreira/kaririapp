@@ -1,0 +1,6 @@
+{
+  "name": "KARIRI - Descoberta Local no Cariri Cearense",
+  "description": "Guia digital e plataforma de descoberta local para Crato, Juazeiro do Norte e Barbalha no Cariri cearense.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
