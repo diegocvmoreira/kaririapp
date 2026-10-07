@@ -7,7 +7,7 @@ export const API_BASE_URL =
 
 // Toggle mock mode: when true, services return local mock data
 // When false, services send real fetch calls to API_BASE_URL
-export const USE_MOCK_DATA = true;
+export const USE_MOCK_DATA = false;
 
 // Helper to simulate network latency for authentic UI feedback (loading spinners, skeletons)
 export async function simulateNetworkDelay<T>(data: T, delayMs: number = 150): Promise<T> {
