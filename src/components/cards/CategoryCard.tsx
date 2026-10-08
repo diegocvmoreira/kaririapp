@@ -29,6 +29,12 @@ const ICON_MAP: Record<string, React.ElementType> = {
   ShoppingBag,
   Hotel,
   Compass,
+  Sparkles,
+  // Mapeamentos para ícones retornados da API Laravel
+  restaurant: UtensilsCrossed,
+  terrain: Trees,
+  palette: Landmark,
+  local_bar: Beer,
 };
 
 export const CategoryCard: React.FC<CategoryCardProps> = ({

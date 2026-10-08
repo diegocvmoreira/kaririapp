@@ -15,6 +15,8 @@ import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
 import { ErrorState } from '../components/common/ErrorState';
 import { SectionHeader } from '../components/common/SectionHeader';
+import { ApiDiagnosticReport } from '../services/api/diagnostics';
+import { ApiError } from '../services/api/config';
 import { setPageMeta } from '../utils/seo';
 
 export const ExplorePage: React.FC = () => {
@@ -39,6 +41,8 @@ export const ExplorePage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('Não foi possível carregar as informações do Cariri.');
+  const [diagnostic, setDiagnostic] = useState<ApiDiagnosticReport | undefined>();
 
   useEffect(() => {
     setPageMeta({
@@ -63,17 +67,32 @@ export const ExplorePage: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     setHasError(false);
+    setDiagnostic(undefined);
     try {
       const [placesData, eventsData] = await Promise.all([
         placesApi.getAll({
           ...filters,
           query: searchQuery,
         }),
-        eventsApi.getAll(filters.city_slug),
+        eventsApi.getAll({
+          city_slug: filters.city_slug,
+          category: filters.category_slug,
+        }),
       ]);
 
       let filteredPlaces = placesData;
       let filteredEvents = eventsData;
+
+      if (filters.category_slug) {
+        const catObj = categories.find((c) => c.slug === filters.category_slug);
+        const catName = catObj ? catObj.name.toLowerCase() : filters.category_slug.toLowerCase();
+        filteredEvents = filteredEvents.filter(
+          (e) =>
+            e.category.toLowerCase().includes(catName) ||
+            e.category.toLowerCase().includes(filters.category_slug!.toLowerCase()) ||
+            catName.includes(e.category.toLowerCase())
+        );
+      }
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -92,14 +111,25 @@ export const ExplorePage: React.FC = () => {
             e.title.toLowerCase().includes(q) ||
             e.category.toLowerCase().includes(q) ||
             e.city_name.toLowerCase().includes(q) ||
-            e.description.toLowerCase().includes(q)
+            e.place_name.toLowerCase().includes(q) ||
+            e.description.toLowerCase().includes(q) ||
+            (e.organizer && e.organizer.toLowerCase().includes(q))
         );
       }
 
       setPlaces(filteredPlaces);
       setEvents(filteredEvents);
-    } catch {
+    } catch (err: unknown) {
       setHasError(true);
+      if (err instanceof ApiError) {
+        setErrorMessage(err.userFriendlyMessage);
+        setDiagnostic(err.diagnostic);
+      } else if (err && typeof err === 'object' && 'userFriendlyMessage' in err) {
+        setErrorMessage((err as { userFriendlyMessage: string }).userFriendlyMessage);
+        setDiagnostic((err as { diagnostic?: ApiDiagnosticReport }).diagnostic);
+      } else {
+        setErrorMessage('Não foi possível conectar com o servidor da API.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -247,7 +277,7 @@ export const ExplorePage: React.FC = () => {
       {isLoading ? (
         <LoadingState count={4} />
       ) : hasError ? (
-        <ErrorState onRetry={fetchData} />
+        <ErrorState message={errorMessage} diagnostic={diagnostic} onRetry={fetchData} />
       ) : activeTab === 'all' ? (
         // Mixed Results View (Seção 13)
         totalResults === 0 ? (

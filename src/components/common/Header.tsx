@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { MapPin, ChevronDown, User as UserIcon } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const { cities, selectedCitySlug, setSelectedCitySlug, selectedCity } = useCity();
+  const { cities, selectedCitySlug, setSelectedCitySlug, selectedCity, isLoading, error } = useCity();
   const { user, isAuthenticated } = useAuth();
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const location = useLocation();
@@ -60,6 +60,24 @@ export const Header: React.FC = () => {
                   <span>Todo o Cariri</span>
                   {selectedCitySlug === 'all' && <span className="w-1.5 h-1.5 rounded-full bg-[#D9262E]" />}
                 </button>
+
+                {isLoading && (
+                  <div className="px-4 py-2 text-[11px] text-gray-400">
+                    Carregando cidades...
+                  </div>
+                )}
+
+                {error && !isLoading && (
+                  <div className="px-4 py-2 text-[11px] text-red-500">
+                    Falha ao carregar cidades
+                  </div>
+                )}
+
+                {!isLoading && !error && cities.length === 0 && (
+                  <div className="px-4 py-2 text-[11px] text-gray-400">
+                    Nenhuma cidade cadastrada
+                  </div>
+                )}
 
                 {cities.map((c) => (
                   <button

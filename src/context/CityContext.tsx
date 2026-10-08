@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { City } from '../types';
 import { citiesApi } from '../services/api/cities';
 
@@ -8,6 +8,8 @@ interface CityContextType {
   selectedCity: City | null;
   setSelectedCitySlug: (slug: string) => void;
   isLoading: boolean;
+  error: string | null;
+  refetchCities: () => Promise<void>;
 }
 
 const CityContext = createContext<CityContextType | undefined>(undefined);
@@ -16,17 +18,26 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cities, setCities] = useState<City[]>([]);
   const [selectedCitySlug, setSelectedCitySlug] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCities = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await citiesApi.getActive();
+      setCities(data);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Falha ao carregar municípios da API';
+      setError(msg);
+      console.warn('Erro ao carregar municípios:', msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    citiesApi
-      .getActive()
-      .then((data) => {
-        setCities(data);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, []);
+    fetchCities();
+  }, [fetchCities]);
 
   const selectedCity =
     selectedCitySlug === 'all'
@@ -41,6 +52,8 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
         selectedCity,
         setSelectedCitySlug,
         isLoading,
+        error,
+        refetchCities: fetchCities,
       }}
     >
       {children}

@@ -3,7 +3,8 @@ import { Heart } from 'lucide-react';
 import { useFavorites } from '../../context/FavoritesContext';
 
 interface FavoriteButtonProps {
-  placeId: number;
+  placeId?: number;
+  eventId?: number;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   stopPropagation?: boolean;
@@ -11,12 +12,14 @@ interface FavoriteButtonProps {
 
 export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   placeId,
+  eventId,
   size = 'md',
   className = '',
   stopPropagation = true,
 }) => {
-  const { isFavorite, toggleFavorite } = useFavorites();
-  const active = isFavorite(placeId);
+  const { isFavorite, toggleFavorite, isEventFavorite, toggleEventFavorite } = useFavorites();
+  const isEvent = eventId !== undefined;
+  const active = isEvent ? isEventFavorite(eventId!) : placeId !== undefined ? isFavorite(placeId) : false;
 
   const sizeClasses = {
     sm: 'w-8 h-8 p-1.5',
@@ -35,7 +38,11 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       e.preventDefault();
       e.stopPropagation();
     }
-    toggleFavorite(placeId);
+    if (isEvent && eventId !== undefined) {
+      toggleEventFavorite(eventId);
+    } else if (placeId !== undefined) {
+      toggleFavorite(placeId);
+    }
   };
 
   return (

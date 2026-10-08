@@ -1,13 +1,25 @@
 import { apiClient, simulateNetworkDelay, USE_MOCK_DATA } from './config';
 import { City } from '../../types';
 import { mockCities } from '../../mocks/mockCities';
+import { mapApiCityToCity, ApiCityRaw } from './mappers/cityMapper';
 
 export const citiesApi = {
   async getAll(): Promise<City[]> {
+    // Fallback para mock somente quando VITE_USE_MOCK_DATA=true ou quando offline
     if (USE_MOCK_DATA) {
       return simulateNetworkDelay(mockCities, 80);
     }
-    return apiClient<City[]>('/cities');
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return mockCities;
+    }
+
+    const response = await apiClient<unknown>('/cities');
+    const list = Array.isArray(response)
+      ? response
+      : (response as { data?: unknown[] })?.data || [];
+
+    return list.map((item) => mapApiCityToCity(item as ApiCityRaw));
   },
 
   async getActive(): Promise<City[]> {
@@ -15,7 +27,19 @@ export const citiesApi = {
       const active = mockCities.filter((c) => c.is_active);
       return simulateNetworkDelay(active, 80);
     }
-    return apiClient<City[]>('/cities?active=1');
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return mockCities.filter((c) => c.is_active);
+    }
+
+    const response = await apiClient<unknown>('/cities');
+    const list = Array.isArray(response)
+      ? response
+      : (response as { data?: unknown[] })?.data || [];
+
+    const adapted = list.map((item) => mapApiCityToCity(item as ApiCityRaw));
+    const activeOnly = adapted.filter((c) => c.is_active);
+    return activeOnly.length > 0 ? activeOnly : adapted;
   },
 
   async getBySlug(slug: string): Promise<City | null> {
@@ -23,6 +47,22 @@ export const citiesApi = {
       const city = mockCities.find((c) => c.slug === slug) || null;
       return simulateNetworkDelay(city, 80);
     }
-    return apiClient<City>(`/cities/${slug}`);
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return mockCities.find((c) => c.slug === slug) || null;
+    }
+
+    try {
+      const response = await apiClient<unknown>(`/cities/${slug}`);
+      const raw = (response as { data?: ApiCityRaw })?.data || (response as ApiCityRaw);
+      if (raw && raw.id) {
+        return mapApiCityToCity(raw);
+      }
+      return null;
+    } catch {
+      // Se endpoint específico de slug não existir, busca na lista geral de /cities
+      const all = await this.getAll();
+      return all.find((c) => c.slug === slug) || null;
+    }
   },
 };

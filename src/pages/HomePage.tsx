@@ -13,6 +13,8 @@ import { SectionHeader } from '../components/common/SectionHeader';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { PWAInstallButton } from '../components/common/PWAInstallButton';
+import { ApiDiagnosticReport } from '../services/api/diagnostics';
+import { ApiError } from '../services/api/config';
 import { setPageMeta } from '../utils/seo';
 import { Sparkles, Compass } from 'lucide-react';
 
@@ -28,6 +30,8 @@ export const HomePage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('Não foi possível carregar as informações do Cariri.');
+  const [diagnostic, setDiagnostic] = useState<ApiDiagnosticReport | undefined>();
 
   useEffect(() => {
     setPageMeta({
@@ -40,6 +44,7 @@ export const HomePage: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     setHasError(false);
+    setDiagnostic(undefined);
     try {
       const cityFilter = selectedCitySlug === 'all' ? undefined : selectedCitySlug;
 
@@ -57,8 +62,17 @@ export const HomePage: React.FC = () => {
       setFeaturedPlaces(featuredData);
       setNearbyPlaces(nearbyData);
       setEvents(eventsData);
-    } catch {
+    } catch (err: unknown) {
       setHasError(true);
+      if (err instanceof ApiError) {
+        setErrorMessage(err.userFriendlyMessage);
+        setDiagnostic(err.diagnostic);
+      } else if (err && typeof err === 'object' && 'userFriendlyMessage' in err) {
+        setErrorMessage((err as { userFriendlyMessage: string }).userFriendlyMessage);
+        setDiagnostic((err as { diagnostic?: ApiDiagnosticReport }).diagnostic);
+      } else {
+        setErrorMessage('Não foi possível conectar com o servidor da API.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +100,7 @@ export const HomePage: React.FC = () => {
   if (hasError) {
     return (
       <div className="py-8">
-        <ErrorState onRetry={fetchData} />
+        <ErrorState message={errorMessage} diagnostic={diagnostic} onRetry={fetchData} />
       </div>
     );
   }
@@ -144,13 +158,21 @@ export const HomePage: React.FC = () => {
               actionText="Ver todas"
               actionTo="/explorar"
             />
-            <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-2">
-              {categories.map((category) => (
-                <div key={category.id} className="w-24 sm:w-28 shrink-0">
-                  <CategoryCard category={category} variant="tile" />
+            {categories.length === 0 ? (
+              <div className="px-4 py-2">
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 text-center text-xs text-gray-400">
+                  Nenhuma categoria cadastrada.
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-2">
+                {categories.map((category) => (
+                  <div key={category.id} className="w-24 sm:w-28 shrink-0">
+                    <CategoryCard category={category} variant="tile" />
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* 3. Destaques do Cariri (Large Horizontal Carousel) */}

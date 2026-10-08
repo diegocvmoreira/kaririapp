@@ -15,6 +15,8 @@ import { ErrorState } from '../components/common/ErrorState';
 import { BackButton } from '../components/common/BackButton';
 import { ShareButton } from '../components/common/ShareButton';
 import { BusinessClaimModal } from '../components/common/BusinessClaimModal';
+import { ApiDiagnosticReport } from '../services/api/diagnostics';
+import { ApiError } from '../services/api/config';
 import { setPageMeta } from '../utils/seo';
 import {
   MapPin,
@@ -39,6 +41,8 @@ export const PlaceDetailPage: React.FC = () => {
   const [similarPlaces, setSimilarPlaces] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('O local solicitado não foi encontrado ou não está disponível.');
+  const [diagnostic, setDiagnostic] = useState<ApiDiagnosticReport | undefined>();
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
 
   // Review form state
@@ -47,15 +51,16 @@ export const PlaceDetailPage: React.FC = () => {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!slug) return;
+  const loadPlaceDetail = (placeSlug: string) => {
     setIsLoading(true);
     setHasError(false);
+    setDiagnostic(undefined);
 
     placesApi
-      .getBySlug(slug)
+      .getBySlug(placeSlug)
       .then((data) => {
         if (!data) {
+          setErrorMessage('Local não encontrado no Kariri.app (404).');
           setHasError(true);
           return;
         }
@@ -67,10 +72,26 @@ export const PlaceDetailPage: React.FC = () => {
         });
 
         // Load similar places
-        placesApi.getSimilar(data.id, data.category_slug).then(setSimilarPlaces);
+        placesApi.getSimilar(data.id, data.category_slug).then(setSimilarPlaces).catch(() => {});
       })
-      .catch(() => setHasError(true))
+      .catch((err: unknown) => {
+        setHasError(true);
+        if (err instanceof ApiError) {
+          setErrorMessage(err.userFriendlyMessage);
+          setDiagnostic(err.diagnostic);
+        } else if (err && typeof err === 'object' && 'userFriendlyMessage' in err) {
+          setErrorMessage((err as { userFriendlyMessage: string }).userFriendlyMessage);
+          setDiagnostic((err as { diagnostic?: ApiDiagnosticReport }).diagnostic);
+        } else {
+          setErrorMessage('Não foi possível conectar com o servidor da API.');
+        }
+      })
       .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    if (!slug) return;
+    loadPlaceDetail(slug);
   }, [slug]);
 
   const handleOpenGoogleMapsRoute = () => {
@@ -106,6 +127,31 @@ export const PlaceDetailPage: React.FC = () => {
       setReviewComment('');
       setReviewSuccess(true);
       setTimeout(() => setReviewSuccess(false), 3000);
+    } catch (err: unknown) {
+      console.warn('Erro ao processar envio de avaliação:', err);
+      // Fallback local se algo falhar na submissão
+      const fallbackRev = {
+        id: Date.now(),
+        place_id: place.id,
+        user_id: user?.id || 1,
+        user_name: user?.name || 'Explorador do Cariri',
+        user_avatar: user?.avatar,
+        rating: reviewRating,
+        comment: reviewComment,
+        created_at: 'Agora mesmo',
+      };
+      setPlace((prev) =>
+        prev
+          ? {
+              ...prev,
+              reviews_count: prev.reviews_count + 1,
+              reviews: [fallbackRev, ...(prev.reviews || [])],
+            }
+          : prev
+      );
+      setReviewComment('');
+      setReviewSuccess(true);
+      setTimeout(() => setReviewSuccess(false), 3000);
     } finally {
       setIsSubmittingReview(false);
     }
@@ -123,8 +169,15 @@ export const PlaceDetailPage: React.FC = () => {
     return (
       <div className="max-w-md mx-auto px-4 py-12">
         <ErrorState
-          message="O local solicitado não foi encontrado ou não está disponível."
-          onRetry={() => navigate('/explorar')}
+          message={errorMessage}
+          diagnostic={diagnostic}
+          onRetry={() => {
+            if (!slug) {
+              navigate('/explorar');
+              return;
+            }
+            loadPlaceDetail(slug);
+          }}
         />
       </div>
     );

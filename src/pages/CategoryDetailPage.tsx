@@ -9,6 +9,8 @@ import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
 import { ErrorState } from '../components/common/ErrorState';
 import { BackButton } from '../components/common/BackButton';
+import { ApiDiagnosticReport } from '../services/api/diagnostics';
+import { ApiError } from '../services/api/config';
 import { setPageMeta } from '../utils/seo';
 
 export const CategoryDetailPage: React.FC = () => {
@@ -21,11 +23,14 @@ export const CategoryDetailPage: React.FC = () => {
   const [selectedSubcat, setSelectedSubcat] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('Categoria não encontrada.');
+  const [diagnostic, setDiagnostic] = useState<ApiDiagnosticReport | undefined>();
 
   useEffect(() => {
     if (!slug) return;
     setIsLoading(true);
     setHasError(false);
+    setDiagnostic(undefined);
     setSelectedSubcat(null);
 
     Promise.all([
@@ -38,6 +43,7 @@ export const CategoryDetailPage: React.FC = () => {
       .then(([catData, placesData]) => {
         if (!catData) {
           setHasError(true);
+          setErrorMessage('Categoria não encontrada no Kariri.app.');
           return;
         }
         setCategory(catData);
@@ -47,7 +53,18 @@ export const CategoryDetailPage: React.FC = () => {
           description: catData.description,
         });
       })
-      .catch(() => setHasError(true))
+      .catch((err: unknown) => {
+        setHasError(true);
+        if (err instanceof ApiError) {
+          setErrorMessage(err.userFriendlyMessage);
+          setDiagnostic(err.diagnostic);
+        } else if (err && typeof err === 'object' && 'userFriendlyMessage' in err) {
+          setErrorMessage((err as { userFriendlyMessage: string }).userFriendlyMessage);
+          setDiagnostic((err as { diagnostic?: ApiDiagnosticReport }).diagnostic);
+        } else {
+          setErrorMessage('Não foi possível conectar com o servidor da API.');
+        }
+      })
       .finally(() => setIsLoading(false));
   }, [slug, selectedCitySlug]);
 
@@ -63,7 +80,8 @@ export const CategoryDetailPage: React.FC = () => {
     return (
       <div className="max-w-md mx-auto px-4 py-12">
         <ErrorState
-          message="Categoria não encontrada."
+          message={errorMessage}
+          diagnostic={diagnostic}
           onRetry={() => navigate('/explorar')}
         />
       </div>

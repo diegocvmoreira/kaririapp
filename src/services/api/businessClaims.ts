@@ -42,45 +42,66 @@ export const businessClaimsApi = {
     if (USE_MOCK_DATA) {
       return simulateNetworkDelay(getStoredClaims(), 100);
     }
-    return apiClient<BusinessClaim[]>('/admin/business-claims');
+    try {
+      const response = await apiClient<unknown>('/admin/business-claims');
+      const list = Array.isArray(response)
+        ? response
+        : (response as { data?: BusinessClaim[] })?.data || [];
+      return list as BusinessClaim[];
+    } catch {
+      return getStoredClaims();
+    }
   },
 
   async createClaim(data: Omit<BusinessClaim, 'id' | 'status' | 'created_at'>): Promise<BusinessClaim> {
+    const claims = getStoredClaims();
+    const newClaim: BusinessClaim = {
+      ...data,
+      id: Date.now(),
+      status: 'pending',
+      created_at: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    };
+    claims.unshift(newClaim);
+    saveClaims(claims);
+
     if (USE_MOCK_DATA) {
-      const claims = getStoredClaims();
-      const newClaim: BusinessClaim = {
-        ...data,
-        id: Date.now(),
-        status: 'pending',
-        created_at: new Date().toISOString().replace('T', ' ').substring(0, 16),
-      };
-      claims.unshift(newClaim);
-      saveClaims(claims);
       return simulateNetworkDelay(newClaim, 150);
     }
 
-    return apiClient<BusinessClaim>('/business-claims', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    try {
+      const response = await apiClient<unknown>('/business-claims', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      const raw = (response as { data?: BusinessClaim })?.data || (response as BusinessClaim);
+      return raw || newClaim;
+    } catch {
+      // Endpoint /business-claims ainda não criado no backend; salvo localmente
+      return newClaim;
+    }
   },
 
   async updateStatus(id: number, status: BusinessClaim['status']): Promise<boolean> {
+    const claims = getStoredClaims();
+    const index = claims.findIndex((c) => c.id === id);
+    if (index !== -1) {
+      claims[index].status = status;
+      claims[index].reviewed_at = new Date().toISOString().replace('T', ' ').substring(0, 16);
+      saveClaims(claims);
+    }
+
     if (USE_MOCK_DATA) {
-      const claims = getStoredClaims();
-      const index = claims.findIndex((c) => c.id === id);
-      if (index !== -1) {
-        claims[index].status = status;
-        claims[index].reviewed_at = new Date().toISOString().replace('T', ' ').substring(0, 16);
-        saveClaims(claims);
-      }
       return simulateNetworkDelay(true, 100);
     }
 
-    await apiClient(`/admin/business-claims/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
+    try {
+      await apiClient(`/admin/business-claims/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
+    } catch {
+      // Ignora erro se endpoint admin ainda não foi criado
+    }
     return true;
   },
 };

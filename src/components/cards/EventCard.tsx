@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Ticket, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, MapPin, Ticket, Building, ExternalLink } from 'lucide-react';
 import { EventItem } from '../../types';
+import { FavoriteButton } from '../common/FavoriteButton';
 
 interface EventCardProps {
   event: EventItem;
@@ -27,7 +28,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
 
-        {/* Date Tag */}
+        {/* Date & Free Tag */}
         <div className="absolute top-3.5 left-3.5 z-10 flex gap-2">
           <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#D9262E] text-white shadow-sm flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -40,11 +41,24 @@ export const EventCard: React.FC<EventCardProps> = ({
           )}
         </div>
 
+        {/* Favorite Button */}
+        <div className="absolute top-3.5 right-3.5 z-20">
+          <FavoriteButton eventId={event.id} size="sm" />
+        </div>
+
         {/* Info */}
         <div className="relative p-4 z-10 text-white space-y-1.5">
-          <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">
-            {event.category}
-          </span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">
+              {event.category}
+            </span>
+            {event.ticket_url && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-white/80 bg-white/10 px-2 py-0.5 rounded-md backdrop-blur-xs">
+                <Ticket className="w-2.5 h-2.5 text-amber-300" />
+                Ingressos
+              </span>
+            )}
+          </div>
 
           <h3 className="text-base sm:text-lg font-bold text-white line-clamp-2 leading-snug group-hover:text-amber-200 transition-colors">
             {event.title}
@@ -53,6 +67,13 @@ export const EventCard: React.FC<EventCardProps> = ({
           <p className="text-xs text-gray-300 line-clamp-2 font-normal leading-relaxed">
             {event.description}
           </p>
+
+          {event.organizer && (
+            <p className="text-[11px] text-gray-300/80 truncate flex items-center gap-1">
+              <Building className="w-3 h-3 text-gray-400 shrink-0" />
+              <span className="truncate">{event.organizer}</span>
+            </p>
+          )}
 
           <div className="pt-2 border-t border-white/15 flex items-center justify-between text-xs text-white/90">
             <span className="flex items-center gap-1 truncate text-xs">
@@ -103,19 +124,41 @@ export const EventCard: React.FC<EventCardProps> = ({
             </span>
           )}
         </div>
+
+        {/* Favorite Button */}
+        <div className="absolute top-3 right-3 z-20">
+          <FavoriteButton eventId={event.id} size="sm" />
+        </div>
       </div>
 
       <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
         <div>
-          <span className="text-[11px] font-bold text-[#D9262E] uppercase tracking-wide">
-            {event.category}
-          </span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold text-[#D9262E] uppercase tracking-wide">
+              {event.category}
+            </span>
+            {event.ticket_url && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <Ticket className="w-2.5 h-2.5 text-[#D9262E]" />
+                Ingresso
+              </span>
+            )}
+          </div>
+
           <h3 className="text-base font-bold text-gray-900 group-hover:text-[#D9262E] transition-colors line-clamp-1 mt-0.5">
             {event.title}
           </h3>
+
           <p className="text-xs text-gray-500 line-clamp-2 mt-1 leading-relaxed">
             {event.description}
           </p>
+
+          {event.organizer && (
+            <p className="text-[11px] text-gray-400 mt-1 truncate flex items-center gap-1">
+              <Building className="w-3 h-3 text-gray-400 shrink-0" />
+              <span className="truncate">{event.organizer}</span>
+            </p>
+          )}
         </div>
 
         <div className="pt-2 border-t border-gray-50 flex items-center justify-between text-xs text-gray-500">

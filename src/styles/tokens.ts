@@ -3,16 +3,16 @@
 
 export const tokens = {
   colors: {
-    primary: '#D9262E', // Vermelho Cariri / Soldadinho do Araripe
-    primaryHover: '#BF1E25',
+    primary: '#DE1F2A', // Vermelho Kariri / Soldadinho do Araripe (Documento Mestre)
+    primaryHover: '#C51620',
     primaryLight: '#FDE8E9',
-    secondary: '#1F2024', // Grafite / Charcoal
-    secondaryLight: '#374151',
+    secondary: '#000000', // Preto como cor de apoio (Documento Mestre)
+    secondaryLight: '#1A1A1A',
     background: '#F8F9FA',
     surface: '#FFFFFF',
     surfaceAlt: '#F3F4F6',
     surfaceHover: '#F9FAFB',
-    text: '#111827',
+    text: '#000000',
     textSecondary: '#4B5563',
     muted: '#6B7280',
     border: '#E5E7EB',
