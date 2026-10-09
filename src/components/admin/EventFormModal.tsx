@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { EventItem, City, EntityStatus } from '../../types';
-import { X, Calendar, Clock, MapPin, Ticket, Building, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { EventItem, City, Category, Place, EntityStatus } from '../../types';
+import { X, Calendar, Clock, MapPin, Ticket, Building, Image as ImageIcon } from 'lucide-react';
 
 interface EventFormModalProps {
   isOpen: boolean;
@@ -8,6 +8,8 @@ interface EventFormModalProps {
   onSave: (data: Partial<EventItem>) => Promise<void>;
   event?: EventItem | null;
   cities: City[];
+  categories: Category[];
+  places: Place[];
 }
 
 export const EventFormModal: React.FC<EventFormModalProps> = ({
@@ -16,15 +18,18 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   onSave,
   event,
   cities,
+  categories,
+  places,
 }) => {
   const isEditing = !!event;
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [cityId, setCityId] = useState<number>(1);
+  const [categoryId, setCategoryId] = useState<number>(1);
+  const [placeId, setPlaceId] = useState<number | ''>('');
   const [placeName, setPlaceName] = useState('');
   const [address, setAddress] = useState('');
-  const [category, setCategory] = useState('Cultura & Tradição');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [startTime, setStartTime] = useState('19:00');
@@ -46,9 +51,10 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       setTitle(event.title || '');
       setSlug(event.slug || '');
       setCityId(event.city_id || 1);
+      setCategoryId(event.category_id || 1);
+      setPlaceId(event.place_id ?? '');
       setPlaceName(event.place_name || '');
       setAddress(event.address || '');
-      setCategory(event.category || 'Cultura & Tradição');
       setStartDate(event.start_date || '');
       setEndDate(event.end_date || '');
       setStartTime(event.start_time || '19:00');
@@ -65,9 +71,10 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       setTitle('');
       setSlug('');
       setCityId(cities[0]?.id || 1);
+      setCategoryId(categories[0]?.id || 1);
+      setPlaceId('');
       setPlaceName('');
       setAddress('');
-      setCategory('Música & Shows');
       setStartDate(new Date().toISOString().split('T')[0]);
       setEndDate('');
       setStartTime('19:00');
@@ -82,7 +89,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       setIsFeatured(false);
     }
     setErrorMsg(null);
-  }, [event, isOpen, cities]);
+  }, [event, isOpen, cities, categories]);
 
   const handleTitleChange = (val: string) => {
     setTitle(val);
@@ -97,6 +104,21 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
     }
   };
 
+  const handlePlaceSelect = (idStr: string) => {
+    if (!idStr) {
+      setPlaceId('');
+      return;
+    }
+    const idNum = Number(idStr);
+    setPlaceId(idNum);
+    const foundPlace = places.find((p) => p.id === idNum);
+    if (foundPlace) {
+      setPlaceName(foundPlace.name);
+      if (!address) setAddress(foundPlace.address);
+      if (foundPlace.city_id) setCityId(foundPlace.city_id);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -105,6 +127,8 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
     }
 
     const selectedCity = cities.find((c) => c.id === Number(cityId));
+    const selectedCat = categories.find((c) => c.id === Number(categoryId));
+    const selectedPlace = placeId ? places.find((p) => p.id === Number(placeId)) : null;
 
     setIsSubmitting(true);
     setErrorMsg(null);
@@ -115,9 +139,11 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
         city_id: Number(cityId),
         city_name: selectedCity?.name || 'Crato',
         city_slug: selectedCity?.slug || 'crato',
-        place_name: placeName.trim() || 'Local no Cariri',
-        address: address.trim(),
-        category: category.trim(),
+        category_id: Number(categoryId),
+        category: selectedCat?.name || 'Cultura & Arte',
+        place_id: placeId !== '' ? Number(placeId) : null,
+        place_name: selectedPlace?.name || placeName.trim() || 'Espaço Cultural no Cariri',
+        address: address.trim() || selectedPlace?.address || '',
         start_date: startDate,
         end_date: endDate || undefined,
         display_date: startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir',
@@ -205,7 +231,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
             </div>
           </div>
 
-          {/* Cidade e Categoria */}
+          {/* Município e Categoria por ID */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-gray-700 mb-1">
@@ -225,21 +251,68 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">Categoria</label>
+              <label className="block font-bold text-gray-700 mb-1">
+                Categoria (ID do banco) <span className="text-[#DE1F2A]">*</span>
+              </label>
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={categoryId}
+                onChange={(e) => setCategoryId(Number(e.target.value))}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
               >
-                <option value="Música & Shows">Música & Shows</option>
-                <option value="Cultura & Tradição">Cultura & Tradição</option>
-                <option value="Teatro & Dança">Teatro & Dança</option>
-                <option value="Gastronomia & Feiras">Gastronomia & Feiras</option>
-                <option value="Religiosidade & Romarias">Religiosidade & Romarias</option>
-                <option value="Esporte & Trilhas">Esporte & Trilhas</option>
-                <option value="Outros">Outros</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
             </div>
+          </div>
+
+          {/* Local Cadastrado ou Local Textual */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+            <div>
+              <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-[#DE1F2A]" />
+                <span>Vincular a Local Cadastrado (place_id)</span>
+              </label>
+              <select
+                value={placeId}
+                onChange={(e) => handlePlaceSelect(e.target.value)}
+                className="w-full p-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-[#DE1F2A]"
+              >
+                <option value="">-- Nenhum (local externo ou praça pública) --</option>
+                {places.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.city_name})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-gray-700 mb-1">
+                Nome do Local / Espaço (location_name)
+              </label>
+              <input
+                type="text"
+                value={placeName}
+                onChange={(e) => setPlaceName(e.target.value)}
+                placeholder="Ex: Praça da Sé / Centro Cultural do Cariri"
+                className="w-full p-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-[#DE1F2A]"
+              />
+            </div>
+          </div>
+
+          {/* Endereço */}
+          <div>
+            <label className="block font-bold text-gray-700 mb-1">Endereço Completo</label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Ex: Av. Joaquim Pinheiro Bezerra de Menezes, 1"
+              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
+            />
           </div>
 
           {/* Datas e Horários */}
@@ -298,34 +371,6 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
             </div>
           </div>
 
-          {/* Local e Endereço */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#DE1F2A]" />
-                <span>Nome do Local / Espaço</span>
-              </label>
-              <input
-                type="text"
-                value={placeName}
-                onChange={(e) => setPlaceName(e.target.value)}
-                placeholder="Ex: Teatro Rachel de Queiroz / Praça da Sé"
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Endereço Completo</label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Ex: Rua Cel. Antônio Luís, 120"
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
-              />
-            </div>
-          </div>
-
           {/* Preço e Ingressos */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
             <div className="flex items-center gap-2 pt-4">
@@ -366,7 +411,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                 type="url"
                 value={ticketUrl}
                 onChange={(e) => setTicketUrl(e.target.value)}
-                placeholder="https://bileto.sympla.com..."
+                placeholder="https://sympla.com.br..."
                 className="w-full p-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-[#DE1F2A]"
               />
             </div>
@@ -403,7 +448,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
           <div>
             <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
               <ImageIcon className="w-3.5 h-3.5 text-gray-500" />
-              <span>URL do Cartaz / Foto de Capa</span>
+              <span>URL da Imagem / Cartaz (cover_image)</span>
             </label>
             <input
               type="url"

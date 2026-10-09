@@ -42,58 +42,47 @@ export const businessClaimsApi = {
     if (USE_MOCK_DATA) {
       return simulateNetworkDelay(getStoredClaims(), 100);
     }
-    try {
-      const response = await apiClient<unknown>('/admin/business-claims');
-      const list = Array.isArray(response)
-        ? response
-        : (response as { data?: BusinessClaim[] })?.data || [];
-      return list as BusinessClaim[];
-    } catch {
-      return getStoredClaims();
-    }
+    const response = await apiClient<unknown>('/admin/business-claims');
+    const list = Array.isArray(response)
+      ? response
+      : (response as { data?: BusinessClaim[] })?.data || [];
+    return list as BusinessClaim[];
   },
 
   async createClaim(data: Omit<BusinessClaim, 'id' | 'status' | 'created_at'>): Promise<BusinessClaim> {
-    const claims = getStoredClaims();
-    const newClaim: BusinessClaim = {
-      ...data,
-      id: Date.now(),
-      status: 'pending',
-      created_at: new Date().toISOString().replace('T', ' ').substring(0, 16),
-    };
-    claims.unshift(newClaim);
-    saveClaims(claims);
-
     if (USE_MOCK_DATA) {
+      const claims = getStoredClaims();
+      const newClaim: BusinessClaim = {
+        ...data,
+        id: Date.now(),
+        status: 'pending',
+        created_at: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      };
+      claims.unshift(newClaim);
+      saveClaims(claims);
       return simulateNetworkDelay(newClaim, 150);
     }
 
-    try {
-      const response = await apiClient<unknown>('/business-claims', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      const raw = (response as { data?: BusinessClaim })?.data || (response as BusinessClaim);
-      return raw || newClaim;
-    } catch {
-      // Endpoint /business-claims ainda não criado no backend; salvo localmente
-      return newClaim;
-    }
+    const response = await apiClient<unknown>('/business-claims', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    const raw = (response as { data?: BusinessClaim })?.data || (response as BusinessClaim);
+    return raw;
   },
 
   async updateStatus(id: number, status: BusinessClaim['status'], rejectReason?: string): Promise<boolean> {
-    const claims = getStoredClaims();
-    const index = claims.findIndex((c) => c.id === id);
-    if (index !== -1) {
-      claims[index].status = status;
-      if (rejectReason) {
-        (claims[index] as BusinessClaim & { reject_reason?: string }).reject_reason = rejectReason;
-      }
-      claims[index].reviewed_at = new Date().toISOString().replace('T', ' ').substring(0, 16);
-      saveClaims(claims);
-    }
-
     if (USE_MOCK_DATA) {
+      const claims = getStoredClaims();
+      const index = claims.findIndex((c) => c.id === id);
+      if (index !== -1) {
+        claims[index].status = status;
+        if (rejectReason) {
+          (claims[index] as BusinessClaim & { reject_reason?: string }).reject_reason = rejectReason;
+        }
+        claims[index].reviewed_at = new Date().toISOString().replace('T', ' ').substring(0, 16);
+        saveClaims(claims);
+      }
       return simulateNetworkDelay(true, 100);
     }
 

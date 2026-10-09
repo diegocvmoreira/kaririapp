@@ -83,7 +83,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
                 onClick={() => setLocalFilters({ ...localFilters, city_slug: undefined })}
                 className={`px-3 py-1.5 rounded-xl font-medium transition ${
                   !localFilters.city_slug
-                    ? 'bg-[#D9262E] text-white shadow-xs'
+                    ? 'bg-[#DE1F2A] text-white shadow-xs'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -98,7 +98,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
                   }
                   className={`px-3 py-1.5 rounded-xl font-medium transition ${
                     localFilters.city_slug === city.slug
-                      ? 'bg-[#D9262E] text-white shadow-xs'
+                      ? 'bg-[#DE1F2A] text-white shadow-xs'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -235,13 +235,13 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
                   }
                   className={`py-2 px-3 rounded-xl text-left font-medium flex items-center justify-between transition ${
                     (localFilters.sort_by || 'featured') === sort.id
-                      ? 'bg-[#FDE8E9] text-[#D9262E] font-bold ring-1 ring-[#D9262E]'
+                      ? 'bg-[#FDE8E9] text-[#DE1F2A] font-bold ring-1 ring-[#DE1F2A]'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   <span className="text-xs">{sort.label}</span>
                   {(localFilters.sort_by || 'featured') === sort.id && (
-                    <Check className="w-3.5 h-3.5 text-[#D9262E]" />
+                    <Check className="w-3.5 h-3.5 text-[#DE1F2A]" />
                   )}
                 </button>
               ))}
@@ -263,7 +263,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
           <button
             type="button"
             onClick={handleApply}
-            className="flex-1 py-2.5 rounded-xl bg-[#D9262E] text-white font-bold hover:bg-[#BF1E25] active:scale-98 transition shadow-sm text-center"
+            className="flex-1 py-2.5 rounded-xl bg-[#DE1F2A] text-white font-bold hover:bg-[#C51620] active:scale-98 transition shadow-sm text-center"
           >
             Aplicar Filtros
           </button>

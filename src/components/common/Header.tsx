@@ -38,7 +38,7 @@ export const Header: React.FC = () => {
               aria-expanded={isCityDropdownOpen}
               aria-haspopup="listbox"
             >
-              <MapPin className="w-3.5 h-3.5 text-[#D9262E]" />
+              <MapPin className="w-3.5 h-3.5 text-[#DE1F2A]" />
               <span className="truncate max-w-[110px] sm:max-w-none">
                 {selectedCity ? selectedCity.name : 'Todo o Cariri'}
               </span>
@@ -54,11 +54,11 @@ export const Header: React.FC = () => {
                   type="button"
                   onClick={() => setSelectedCitySlug('all')}
                   className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center justify-between hover:bg-gray-50 ${
-                    selectedCitySlug === 'all' ? 'text-[#D9262E] bg-[#FDE8E9]/50' : 'text-gray-700'
+                    selectedCitySlug === 'all' ? 'text-[#DE1F2A] bg-[#FDE8E9]/50' : 'text-gray-700'
                   }`}
                 >
                   <span>Todo o Cariri</span>
-                  {selectedCitySlug === 'all' && <span className="w-1.5 h-1.5 rounded-full bg-[#D9262E]" />}
+                  {selectedCitySlug === 'all' && <span className="w-1.5 h-1.5 rounded-full bg-[#DE1F2A]" />}
                 </button>
 
                 {isLoading && (
@@ -85,11 +85,11 @@ export const Header: React.FC = () => {
                     type="button"
                     onClick={() => setSelectedCitySlug(c.slug)}
                     className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center justify-between hover:bg-gray-50 ${
-                      selectedCitySlug === c.slug ? 'text-[#D9262E] bg-[#FDE8E9]/50' : 'text-gray-700'
+                      selectedCitySlug === c.slug ? 'text-[#DE1F2A] bg-[#FDE8E9]/50' : 'text-gray-700'
                     }`}
                   >
                     <span>{c.name}</span>
-                    {selectedCitySlug === c.slug && <span className="w-1.5 h-1.5 rounded-full bg-[#D9262E]" />}
+                    {selectedCitySlug === c.slug && <span className="w-1.5 h-1.5 rounded-full bg-[#DE1F2A]" />}
                   </button>
                 ))}
               </div>
@@ -110,7 +110,7 @@ export const Header: React.FC = () => {
                 to={link.to}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
                   isActive
-                    ? 'bg-[#1F2024] text-white shadow-xs'
+                    ? 'bg-[#000000] text-white shadow-xs'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
@@ -133,7 +133,7 @@ export const Header: React.FC = () => {
               <img
                 src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
                 alt={user.name}
-                className="w-8 h-8 rounded-full object-cover ring-2 ring-[#D9262E]/20 group-hover:ring-[#D9262E]"
+                className="w-8 h-8 rounded-full object-cover ring-2 ring-[#DE1F2A]/20 group-hover:ring-[#DE1F2A]"
               />
               <span className="hidden sm:inline text-xs font-bold text-gray-700 group-hover:text-gray-900">
                 {user.name.split(' ')[0]}

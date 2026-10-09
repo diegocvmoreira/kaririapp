@@ -9,7 +9,7 @@ export const MainLayout: React.FC = () => {
   const isOnline = useOnlineStatus();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#1F2024] selection:bg-[#D9262E] selection:text-white pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#000000] selection:bg-[#DE1F2A] selection:text-white pb-20 md:pb-0">
       {/* Offline Toast */}
       {!isOnline && (
         <div className="bg-amber-500 text-white text-xs font-semibold py-1.5 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50">

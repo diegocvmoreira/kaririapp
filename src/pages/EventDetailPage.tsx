@@ -137,7 +137,7 @@ export const EventDetailPage: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10" />
 
         <div className="absolute top-4 left-4 flex gap-2">
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#D9262E] text-white shadow-sm flex items-center gap-1">
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#DE1F2A] text-white shadow-sm flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" />
             {event.display_date}
           </span>
@@ -162,7 +162,7 @@ export const EventDetailPage: React.FC = () => {
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
           <div className="p-3 bg-gray-50 rounded-2xl flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-[#D9262E] shrink-0" />
+            <Calendar className="w-5 h-5 text-[#DE1F2A] shrink-0" />
             <div>
               <p className="font-bold text-gray-900">Data</p>
               <p className="text-gray-600 mt-0.5">{event.display_date}</p>
@@ -170,7 +170,7 @@ export const EventDetailPage: React.FC = () => {
           </div>
 
           <div className="p-3 bg-gray-50 rounded-2xl flex items-center gap-3">
-            <Clock className="w-5 h-5 text-[#D9262E] shrink-0" />
+            <Clock className="w-5 h-5 text-[#DE1F2A] shrink-0" />
             <div>
               <p className="font-bold text-gray-900">Horário</p>
               <p className="text-gray-600 mt-0.5">
@@ -206,11 +206,11 @@ export const EventDetailPage: React.FC = () => {
         {/* Location Row */}
         <div className="p-4 bg-gray-50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
-            <MapPin className="w-5 h-5 text-[#D9262E] shrink-0 mt-0.5" />
+            <MapPin className="w-5 h-5 text-[#DE1F2A] shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-gray-900">{event.place_name}</p>
               <p className="text-gray-600 text-xs sm:text-sm mt-0.5">{event.address}</p>
-              <span className="inline-block mt-1 text-xs font-semibold text-[#D9262E]">
+              <span className="inline-block mt-1 text-xs font-semibold text-[#DE1F2A]">
                 {event.city_name}, Cariri Cearense
               </span>
             </div>
@@ -224,7 +224,7 @@ export const EventDetailPage: React.FC = () => {
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-gray-800 border border-gray-200 rounded-xl text-xs font-semibold hover:bg-gray-50 transition shrink-0"
           >
-            <Navigation className="w-3.5 h-3.5 text-[#D9262E]" />
+            <Navigation className="w-3.5 h-3.5 text-[#DE1F2A]" />
             <span>Ver no Mapa</span>
           </a>
         </div>
@@ -234,7 +234,7 @@ export const EventDetailPage: React.FC = () => {
           <div className="space-y-2 pt-2 border-t border-gray-100">
             <div className="flex items-center justify-between text-xs text-gray-500 px-1">
               <span className="font-semibold text-gray-700 flex items-center gap-1.5">
-                <Ticket className="w-3.5 h-3.5 text-[#D9262E]" />
+                <Ticket className="w-3.5 h-3.5 text-[#DE1F2A]" />
                 Ingressos & Inscrições
               </span>
               <span className="text-[10px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full font-bold border border-amber-200">
@@ -246,7 +246,7 @@ export const EventDetailPage: React.FC = () => {
               href={event.ticket_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3.5 px-4 bg-[#D9262E] hover:bg-[#BF1E25] active:scale-98 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition"
+              className="w-full py-3.5 px-4 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition"
             >
               <Ticket className="w-4 h-4" />
               <span>Garantir Ingresso no Site Oficial</span>
@@ -268,7 +268,7 @@ export const EventDetailPage: React.FC = () => {
       {/* 4. Description */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-3">
         <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#D9262E]" />
+          <Sparkles className="w-4 h-4 text-[#DE1F2A]" />
           <span>Sobre o Evento</span>
         </h2>
         <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">

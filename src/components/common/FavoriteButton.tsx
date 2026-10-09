@@ -52,13 +52,13 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       aria-label={active ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
       className={`rounded-full flex items-center justify-center transition-all duration-200 active:scale-90 ${sizeClasses[size]} ${
         active
-          ? 'bg-white/95 text-[#D9262E] shadow-md hover:bg-white'
-          : 'bg-white/80 text-gray-700 hover:text-[#D9262E] hover:bg-white shadow-sm backdrop-blur-md'
+          ? 'bg-white/95 text-[#DE1F2A] shadow-md hover:bg-white'
+          : 'bg-white/80 text-gray-700 hover:text-[#DE1F2A] hover:bg-white shadow-sm backdrop-blur-md'
       } ${className}`}
     >
       <Heart
         className={`${iconSizes[size]} transition-transform duration-200 ${
-          active ? 'fill-[#D9262E] text-[#D9262E] scale-110' : ''
+          active ? 'fill-[#DE1F2A] text-[#DE1F2A] scale-110' : ''
         }`}
       />
     </button>

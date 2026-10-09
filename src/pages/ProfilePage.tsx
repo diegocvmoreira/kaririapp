@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
+import { useCity } from '../context/CityContext';
 import { PWAInstallButton } from '../components/common/PWAInstallButton';
 import { setPageMeta } from '../utils/seo';
 import {
@@ -19,6 +20,7 @@ import {
 export const ProfilePage: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { favoriteIds } = useFavorites();
+  const { cities } = useCity();
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -33,6 +35,8 @@ export const ProfilePage: React.FC = () => {
     navigate('/');
   };
 
+  const isAdmin = user?.role === 'admin' && (user?.status === 'active' || !user?.status);
+
   return (
     <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
       {/* 1. Profile Header Card */}
@@ -44,7 +48,7 @@ export const ProfilePage: React.FC = () => {
               'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
             }
             alt={user?.name || 'Visitante'}
-            className="w-20 h-20 rounded-full object-cover ring-4 ring-[#D9262E]/20"
+            className="w-20 h-20 rounded-full object-cover ring-4 ring-[#DE1F2A]/20"
           />
           {isAuthenticated && (
             <span className="absolute bottom-0 right-0 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full" />
@@ -56,7 +60,7 @@ export const ProfilePage: React.FC = () => {
             <>
               <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
               <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
-              <div className="flex items-center justify-center sm:justify-start gap-1 text-xs text-[#D9262E] font-semibold mt-2">
+              <div className="flex items-center justify-center sm:justify-start gap-1 text-xs text-[#DE1F2A] font-semibold mt-2">
                 <MapPin className="w-3.5 h-3.5" />
                 <span>{user.city_preference || 'Crato, CE'}</span>
               </div>
@@ -70,7 +74,7 @@ export const ProfilePage: React.FC = () => {
               <div className="flex gap-2 mt-3 justify-center sm:justify-start">
                 <Link
                   to="/login"
-                  className="px-4 py-1.5 bg-[#D9262E] text-white text-xs font-bold rounded-xl hover:bg-[#BF1E25] transition"
+                  className="px-4 py-1.5 bg-[#DE1F2A] text-white text-xs font-bold rounded-xl hover:bg-[#C51620] transition"
                 >
                   Entrar
                 </Link>
@@ -92,8 +96,8 @@ export const ProfilePage: React.FC = () => {
           to="/favoritos"
           className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center gap-3 hover:border-gray-200 transition"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#FDE8E9] flex items-center justify-center text-[#D9262E]">
-            <Heart className="w-5 h-5 fill-[#D9262E]" />
+          <div className="w-10 h-10 rounded-xl bg-[#FDE8E9] flex items-center justify-center text-[#DE1F2A]">
+            <Heart className="w-5 h-5 fill-[#DE1F2A]" />
           </div>
           <div>
             <span className="text-lg font-black text-gray-900">{favoriteIds.length}</span>
@@ -106,7 +110,7 @@ export const ProfilePage: React.FC = () => {
             <MapPin className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-lg font-black text-gray-900">3</span>
+            <span className="text-lg font-black text-gray-900">{cities.length || 3}</span>
             <p className="text-xs text-gray-500">Cidades no Guia</p>
           </div>
         </div>
@@ -128,18 +132,20 @@ export const ProfilePage: React.FC = () => {
           <span className="text-xs text-gray-400 font-medium">{favoriteIds.length}</span>
         </Link>
 
-        <Link
-          to="/admin"
-          className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition"
-        >
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="w-4 h-4 text-[#D9262E]" />
-            <span className="font-semibold text-gray-900">Painel Administrativo (Gestão)</span>
-          </div>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FDE8E9] text-[#D9262E]">
-            Admin
-          </span>
-        </Link>
+        {isAdmin && (
+          <Link
+            to="/admin"
+            className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition"
+          >
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="w-4 h-4 text-[#DE1F2A]" />
+              <span className="font-semibold text-gray-900">Painel Administrativo (Gestão)</span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FDE8E9] text-[#DE1F2A]">
+              Admin
+            </span>
+          </Link>
+        )}
 
         <div className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition cursor-pointer">
           <div className="flex items-center gap-3">
@@ -179,7 +185,7 @@ export const ProfilePage: React.FC = () => {
         ) : (
           <Link
             to="/login"
-            className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-[#D9262E] hover:bg-[#FDE8E9]/40 transition font-bold"
+            className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-[#DE1F2A] hover:bg-[#FDE8E9]/40 transition font-bold"
           >
             <div className="flex items-center gap-3">
               <LogIn className="w-4 h-4" />

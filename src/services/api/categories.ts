@@ -5,13 +5,12 @@ import { mapApiCategoryToCategory, ApiCategoryRaw } from './mappers/categoryMapp
 
 export const categoriesApi = {
   async getAll(): Promise<Category[]> {
-    // Fallback para mock somente quando VITE_USE_MOCK_DATA=true ou quando offline
     if (USE_MOCK_DATA) {
       return simulateNetworkDelay(mockCategories, 80);
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return mockCategories;
+      throw new ApiError(0, 'Sem conexão com a internet.', { offline: true }, '/categories');
     }
 
     const response = await apiClient<unknown>('/categories');
@@ -29,7 +28,7 @@ export const categoriesApi = {
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return mockCategories.find((c) => c.slug === slug) || null;
+      throw new ApiError(0, 'Sem conexão com a internet.', { offline: true }, `/categories/${slug}`);
     }
 
     try {

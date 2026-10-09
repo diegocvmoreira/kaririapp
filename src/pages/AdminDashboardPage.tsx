@@ -28,6 +28,7 @@ import {
   Clock,
   ShieldAlert,
   ChevronRight,
+  ChevronLeft,
   Filter,
   Activity,
   Plus,
@@ -63,6 +64,12 @@ export const AdminDashboardPage: React.FC = () => {
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('all');
   const [userStatusFilter, setUserStatusFilter] = useState('all');
+  const [userPage, setUserPage] = useState(1);
+  const USERS_PER_PAGE = 5;
+
+  useEffect(() => {
+    setUserPage(1);
+  }, [userSearch, userRoleFilter, userStatusFilter]);
 
   // Modals state
   const [isPlaceModalOpen, setIsPlaceModalOpen] = useState(false);
@@ -301,6 +308,12 @@ export const AdminDashboardPage: React.FC = () => {
     const matchesStatus = userStatusFilter === 'all' || (u.status || 'active') === userStatusFilter;
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  const totalUserPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
+  const paginatedUsers = filteredUsers.slice(
+    (userPage - 1) * USERS_PER_PAGE,
+    userPage * USERS_PER_PAGE
+  );
 
   const getCategoryBadge = (category?: ApiDiagnosticCategory) => {
     switch (category) {
@@ -827,7 +840,7 @@ export const AdminDashboardPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-gray-700">
-                  {filteredUsers.map((u) => (
+                  {paginatedUsers.map((u) => (
                     <tr key={u.id} className="hover:bg-gray-50/60 transition">
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2.5">
@@ -886,6 +899,47 @@ export const AdminDashboardPage: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+
+              {/* Controles de Paginação (4.3) */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100 px-3">
+                <span className="text-xs text-gray-500">
+                  Mostrando{' '}
+                  <strong className="text-gray-900">
+                    {(userPage - 1) * USERS_PER_PAGE + 1}
+                  </strong>{' '}
+                  a{' '}
+                  <strong className="text-gray-900">
+                    {Math.min(userPage * USERS_PER_PAGE, filteredUsers.length)}
+                  </strong>{' '}
+                  de <strong className="text-gray-900">{filteredUsers.length}</strong> usuários
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setUserPage((p) => Math.max(1, p - 1))}
+                    disabled={userPage <= 1}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Anterior</span>
+                  </button>
+
+                  <span className="text-xs font-bold text-gray-700 px-2">
+                    {userPage} / {totalUserPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setUserPage((p) => Math.min(totalUserPages, p + 1))}
+                    disabled={userPage >= totalUserPages}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <span>Próxima</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

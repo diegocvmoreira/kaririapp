@@ -38,7 +38,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center py-10 px-4 text-center max-w-md mx-auto">
-      <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#D9262E] flex items-center justify-center mb-3">
+      <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#DE1F2A] flex items-center justify-center mb-3">
         <AlertCircle className="w-7 h-7" />
       </div>
 

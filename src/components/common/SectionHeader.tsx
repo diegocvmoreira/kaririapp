@@ -22,7 +22,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   return (
     <div className={`flex items-end justify-between mb-3 px-4 ${className}`}>
       <div>
-        <h2 className="text-lg sm:text-xl font-bold text-[#1F2024] tracking-tight">
+        <h2 className="text-lg sm:text-xl font-bold text-[#000000] tracking-tight">
           {title}
         </h2>
         {subtitle && (
@@ -33,7 +33,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       {actionText && actionTo && (
         <Link
           to={actionTo}
-          className="inline-flex items-center text-xs font-semibold text-[#D9262E] hover:text-[#BF1E25] transition-colors py-1 pl-2 group"
+          className="inline-flex items-center text-xs font-semibold text-[#DE1F2A] hover:text-[#C51620] transition-colors py-1 pl-2 group"
         >
           <span>{actionText}</span>
           <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -44,7 +44,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
         <button
           type="button"
           onClick={onActionClick}
-          className="inline-flex items-center text-xs font-semibold text-[#D9262E] hover:text-[#BF1E25] transition-colors py-1 pl-2 group"
+          className="inline-flex items-center text-xs font-semibold text-[#DE1F2A] hover:text-[#C51620] transition-colors py-1 pl-2 group"
         >
           <span>{actionText}</span>
           <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />

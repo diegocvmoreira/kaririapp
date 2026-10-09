@@ -62,7 +62,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {errorMsg && (
-          <div className="p-3 bg-red-50 border border-red-200 text-[#D9262E] text-xs font-medium rounded-xl">
+          <div className="p-3 bg-red-50 border border-red-200 text-[#DE1F2A] text-xs font-medium rounded-xl">
             {errorMsg}
           </div>
         )}
@@ -80,7 +80,7 @@ export const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu.email@exemplo.com"
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#D9262E] focus:bg-white transition"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#DE1F2A] focus:bg-white transition"
               />
             </div>
           </div>
@@ -88,16 +88,15 @@ export const LoginPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold text-gray-700">Senha</label>
-              <a
-                href="#esqueci"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert('Recuperação de senha via e-mail será ativada no backend Laravel.');
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorMsg('A recuperação de senha por e-mail será processada pela API Laravel.');
                 }}
-                className="text-[11px] font-semibold text-[#D9262E] hover:underline"
+                className="text-[11px] font-semibold text-[#DE1F2A] hover:underline"
               >
                 Esqueceu a senha?
-              </a>
+              </button>
             </div>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -107,7 +106,7 @@ export const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#D9262E] focus:bg-white transition"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#DE1F2A] focus:bg-white transition"
               />
             </div>
           </div>
@@ -115,7 +114,7 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 bg-[#D9262E] hover:bg-[#BF1E25] active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
+            className="w-full py-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
           >
             <span>{isSubmitting ? 'Entrando...' : 'Entrar'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -125,7 +124,7 @@ export const LoginPage: React.FC = () => {
         <div className="text-center pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-500">
             Ainda não tem conta?{' '}
-            <Link to="/cadastro" className="text-[#D9262E] font-bold hover:underline">
+            <Link to="/cadastro" className="text-[#DE1F2A] font-bold hover:underline">
               Criar conta gratuita
             </Link>
           </p>

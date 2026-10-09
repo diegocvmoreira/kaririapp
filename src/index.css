@@ -2,11 +2,11 @@
 
 @layer base {
   :root {
-    --primary: #D9262E;
-    --primary-hover: #BF1E25;
+    --primary: #DE1F2A;
+    --primary-hover: #C51620;
     --primary-light: #FDE8E9;
-    --secondary: #1F2024;
-    --secondary-light: #374151;
+    --secondary: #000000;
+    --secondary-light: #1A1A1A;
     --background: #F8F9FA;
     --surface: #FFFFFF;
     --surface-alt: #F3F4F6;

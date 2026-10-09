@@ -69,7 +69,7 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         {errorMsg && (
-          <div className="p-3 bg-red-50 border border-red-200 text-[#D9262E] text-xs font-medium rounded-xl">
+          <div className="p-3 bg-red-50 border border-red-200 text-[#DE1F2A] text-xs font-medium rounded-xl">
             {errorMsg}
           </div>
         )}
@@ -87,7 +87,7 @@ export const RegisterPage: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Seu nome"
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#D9262E] focus:bg-white transition"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#DE1F2A] focus:bg-white transition"
               />
             </div>
           </div>
@@ -104,7 +104,7 @@ export const RegisterPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu.email@exemplo.com"
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#D9262E] focus:bg-white transition"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#DE1F2A] focus:bg-white transition"
               />
             </div>
           </div>
@@ -118,7 +118,7 @@ export const RegisterPage: React.FC = () => {
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#D9262E] focus:bg-white transition"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#DE1F2A] focus:bg-white transition"
               >
                 <option value="Crato">Crato</option>
                 <option value="Juazeiro do Norte">Juazeiro do Norte</option>
@@ -140,7 +140,7 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
                 minLength={6}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#D9262E] focus:bg-white transition"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#DE1F2A] focus:bg-white transition"
               />
             </div>
           </div>
@@ -148,7 +148,7 @@ export const RegisterPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 bg-[#D9262E] hover:bg-[#BF1E25] active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
+            className="w-full py-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
           >
             <span>{isSubmitting ? 'Cadastrando...' : 'Criar Conta'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -158,7 +158,7 @@ export const RegisterPage: React.FC = () => {
         <div className="text-center pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-500">
             Já tem uma conta?{' '}
-            <Link to="/login" className="text-[#D9262E] font-bold hover:underline">
+            <Link to="/login" className="text-[#DE1F2A] font-bold hover:underline">
               Fazer login
             </Link>
           </p>

@@ -50,6 +50,7 @@ export const PlaceDetailPage: React.FC = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const loadPlaceDetail = (placeSlug: string) => {
     setIsLoading(true);
@@ -94,9 +95,20 @@ export const PlaceDetailPage: React.FC = () => {
     loadPlaceDetail(slug);
   }, [slug]);
 
+  const hasCoordinates =
+    typeof place?.latitude === 'number' &&
+    typeof place?.longitude === 'number' &&
+    !isNaN(place.latitude) &&
+    !isNaN(place.longitude) &&
+    Math.abs(place.latitude) > 0.001;
+
   const handleOpenGoogleMapsRoute = () => {
     if (!place) return;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`;
+    const url = hasCoordinates
+      ? `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          `${place.name}, ${place.address || place.city_name || 'Cariri, CE'}`
+        )}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -105,6 +117,7 @@ export const PlaceDetailPage: React.FC = () => {
     if (!place || !reviewComment.trim()) return;
 
     setIsSubmittingReview(true);
+    setReviewError(null);
     try {
       const newRev = await reviewsApi.addReview(place.id, {
         place_id: place.id,
@@ -128,30 +141,11 @@ export const PlaceDetailPage: React.FC = () => {
       setReviewSuccess(true);
       setTimeout(() => setReviewSuccess(false), 3000);
     } catch (err: unknown) {
-      console.warn('Erro ao processar envio de avaliação:', err);
-      // Fallback local se algo falhar na submissão
-      const fallbackRev = {
-        id: Date.now(),
-        place_id: place.id,
-        user_id: user?.id || 1,
-        user_name: user?.name || 'Explorador do Cariri',
-        user_avatar: user?.avatar,
-        rating: reviewRating,
-        comment: reviewComment,
-        created_at: 'Agora mesmo',
-      };
-      setPlace((prev) =>
-        prev
-          ? {
-              ...prev,
-              reviews_count: prev.reviews_count + 1,
-              reviews: [fallbackRev, ...(prev.reviews || [])],
-            }
-          : prev
-      );
-      setReviewComment('');
-      setReviewSuccess(true);
-      setTimeout(() => setReviewSuccess(false), 3000);
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível publicar a avaliação no momento. Tente novamente mais tarde.';
+      setReviewError(msg);
     } finally {
       setIsSubmittingReview(false);
     }
@@ -206,7 +200,7 @@ export const PlaceDetailPage: React.FC = () => {
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-[#FDE8E9] text-[#D9262E] text-xs font-bold rounded-full">
+            <span className="px-3 py-1 bg-[#FDE8E9] text-[#DE1F2A] text-xs font-bold rounded-full">
               {place.category_name}
             </span>
             <PriceBadge level={place.price_level} />
@@ -232,7 +226,7 @@ export const PlaceDetailPage: React.FC = () => {
           <button
             type="button"
             onClick={handleOpenGoogleMapsRoute}
-            className="flex-1 py-3 px-4 bg-[#D9262E] hover:bg-[#BF1E25] active:scale-98 text-white rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition"
+            className="flex-1 py-3 px-4 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition"
           >
             <Navigation2 className="w-4 h-4 fill-white" />
             <span>Como Chegar (Rota no Maps)</span>
@@ -255,7 +249,7 @@ export const PlaceDetailPage: React.FC = () => {
       {/* 4. Description & Details */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4">
         <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#D9262E]" />
+          <Sparkles className="w-4 h-4 text-[#DE1F2A]" />
           <span>Sobre o Local</span>
         </h2>
         <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
@@ -284,7 +278,7 @@ export const PlaceDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
           {/* Address */}
           <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50">
-            <MapPin className="w-4 h-4 text-[#D9262E] shrink-0 mt-0.5" />
+            <MapPin className="w-4 h-4 text-[#DE1F2A] shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-gray-800">Endereço</p>
               <p className="text-gray-600 mt-0.5">{place.address}</p>
@@ -293,7 +287,7 @@ export const PlaceDetailPage: React.FC = () => {
 
           {/* Horário */}
           <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50">
-            <Clock className="w-4 h-4 text-[#D9262E] shrink-0 mt-0.5" />
+            <Clock className="w-4 h-4 text-[#DE1F2A] shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-gray-800">Horário de Funcionamento</p>
               <p className="text-gray-600 mt-0.5">{place.opening_hours || 'Não informado'}</p>
@@ -308,12 +302,12 @@ export const PlaceDetailPage: React.FC = () => {
           {/* Telefone */}
           {place.phone && (
             <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50">
-              <Phone className="w-4 h-4 text-[#D9262E] shrink-0 mt-0.5" />
+              <Phone className="w-4 h-4 text-[#DE1F2A] shrink-0 mt-0.5" />
               <div>
                 <p className="font-bold text-gray-800">Telefone</p>
                 <a
                   href={`tel:${place.phone.replace(/\D/g, '')}`}
-                  className="text-[#D9262E] font-semibold hover:underline mt-0.5 inline-block"
+                  className="text-[#DE1F2A] font-semibold hover:underline mt-0.5 inline-block"
                 >
                   {place.phone}
                 </a>
@@ -363,21 +357,47 @@ export const PlaceDetailPage: React.FC = () => {
       <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-gray-900">Localização Geográfica</h2>
-          <span className="text-xs text-gray-500">
-            {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)}
-          </span>
+          {hasCoordinates ? (
+            <span className="text-xs text-gray-500">
+              {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)}
+            </span>
+          ) : (
+            <span className="text-[11px] text-amber-700 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+              Sem coordenadas GPS
+            </span>
+          )}
         </div>
 
-        <div className="w-full h-48 rounded-2xl bg-slate-100 overflow-hidden relative border border-gray-200">
-          <iframe
-            title={`Mapa de ${place.name}`}
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            loading="lazy"
-            src={`https://www.openstreetmap.org/export/embed.html?bbox=${place.longitude - 0.008}%2C${place.latitude - 0.008}%2C${place.longitude + 0.008}%2C${place.latitude + 0.008}&layer=mapnik&marker=${place.latitude}%2C${place.longitude}`}
-          />
-        </div>
+        {hasCoordinates ? (
+          <div className="w-full h-48 rounded-2xl bg-slate-100 overflow-hidden relative border border-gray-200">
+            <iframe
+              title={`Mapa de ${place.name}`}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${place.longitude - 0.008}%2C${place.latitude - 0.008}%2C${place.longitude + 0.008}%2C${place.latitude + 0.008}&layer=mapnik&marker=${place.latitude}%2C${place.longitude}`}
+            />
+          </div>
+        ) : (
+          <div className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-gray-800">Endereço textual:</p>
+              <p className="text-xs text-gray-600 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#DE1F2A] shrink-0" />
+                <span>{place.address || `${place.neighborhood ? place.neighborhood + ', ' : ''}${place.city_name}`}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleOpenGoogleMapsRoute}
+              className="px-3.5 py-2 rounded-xl bg-black text-white text-xs font-bold hover:bg-gray-800 transition flex items-center gap-1.5 shrink-0"
+            >
+              <Navigation2 className="w-3.5 h-3.5" />
+              <span>Buscar no Google Maps</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 7. Community Reviews & Submit Form (Seção 20) */}
@@ -389,7 +409,7 @@ export const PlaceDetailPage: React.FC = () => {
               Experiências reais compartilhadas por quem visitou
             </p>
           </div>
-          <span className="text-xs font-semibold text-[#D9262E]">
+          <span className="text-xs font-semibold text-[#DE1F2A]">
             {place.reviews?.length || 0} avaliações
           </span>
         </div>
@@ -423,8 +443,14 @@ export const PlaceDetailPage: React.FC = () => {
             value={reviewComment}
             onChange={(e) => setReviewComment(e.target.value)}
             placeholder="Como foi sua experiência neste local?"
-            className="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#D9262E]"
+            className="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
           />
+
+          {reviewError && (
+            <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold">
+              {reviewError}
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             {reviewSuccess ? (
@@ -440,7 +466,7 @@ export const PlaceDetailPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmittingReview}
-              className="px-4 py-2 bg-[#D9262E] hover:bg-[#BF1E25] active:scale-95 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition disabled:opacity-50"
+              className="px-4 py-2 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isSubmittingReview ? 'Enviando...' : 'Avaliar'}</span>
@@ -483,7 +509,7 @@ export const PlaceDetailPage: React.FC = () => {
       <div className="p-4 rounded-3xl bg-gray-100/70 border border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 shrink-0 shadow-2xs">
-            <Building2 className="w-4 h-4 text-[#D9262E]" />
+            <Building2 className="w-4 h-4 text-[#DE1F2A]" />
           </div>
           <div>
             <p className="text-xs font-bold text-gray-800">É o proprietário deste local?</p>

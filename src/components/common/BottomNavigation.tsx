@@ -31,7 +31,7 @@ export const BottomNavigation: React.FC = () => {
               className={({ isActive }) =>
                 `relative flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 ${
                   isActive
-                    ? 'text-[#D9262E] font-bold'
+                    ? 'text-[#DE1F2A] font-bold'
                     : 'text-gray-500 hover:text-gray-800 font-medium'
                 }`
               }
@@ -45,14 +45,14 @@ export const BottomNavigation: React.FC = () => {
                       }`}
                     />
                     {item.badge !== undefined && (
-                      <span className="absolute -top-1 -right-2 bg-[#D9262E] text-white text-[9px] font-bold px-1 rounded-full min-w-3.5 h-3.5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-2 bg-[#DE1F2A] text-white text-[9px] font-bold px-1 rounded-full min-w-3.5 h-3.5 flex items-center justify-center">
                         {item.badge}
                       </span>
                     )}
                   </div>
                   <span className="text-[10px] mt-1 tracking-tight">{item.label}</span>
                   {isActive && (
-                    <span className="absolute bottom-0 w-1 h-1 bg-[#D9262E] rounded-full" />
+                    <span className="absolute bottom-0 w-1 h-1 bg-[#DE1F2A] rounded-full" />
                   )}
                 </>
               )}

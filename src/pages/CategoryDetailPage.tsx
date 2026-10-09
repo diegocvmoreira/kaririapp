@@ -105,7 +105,7 @@ export const CategoryDetailPage: React.FC = () => {
 
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-3">
           <div>
-            <span className="text-xs font-bold text-[#D9262E] uppercase tracking-wider">
+            <span className="text-xs font-bold text-[#DE1F2A] uppercase tracking-wider">
               Categoria
             </span>
             <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mt-0.5">
@@ -128,7 +128,7 @@ export const CategoryDetailPage: React.FC = () => {
                   onClick={() => setSelectedSubcat(null)}
                   className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
                     selectedSubcat === null
-                      ? 'bg-[#1F2024] text-white shadow-2xs'
+                      ? 'bg-[#000000] text-white shadow-2xs'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -143,7 +143,7 @@ export const CategoryDetailPage: React.FC = () => {
                     }
                     className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
                       selectedSubcat === sub.name
-                        ? 'bg-[#D9262E] text-white shadow-2xs'
+                        ? 'bg-[#DE1F2A] text-white shadow-2xs'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >

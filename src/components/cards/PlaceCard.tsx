@@ -13,11 +13,18 @@ interface PlaceCardProps {
   className?: string;
 }
 
+const DEFAULT_PLACE_COVER =
+  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80';
+
 export const PlaceCard: React.FC<PlaceCardProps> = ({
   place,
   variant = 'grid',
   className = '',
 }) => {
+  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = DEFAULT_PLACE_COVER;
+  };
+
   // 1. Featured card (Large hero card style, similar to travel agency mobile app)
   if (variant === 'featured') {
     return (
@@ -25,8 +32,9 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
         className={`relative flex flex-col justify-end w-72 sm:w-80 h-96 rounded-3xl overflow-hidden shadow-md group shrink-0 select-none bg-gray-900 ${className}`}
       >
         <img
-          src={place.cover_image}
+          src={place.cover_image || DEFAULT_PLACE_COVER}
           alt={place.name}
+          onError={handleImgError}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           loading="lazy"
         />
@@ -35,7 +43,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
 
         {/* Top Badges */}
         <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-10">
-          <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#D9262E] text-white shadow-sm tracking-wide uppercase">
+          <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#DE1F2A] text-white shadow-sm tracking-wide uppercase">
             Destaque
           </span>
           <FavoriteButton placeId={place.id} size="sm" />
@@ -103,13 +111,13 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           <div>
             <div className="flex items-center justify-between gap-1">
-              <span className="text-[11px] font-semibold text-[#D9262E] uppercase tracking-wider truncate">
+              <span className="text-[11px] font-semibold text-[#DE1F2A] uppercase tracking-wider truncate">
                 {place.category_name}
               </span>
               <Rating value={place.rating} size="sm" showCount={false} />
             </div>
 
-            <h3 className="text-sm font-bold text-gray-900 truncate group-hover:text-[#D9262E] transition-colors mt-0.5">
+            <h3 className="text-sm font-bold text-gray-900 truncate group-hover:text-[#DE1F2A] transition-colors mt-0.5">
               {place.name}
             </h3>
 
@@ -152,7 +160,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
         </div>
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-[#D9262E]">
+            <span className="text-[10px] font-bold text-[#DE1F2A]">
               {place.category_name}
             </span>
             <Rating value={place.rating} size="sm" showCount={false} />
@@ -161,7 +169,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
           <LocationBadge cityName={place.city_name} distanceKm={place.distance_km} />
           <Link
             to={`/locais/${place.slug}`}
-            className="mt-2 block w-full text-center py-1.5 bg-[#D9262E] text-white text-[11px] font-bold rounded-lg hover:bg-[#BF1E25] transition"
+            className="mt-2 block w-full text-center py-1.5 bg-[#DE1F2A] text-white text-[11px] font-bold rounded-lg hover:bg-[#C51620] transition"
           >
             Ver Detalhes
           </Link>
@@ -211,7 +219,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
             <PriceBadge level={place.price_level} />
           </div>
 
-          <h3 className="text-base font-bold text-gray-900 group-hover:text-[#D9262E] transition-colors line-clamp-1">
+          <h3 className="text-base font-bold text-gray-900 group-hover:text-[#DE1F2A] transition-colors line-clamp-1">
             {place.name}
           </h3>
 

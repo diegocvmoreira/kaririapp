@@ -7,7 +7,7 @@ export const mockCategories: Category[] = [
     slug: 'gastronomia',
     icon: 'UtensilsCrossed',
     description: 'Sabores autênticos do Cariri, restaurantes tradicionais, docerias, peixadas e café especial.',
-    color: '#D9262E',
+    color: '#DE1F2A',
     count: 48,
     subcategories: [
       { id: 101, name: 'Restaurantes', slug: 'restaurantes', icon: 'Utensils', description: 'Culinária regional e contemporânea', parent_id: 1 },
@@ -115,7 +115,7 @@ export const mockCategories: Category[] = [
     slug: 'eventos',
     icon: 'Calendar',
     description: 'Shows, festivais como Expocrato, Pau da Bandeira, Romarias e celebrações regionais.',
-    color: '#D9262E',
+    color: '#DE1F2A',
     count: 25,
     subcategories: [
       { id: 801, name: 'Shows & Festas', slug: 'shows-festas', icon: 'Music', description: 'Forró, festivais e apresentações', parent_id: 8 },

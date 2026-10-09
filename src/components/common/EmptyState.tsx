@@ -19,14 +19,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
       <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 mb-4 shadow-inner">
-        {icon || <Compass className="w-8 h-8 text-[#D9262E]" />}
+        {icon || <Compass className="w-8 h-8 text-[#DE1F2A]" />}
       </div>
       <h3 className="text-base font-bold text-gray-800 mb-1">{title}</h3>
       <p className="text-sm text-gray-500 max-w-xs mb-5">{description}</p>
       {actionText && onAction && (
         <button
           onClick={onAction}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#D9262E] text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-[#BF1E25] active:scale-95 transition"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#DE1F2A] text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-[#C51620] active:scale-95 transition"
         >
           <RotateCcw className="w-4 h-4" />
           {actionText}

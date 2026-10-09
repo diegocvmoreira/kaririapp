@@ -1,17 +1,16 @@
-import { apiClient, simulateNetworkDelay, USE_MOCK_DATA } from './config';
+import { apiClient, simulateNetworkDelay, USE_MOCK_DATA, ApiError } from './config';
 import { City } from '../../types';
 import { mockCities } from '../../mocks/mockCities';
 import { mapApiCityToCity, ApiCityRaw } from './mappers/cityMapper';
 
 export const citiesApi = {
   async getAll(): Promise<City[]> {
-    // Fallback para mock somente quando VITE_USE_MOCK_DATA=true ou quando offline
     if (USE_MOCK_DATA) {
       return simulateNetworkDelay(mockCities, 80);
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return mockCities;
+      throw new ApiError(0, 'Sem conexão com a internet.', { offline: true }, '/cities');
     }
 
     const response = await apiClient<unknown>('/cities');
@@ -29,7 +28,7 @@ export const citiesApi = {
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return mockCities.filter((c) => c.is_active);
+      throw new ApiError(0, 'Sem conexão com a internet.', { offline: true }, '/cities');
     }
 
     const response = await apiClient<unknown>('/cities');
@@ -49,7 +48,7 @@ export const citiesApi = {
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return mockCities.find((c) => c.slug === slug) || null;
+      throw new ApiError(0, 'Sem conexão com a internet.', { offline: true }, `/cities/${slug}`);
     }
 
     try {

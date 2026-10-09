@@ -58,7 +58,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, placeName })
               onClick={() => setActiveIdx(idx)}
               className={`relative w-20 h-16 rounded-xl overflow-hidden shrink-0 border-2 transition ${
                 activeIdx === idx
-                  ? 'border-[#D9262E] scale-95 shadow-sm'
+                  ? 'border-[#DE1F2A] scale-95 shadow-sm'
                   : 'border-transparent opacity-70 hover:opacity-100'
               }`}
             >

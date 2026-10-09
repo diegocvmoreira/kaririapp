@@ -64,7 +64,7 @@ export const FavoritesPage: React.FC = () => {
             onClick={() => setActiveTab('places')}
             className={`px-4 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 ${
               activeTab === 'places'
-                ? 'bg-[#1F2024] text-white shadow-xs'
+                ? 'bg-[#000000] text-white shadow-xs'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -77,7 +77,7 @@ export const FavoritesPage: React.FC = () => {
             onClick={() => setActiveTab('events')}
             className={`px-4 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 ${
               activeTab === 'events'
-                ? 'bg-[#D9262E] text-white shadow-xs'
+                ? 'bg-[#DE1F2A] text-white shadow-xs'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -92,7 +92,7 @@ export const FavoritesPage: React.FC = () => {
       ) : activeTab === 'places' ? (
         favoritePlaces.length === 0 ? (
           <EmptyState
-            icon={<Heart className="w-8 h-8 text-[#D9262E]" />}
+            icon={<Heart className="w-8 h-8 text-[#DE1F2A]" />}
             title="Nenhum local salvo ainda"
             description="Toque no coração dos locais que você mais gostar para salvar sua lista personalizada de experiências no Cariri."
             actionText="Explorar Locais"
@@ -107,7 +107,7 @@ export const FavoritesPage: React.FC = () => {
         )
       ) : favoriteEvents.length === 0 ? (
         <EmptyState
-          icon={<Calendar className="w-8 h-8 text-[#D9262E]" />}
+          icon={<Calendar className="w-8 h-8 text-[#DE1F2A]" />}
           title="Nenhum evento salvo ainda"
           description="Navegue pela agenda cultural e salve os shows, festivais e romarias que você quer acompanhar."
           actionText="Ver Agenda Cultural"

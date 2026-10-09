@@ -30,7 +30,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
         {/* Date & Free Tag */}
         <div className="absolute top-3.5 left-3.5 z-10 flex gap-2">
-          <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#D9262E] text-white shadow-sm flex items-center gap-1">
+          <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#DE1F2A] text-white shadow-sm flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {event.display_date}
           </span>
@@ -77,7 +77,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
           <div className="pt-2 border-t border-white/15 flex items-center justify-between text-xs text-white/90">
             <span className="flex items-center gap-1 truncate text-xs">
-              <MapPin className="w-3.5 h-3.5 text-[#D9262E] shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-[#DE1F2A] shrink-0" />
               <span className="truncate">{event.city_name}</span>
             </span>
 
@@ -111,7 +111,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
         <div className="absolute top-3 left-3 flex gap-1.5 z-10">
           <span className="px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-full text-[10px] font-bold text-gray-800 shadow-xs flex items-center gap-1">
-            <Calendar className="w-3 h-3 text-[#D9262E]" />
+            <Calendar className="w-3 h-3 text-[#DE1F2A]" />
             {event.display_date}
           </span>
           {event.is_free ? (
@@ -134,18 +134,18 @@ export const EventCard: React.FC<EventCardProps> = ({
       <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
         <div>
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-[#D9262E] uppercase tracking-wide">
+            <span className="text-[11px] font-bold text-[#DE1F2A] uppercase tracking-wide">
               {event.category}
             </span>
             {event.ticket_url && (
               <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                <Ticket className="w-2.5 h-2.5 text-[#D9262E]" />
+                <Ticket className="w-2.5 h-2.5 text-[#DE1F2A]" />
                 Ingresso
               </span>
             )}
           </div>
 
-          <h3 className="text-base font-bold text-gray-900 group-hover:text-[#D9262E] transition-colors line-clamp-1 mt-0.5">
+          <h3 className="text-base font-bold text-gray-900 group-hover:text-[#DE1F2A] transition-colors line-clamp-1 mt-0.5">
             {event.title}
           </h3>
 
@@ -163,7 +163,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
         <div className="pt-2 border-t border-gray-50 flex items-center justify-between text-xs text-gray-500">
           <span className="flex items-center gap-1 truncate max-w-[170px]">
-            <MapPin className="w-3.5 h-3.5 text-[#D9262E] shrink-0" />
+            <MapPin className="w-3.5 h-3.5 text-[#DE1F2A] shrink-0" />
             <span className="truncate">{event.place_name}, {event.city_name}</span>
           </span>
 

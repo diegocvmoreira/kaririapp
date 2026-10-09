@@ -2,6 +2,7 @@ interface MetaOptions {
   title?: string;
   description?: string;
   image?: string;
+  canonical?: string;
 }
 
 const DEFAULT_TITLE = 'KARIRI – Descoberta Local no Cariri Cearense';
@@ -31,4 +32,14 @@ export function setPageMeta(options: MetaOptions) {
     let ogImage = document.querySelector('meta[property="og:image"]');
     if (ogImage) ogImage.setAttribute('content', options.image);
   }
+
+  // Update Canonical URL
+  const canonicalUrl = options.canonical || (typeof window !== 'undefined' ? window.location.href : 'https://kariri.app.br/');
+  let canonicalLink = document.querySelector('link[rel="canonical"]');
+  if (!canonicalLink) {
+    canonicalLink = document.createElement('link');
+    canonicalLink.setAttribute('rel', 'canonical');
+    document.head.appendChild(canonicalLink);
+  }
+  canonicalLink.setAttribute('href', canonicalUrl);
 }

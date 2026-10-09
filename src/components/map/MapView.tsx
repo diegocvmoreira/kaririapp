@@ -61,7 +61,18 @@ export const MapView: React.FC<MapViewProps> = ({
 
     const group = L.featureGroup();
 
-    places.forEach((place) => {
+    // Filtra apenas locais com coordenadas válidas (evita posicionar locais nulos no oceano ou ponto falso)
+    const validPlaces = places.filter(
+      (place) =>
+        typeof place.latitude === 'number' &&
+        typeof place.longitude === 'number' &&
+        !isNaN(place.latitude) &&
+        !isNaN(place.longitude) &&
+        Math.abs(place.latitude) > 0.001 &&
+        Math.abs(place.longitude) > 0.001
+    );
+
+    validPlaces.forEach((place) => {
       const isSelected = activePlace?.id === place.id;
       const icon = mapService.createCustomIcon(place.category_slug, isSelected);
 
@@ -77,8 +88,8 @@ export const MapView: React.FC<MapViewProps> = ({
       group.addLayer(marker);
     });
 
-    // Fit bounds if places exist and no single place is selected
-    if (places.length > 0 && !selectedPlaceId) {
+    // Fit bounds if valid places exist and no single place is selected
+    if (validPlaces.length > 0 && !selectedPlaceId) {
       map.fitBounds(group.getBounds().pad(0.15));
     }
   }, [places, onPlaceSelect]);
@@ -137,11 +148,11 @@ export const MapView: React.FC<MapViewProps> = ({
           type="button"
           onClick={handleLocateMe}
           disabled={isLocating}
-          className="w-10 h-10 rounded-2xl bg-white shadow-md flex items-center justify-center text-gray-700 hover:text-[#D9262E] hover:bg-gray-50 active:scale-95 transition"
+          className="w-10 h-10 rounded-2xl bg-white shadow-md flex items-center justify-center text-gray-700 hover:text-[#DE1F2A] hover:bg-gray-50 active:scale-95 transition"
           aria-label="Minha localização atual"
           title="Minha localização atual"
         >
-          <Navigation className={`w-5 h-5 ${isLocating ? 'animate-spin text-[#D9262E]' : ''}`} />
+          <Navigation className={`w-5 h-5 ${isLocating ? 'animate-spin text-[#DE1F2A]' : ''}`} />
         </button>
 
         <div className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col divide-y divide-gray-100">

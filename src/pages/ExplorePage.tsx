@@ -193,7 +193,7 @@ export const ExplorePage: React.FC = () => {
           onClick={() => setActiveTab('places')}
           className={`px-3.5 py-1.5 rounded-2xl text-xs font-bold transition shrink-0 ${
             activeTab === 'places'
-              ? 'bg-[#D9262E] text-white shadow-xs'
+              ? 'bg-[#DE1F2A] text-white shadow-xs'
               : 'bg-white text-gray-600 hover:bg-gray-100'
           }`}
         >
@@ -205,7 +205,7 @@ export const ExplorePage: React.FC = () => {
           onClick={() => setActiveTab('events')}
           className={`px-3.5 py-1.5 rounded-2xl text-xs font-bold transition shrink-0 ${
             activeTab === 'events'
-              ? 'bg-[#D9262E] text-white shadow-xs'
+              ? 'bg-[#DE1F2A] text-white shadow-xs'
               : 'bg-white text-gray-600 hover:bg-gray-100'
           }`}
         >
@@ -266,7 +266,7 @@ export const ExplorePage: React.FC = () => {
                 sort_by: 'featured',
               })
             }
-            className="text-[#D9262E] font-semibold hover:underline shrink-0 pl-1"
+            className="text-[#DE1F2A] font-semibold hover:underline shrink-0 pl-1"
           >
             Limpar filtros
           </button>

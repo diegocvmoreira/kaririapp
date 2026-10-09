@@ -111,7 +111,7 @@ export const HomePage: React.FC = () => {
       <section className="px-4 pt-4 sm:pt-6">
         <div className="bg-gradient-to-br from-[#1F2024] via-[#2A2B31] to-[#1F2024] text-white rounded-3xl p-5 sm:p-7 shadow-lg relative overflow-hidden">
           {/* Subtle decorative background glow */}
-          <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#D9262E]/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#DE1F2A]/25 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 max-w-xl">
@@ -245,7 +245,7 @@ export const HomePage: React.FC = () => {
           {/* 7. Recomendações Especiais / Roteiro */}
           <section className="px-4">
             <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#FDE8E9] flex items-center justify-center text-[#D9262E] shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-[#FDE8E9] flex items-center justify-center text-[#DE1F2A] shrink-0">
                 <Compass className="w-7 h-7" />
               </div>
               <div className="flex-1 text-center sm:text-left">
@@ -259,7 +259,7 @@ export const HomePage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate('/mapa')}
-                className="w-full sm:w-auto px-5 py-2.5 bg-[#D9262E] hover:bg-[#BF1E25] text-white text-xs font-bold rounded-xl active:scale-95 transition shrink-0 shadow-sm"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#DE1F2A] hover:bg-[#C51620] text-white text-xs font-bold rounded-xl active:scale-95 transition shrink-0 shadow-sm"
               >
                 Abrir Mapa Interativo
               </button>

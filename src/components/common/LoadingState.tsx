@@ -14,7 +14,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   if (type === 'spinner') {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
-        <div className="w-10 h-10 border-4 border-gray-200 border-t-[#D9262E] rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-gray-200 border-t-[#DE1F2A] rounded-full animate-spin"></div>
         {message && <p className="mt-3 text-xs text-gray-500 font-medium">{message}</p>}
       </div>
     );

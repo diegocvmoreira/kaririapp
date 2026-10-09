@@ -12,6 +12,7 @@ import { CategoryDetailPage } from '../pages/CategoryDetailPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
+import { RequireAdmin } from '../components/auth/RequireAdmin';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -29,8 +30,15 @@ export const AppRoutes: React.FC = () => {
         <Route path="/eventos/:slug" element={<EventDetailPage />} />
         <Route path="/categorias/:slug" element={<CategoryDetailPage />} />
 
-        {/* Admin panel */}
-        <Route path="/admin" element={<AdminDashboardPage />} />
+        {/* Protected Admin panel */}
+        <Route
+          path="/admin"
+          element={
+            <RequireAdmin>
+              <AdminDashboardPage />
+            </RequireAdmin>
+          }
+        />
 
         {/* Auth routes */}
         <Route path="/login" element={<LoginPage />} />

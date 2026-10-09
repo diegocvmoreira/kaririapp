@@ -19,7 +19,7 @@ export const LocationBadge: React.FC<LocationBadgeProps> = ({
 
   return (
     <div className={`inline-flex items-center gap-1 text-xs text-gray-500 font-medium truncate ${className}`}>
-      <MapPin className="w-3.5 h-3.5 text-[#D9262E] shrink-0" />
+      <MapPin className="w-3.5 h-3.5 text-[#DE1F2A] shrink-0" />
       <span className="truncate">
         {neighborhood ? `${neighborhood}, ` : ''}{cityName}
       </span>
