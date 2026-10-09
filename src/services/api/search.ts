@@ -1,4 +1,4 @@
-import { apiClient, simulateNetworkDelay, USE_MOCK_DATA } from './config';
+import { apiClient, USE_MOCK_DATA } from './config';
 import { Place, EventItem } from '../../types';
 import { mockPlaces } from '../../mocks/mockPlaces';
 import { mockEvents } from '../../mocks/mockEvents';
@@ -9,41 +9,96 @@ export interface SearchResults {
   total: number;
 }
 
+interface ApiSearchResponse {
+  places?: Place[] | { data?: Place[] };
+  events?: EventItem[] | { data?: EventItem[] };
+  total?: number;
+}
+
+function extractList<T>(value: T[] | { data?: T[] } | undefined): T[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (value && Array.isArray(value.data)) {
+    return value.data;
+  }
+
+  return [];
+}
+
+function normalizeSearchResponse(response: ApiSearchResponse): SearchResults {
+  const places = extractList(response.places);
+  const events = extractList(response.events);
+
+  return {
+    places,
+    events,
+    total:
+      typeof response.total === 'number'
+        ? response.total
+        : places.length + events.length,
+  };
+}
+
 export const searchApi = {
-  async search(query: string, citySlug?: string): Promise<SearchResults> {
-    if (!query || query.trim().length === 0) {
-      return { places: [], events: [], total: 0 };
+  async search(
+    query: string,
+    citySlug?: string
+  ): Promise<SearchResults> {
+    const normalizedQuery = query.trim();
+
+    if (!normalizedQuery) {
+      return {
+        places: [],
+        events: [],
+        total: 0,
+      };
     }
 
     if (USE_MOCK_DATA) {
-      return this.localSearch(query, citySlug);
+      return this.localSearch(normalizedQuery, citySlug);
     }
 
-    try {
-      const params = new URLSearchParams({ q: query });
-      if (citySlug) params.set('city', citySlug);
+    const params = new URLSearchParams({
+      q: normalizedQuery,
+    });
 
-      const response = await apiClient<SearchResults>(`/search?${params.toString()}`);
-      return response;
-    } catch {
-      // Fallback em caso de 404 no endpoint de busca
-      return this.localSearch(query, citySlug);
+    if (citySlug && citySlug !== 'all') {
+      params.set('city', citySlug);
     }
+
+    const response = await apiClient<ApiSearchResponse>(
+      `/search?${params.toString()}`
+    );
+
+    return normalizeSearchResponse(response);
   },
 
-  localSearch(query: string, citySlug?: string): SearchResults {
-    const q = query.toLowerCase().trim();
+  localSearch(
+    query: string,
+    citySlug?: string
+  ): SearchResults {
+    const normalizedQuery = query.toLowerCase().trim();
 
     const matchedPlaces = mockPlaces.filter((place) => {
       const matchesQuery =
-        place.name.toLowerCase().includes(q) ||
-        place.category_name.toLowerCase().includes(q) ||
-        place.city_name.toLowerCase().includes(q) ||
-        place.neighborhood.toLowerCase().includes(q) ||
-        place.short_description.toLowerCase().includes(q) ||
-        place.tags.some((t) => t.toLowerCase().includes(q));
+        place.name.toLowerCase().includes(normalizedQuery) ||
+        place.category_name.toLowerCase().includes(normalizedQuery) ||
+        place.city_name.toLowerCase().includes(normalizedQuery) ||
+        place.neighborhood.toLowerCase().includes(normalizedQuery) ||
+        place.short_description
+          .toLowerCase()
+          .includes(normalizedQuery) ||
+        place.tags.some((tag) =>
+          tag.toLowerCase().includes(normalizedQuery)
+        );
 
-      if (citySlug && place.city_slug !== citySlug) {
+      if (
+        citySlug &&
+        citySlug !== 'all' &&
+        place.city_slug !== citySlug
+      ) {
         return false;
       }
 
@@ -52,13 +107,17 @@ export const searchApi = {
 
     const matchedEvents = mockEvents.filter((event) => {
       const matchesQuery =
-        event.title.toLowerCase().includes(q) ||
-        event.category.toLowerCase().includes(q) ||
-        event.city_name.toLowerCase().includes(q) ||
-        event.place_name.toLowerCase().includes(q) ||
-        event.description.toLowerCase().includes(q);
+        event.title.toLowerCase().includes(normalizedQuery) ||
+        event.category.toLowerCase().includes(normalizedQuery) ||
+        event.city_name.toLowerCase().includes(normalizedQuery) ||
+        event.place_name.toLowerCase().includes(normalizedQuery) ||
+        event.description.toLowerCase().includes(normalizedQuery);
 
-      if (citySlug && event.city_slug !== citySlug) {
+      if (
+        citySlug &&
+        citySlug !== 'all' &&
+        event.city_slug !== citySlug
+      ) {
         return false;
       }
 
