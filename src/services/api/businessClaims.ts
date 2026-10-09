@@ -81,11 +81,14 @@ export const businessClaimsApi = {
     }
   },
 
-  async updateStatus(id: number, status: BusinessClaim['status']): Promise<boolean> {
+  async updateStatus(id: number, status: BusinessClaim['status'], rejectReason?: string): Promise<boolean> {
     const claims = getStoredClaims();
     const index = claims.findIndex((c) => c.id === id);
     if (index !== -1) {
       claims[index].status = status;
+      if (rejectReason) {
+        (claims[index] as BusinessClaim & { reject_reason?: string }).reject_reason = rejectReason;
+      }
       claims[index].reviewed_at = new Date().toISOString().replace('T', ' ').substring(0, 16);
       saveClaims(claims);
     }
@@ -94,14 +97,10 @@ export const businessClaimsApi = {
       return simulateNetworkDelay(true, 100);
     }
 
-    try {
-      await apiClient(`/admin/business-claims/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status }),
-      });
-    } catch {
-      // Ignora erro se endpoint admin ainda não foi criado
-    }
+    await apiClient(`/admin/business-claims/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, reject_reason: rejectReason }),
+    });
     return true;
   },
 };

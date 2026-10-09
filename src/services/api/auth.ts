@@ -25,21 +25,13 @@ export const authApi = {
       return this.mockLogin(credentials);
     }
 
-    try {
-      const data = await apiClient<AuthResponse>('/login', {
-        method: 'POST',
-        body: JSON.stringify(credentials),
-      });
-      localStorage.setItem('kariri_auth_token', data.token);
-      localStorage.setItem('kariri_user_profile', JSON.stringify(data.user));
-      return data;
-    } catch (error: unknown) {
-      if (error instanceof ApiError && error.status === 404) {
-        console.warn('Endpoint /login não encontrado (404). Realizando autenticação simulada de desenvolvimento.');
-        return this.mockLogin(credentials);
-      }
-      throw error;
-    }
+    const data = await apiClient<AuthResponse>('/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    localStorage.setItem('kariri_auth_token', data.token);
+    localStorage.setItem('kariri_user_profile', JSON.stringify(data.user));
+    return data;
   },
 
   async register(data: RegisterData): Promise<AuthResponse> {
@@ -47,21 +39,13 @@ export const authApi = {
       return this.mockRegister(data);
     }
 
-    try {
-      const res = await apiClient<AuthResponse>('/register', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      localStorage.setItem('kariri_auth_token', res.token);
-      localStorage.setItem('kariri_user_profile', JSON.stringify(res.user));
-      return res;
-    } catch (error: unknown) {
-      if (error instanceof ApiError && error.status === 404) {
-        console.warn('Endpoint /register não encontrado (404). Realizando cadastro simulado de desenvolvimento.');
-        return this.mockRegister(data);
-      }
-      throw error;
-    }
+    const res = await apiClient<AuthResponse>('/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    localStorage.setItem('kariri_auth_token', res.token);
+    localStorage.setItem('kariri_user_profile', JSON.stringify(res.user));
+    return res;
   },
 
   async getCurrentUser(): Promise<User | null> {
@@ -80,16 +64,12 @@ export const authApi = {
 
     try {
       const user = await apiClient<User>('/me');
+      localStorage.setItem('kariri_user_profile', JSON.stringify(user));
       return user;
     } catch {
-      // Se /me retornar 404 ou 401, tenta restaurar o perfil armazenado localmente
-      try {
-        const stored = localStorage.getItem('kariri_user_profile');
-        if (stored) return JSON.parse(stored);
-      } catch {
-        // ignore
-      }
-      return mockUser;
+      localStorage.removeItem('kariri_auth_token');
+      localStorage.removeItem('kariri_user_profile');
+      return null;
     }
   },
 

@@ -219,8 +219,8 @@ function mapApiEventToEvent(event: ApiEvent): EventItem {
   return {
     id: event.id,
     place_id: event.place_id ?? event.place?.id ?? null,
-    city_id: event.city_id,
-    category_id: event.category_id,
+    city_id: event.city_id ?? undefined,
+    category_id: event.category_id ?? undefined,
     title: event.title || '',
     slug: event.slug || '',
     description: event.description || '',

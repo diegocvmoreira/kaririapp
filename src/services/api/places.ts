@@ -198,4 +198,171 @@ export const placesApi = {
 
     return result;
   },
+
+  /**
+   * 6. placesApi.create (Admin CRUD)
+   * Cria um novo local via POST /admin/places
+   */
+  async create(data: Partial<Place>): Promise<Place> {
+    if (USE_MOCK_DATA) {
+      const newPlace: Place = {
+        id: Date.now(),
+        owner_id: null,
+        name: data.name || 'Novo Local',
+        slug: data.slug || (data.name ? data.name.toLowerCase().replace(/\s+/g, '-') : `local-${Date.now()}`),
+        short_description: data.short_description || '',
+        description: data.description || '',
+        category_id: data.category_id || 1,
+        category_name: data.category_name || 'Gastronomia',
+        category_slug: data.category_slug || 'gastronomia',
+        city_id: data.city_id || 1,
+        city_name: data.city_name || 'Crato',
+        city_slug: data.city_slug || 'crato',
+        neighborhood: data.neighborhood || '',
+        address: data.address || '',
+        zipcode: data.zipcode,
+        latitude: data.latitude || -7.2341,
+        longitude: data.longitude || -39.4124,
+        cover_image: data.cover_image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80',
+        images: data.images || [data.cover_image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80'],
+        rating: 5.0,
+        reviews_count: 0,
+        price_level: data.price_level || 2,
+        is_featured: !!data.is_featured,
+        is_open_now: true,
+        opening_hours: data.opening_hours || '',
+        phone: data.phone,
+        whatsapp: data.whatsapp,
+        instagram: data.instagram,
+        facebook: data.facebook,
+        website: data.website,
+        status: data.status || 'published',
+        tags: data.tags || [],
+      };
+      mockPlaces.unshift(newPlace);
+      return simulateNetworkDelay(newPlace, 150);
+    }
+
+    const payload = {
+      name: data.name,
+      slug: data.slug,
+      city_id: data.city_id,
+      category_id: data.category_id,
+      short_description: data.short_description,
+      description: data.description,
+      address: data.address,
+      neighborhood: data.neighborhood,
+      zipcode: data.zipcode,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      phone: data.phone,
+      whatsapp: data.whatsapp,
+      website: data.website,
+      instagram: data.instagram,
+      facebook: data.facebook,
+      opening_hours: data.opening_hours,
+      price_level: data.price_level,
+      status: data.status,
+      featured: data.is_featured ? 1 : 0,
+      cover_image: data.cover_image,
+      image: data.cover_image,
+    };
+
+    const response = await apiClient<unknown>('/admin/places', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    const raw = (response as { data?: ApiPlaceRaw })?.data || (response as ApiPlaceRaw);
+    return mapApiPlaceToPlace(raw);
+  },
+
+  /**
+   * 7. placesApi.getById (Admin CRUD)
+   * Busca um local por ID via GET /admin/places/{id}
+   */
+  async getById(id: number): Promise<Place> {
+    if (USE_MOCK_DATA) {
+      const match = mockPlaces.find((p) => p.id === id);
+      if (!match) throw new Error('Local não encontrado');
+      return simulateNetworkDelay(match, 100);
+    }
+
+    const response = await apiClient<unknown>(`/admin/places/${id}`);
+    const raw = (response as { data?: ApiPlaceRaw })?.data || (response as ApiPlaceRaw);
+    return mapApiPlaceToPlace(raw);
+  },
+
+  /**
+   * 8. placesApi.update (Admin CRUD)
+   * Atualiza um local existente via PUT /admin/places/{id}
+   */
+  async update(id: number, data: Partial<Place>): Promise<Place> {
+    if (USE_MOCK_DATA) {
+      const index = mockPlaces.findIndex((p) => p.id === id);
+      if (index === -1) throw new Error('Local não encontrado');
+      mockPlaces[index] = { ...mockPlaces[index], ...data };
+      return simulateNetworkDelay(mockPlaces[index], 120);
+    }
+
+    const payload = {
+      name: data.name,
+      slug: data.slug,
+      city_id: data.city_id,
+      category_id: data.category_id,
+      short_description: data.short_description,
+      description: data.description,
+      address: data.address,
+      neighborhood: data.neighborhood,
+      zipcode: data.zipcode,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      phone: data.phone,
+      whatsapp: data.whatsapp,
+      website: data.website,
+      instagram: data.instagram,
+      facebook: data.facebook,
+      opening_hours: data.opening_hours,
+      price_level: data.price_level,
+      status: data.status,
+      featured: data.is_featured !== undefined ? (data.is_featured ? 1 : 0) : undefined,
+      cover_image: data.cover_image,
+      image: data.cover_image,
+    };
+
+    const response = await apiClient<unknown>(`/admin/places/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+
+    const raw = (response as { data?: ApiPlaceRaw })?.data || (response as ApiPlaceRaw);
+    return mapApiPlaceToPlace(raw);
+  },
+
+  /**
+   * 9. placesApi.delete (Admin CRUD)
+   * Remove um local via DELETE /admin/places/{id}
+   */
+  async delete(id: number): Promise<boolean> {
+    if (USE_MOCK_DATA) {
+      const index = mockPlaces.findIndex((p) => p.id === id);
+      if (index !== -1) {
+        mockPlaces.splice(index, 1);
+      }
+      return simulateNetworkDelay(true, 100);
+    }
+
+    await apiClient(`/admin/places/${id}`, {
+      method: 'DELETE',
+    });
+    return true;
+  },
+
+  /**
+   * 10. placesApi.updateStatus (Admin CRUD)
+   * Altera status de publicação de um local
+   */
+  async updateStatus(id: number, status: Place['status']): Promise<boolean> {
+    return this.update(id, { status }).then(() => true);
+  },
 };

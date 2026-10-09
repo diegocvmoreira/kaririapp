@@ -84,6 +84,8 @@ export async function apiClient<T>(
       } else {
         switch (response.status) {
           case 401:
+            localStorage.removeItem('kariri_auth_token');
+            localStorage.removeItem('kariri_user_profile');
             errorMessage = 'Sessão não autorizada ou expirada.';
             break;
           case 403:
