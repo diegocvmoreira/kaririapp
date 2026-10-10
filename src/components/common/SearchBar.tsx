@@ -30,7 +30,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          className="w-full pl-10 pr-9 py-2.5 bg-white border border-gray-200 rounded-2xl text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#D9262E] focus:ring-2 focus:ring-[#D9262E]/10 transition shadow-xs"
+          className="w-full pl-10 pr-9 py-2.5 bg-white border border-gray-200 rounded-2xl text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#DE1F2A] focus:ring-2 focus:ring-[#DE1F2A]/10 transition shadow-xs"
         />
         {value && (
           <button
@@ -50,14 +50,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onClick={onFilterClick}
           className={`relative p-2.5 rounded-2xl border transition shadow-xs flex items-center justify-center shrink-0 ${
             hasActiveFilters
-              ? 'bg-[#D9262E] text-white border-[#D9262E]'
+              ? 'bg-[#DE1F2A] text-white border-[#DE1F2A]'
               : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
           }`}
           aria-label="Filtros de pesquisa"
         >
           <SlidersHorizontal className="w-4 h-4" />
           {hasActiveFilters && (
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white rounded-full ring-2 ring-[#D9262E]" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white rounded-full ring-2 ring-[#DE1F2A]" />
           )}
         </button>
       )}

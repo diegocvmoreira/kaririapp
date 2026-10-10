@@ -59,13 +59,30 @@ export const AdminDashboardPage: React.FC = () => {
   // Search & Filter states
   const [placeSearch, setPlaceSearch] = useState('');
   const [placeCityFilter, setPlaceCityFilter] = useState('all');
+  const [placePage, setPlacePage] = useState(1);
+  const PLACES_PER_PAGE = 8;
+
   const [eventSearch, setEventSearch] = useState('');
   const [eventCityFilter, setEventCityFilter] = useState('all');
+  const [eventPage, setEventPage] = useState(1);
+  const EVENTS_PER_PAGE = 6;
+
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('all');
   const [userStatusFilter, setUserStatusFilter] = useState('all');
   const [userPage, setUserPage] = useState(1);
   const USERS_PER_PAGE = 5;
+
+  const [claimPage, setClaimPage] = useState(1);
+  const CLAIMS_PER_PAGE = 5;
+
+  useEffect(() => {
+    setPlacePage(1);
+  }, [placeSearch, placeCityFilter]);
+
+  useEffect(() => {
+    setEventPage(1);
+  }, [eventSearch, eventCityFilter]);
 
   useEffect(() => {
     setUserPage(1);
@@ -298,6 +315,18 @@ export const AdminDashboardPage: React.FC = () => {
     return matchesSearch && matchesCity;
   });
 
+  const totalPlacePages = Math.max(1, Math.ceil(filteredPlaces.length / PLACES_PER_PAGE));
+  const paginatedPlaces = filteredPlaces.slice(
+    (placePage - 1) * PLACES_PER_PAGE,
+    placePage * PLACES_PER_PAGE
+  );
+
+  const totalEventPages = Math.max(1, Math.ceil(filteredEvents.length / EVENTS_PER_PAGE));
+  const paginatedEvents = filteredEvents.slice(
+    (eventPage - 1) * EVENTS_PER_PAGE,
+    eventPage * EVENTS_PER_PAGE
+  );
+
   // Filtering users
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
@@ -313,6 +342,12 @@ export const AdminDashboardPage: React.FC = () => {
   const paginatedUsers = filteredUsers.slice(
     (userPage - 1) * USERS_PER_PAGE,
     userPage * USERS_PER_PAGE
+  );
+
+  const totalClaimPages = Math.max(1, Math.ceil(claims.length / CLAIMS_PER_PAGE));
+  const paginatedClaims = claims.slice(
+    (claimPage - 1) * CLAIMS_PER_PAGE,
+    claimPage * CLAIMS_PER_PAGE
   );
 
   const getCategoryBadge = (category?: ApiDiagnosticCategory) => {
@@ -553,86 +588,129 @@ export const AdminDashboardPage: React.FC = () => {
               Nenhum local encontrado para os filtros selecionados.
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
-              {filteredPlaces.map((place) => (
-                <div
-                  key={place.id}
-                  className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-gray-50/50 p-2 rounded-2xl transition"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <img
-                      src={place.cover_image}
-                      alt={place.name}
-                      className="w-14 h-14 rounded-2xl object-cover shrink-0 border border-gray-100"
-                    />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-gray-900 truncate">{place.name}</h4>
-                        {place.is_featured && (
-                          <span className="px-1.5 py-0.5 bg-[#FDE8E9] text-[#DE1F2A] font-bold text-[9px] rounded-md">
-                            Destaque
-                          </span>
-                        )}
+            <div className="space-y-4">
+              <div className="divide-y divide-gray-100">
+                {paginatedPlaces.map((place) => (
+                  <div
+                    key={place.id}
+                    className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-gray-50/50 p-2 rounded-2xl transition"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={place.cover_image}
+                        alt={place.name}
+                        className="w-14 h-14 rounded-2xl object-cover shrink-0 border border-gray-100"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-gray-900 truncate">{place.name}</h4>
+                          {place.is_featured && (
+                            <span className="px-1.5 py-0.5 bg-[#FDE8E9] text-[#DE1F2A] font-bold text-[9px] rounded-md">
+                              Destaque
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">
+                          {place.category_name} • {place.city_name} • {place.rating} ★ ({place.reviews_count} avaliações)
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                          {place.address} {place.phone ? `• ${place.phone}` : ''}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">
-                        {place.category_name} • {place.city_name} • {place.rating} ★ ({place.reviews_count} avaliações)
-                      </p>
-                      <p className="text-[11px] text-gray-400 mt-0.5 truncate">
-                        {place.address} {place.phone ? `• ${place.phone}` : ''}
-                      </p>
+                    </div>
+
+                    {/* Ações */}
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      {/* Botão de Status */}
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePlaceStatus(place)}
+                        title="Clique para alternar status"
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition flex items-center gap-1 ${
+                          place.status === 'published'
+                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                            : place.status === 'draft'
+                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        <span>{place.status === 'published' ? 'Publicado' : place.status === 'draft' ? 'Rascunho' : 'Pendente'}</span>
+                      </button>
+
+                      {/* Editar */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingPlace(place);
+                          setIsPlaceModalOpen(true);
+                        }}
+                        className="p-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                        title="Editar dados do local"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Excluir */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDeleteTarget({
+                            type: 'local',
+                            id: place.id,
+                            title: place.name,
+                          })
+                        }
+                        className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition"
+                        title="Excluir local"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
+                ))}
+              </div>
 
-                  {/* Ações */}
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                    {/* Botão de Status */}
-                    <button
-                      type="button"
-                      onClick={() => handleTogglePlaceStatus(place)}
-                      title="Clique para alternar status"
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition flex items-center gap-1 ${
-                        place.status === 'published'
-                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                          : place.status === 'draft'
-                          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                      }`}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                      <span>{place.status === 'published' ? 'Publicado' : place.status === 'draft' ? 'Rascunho' : 'Pendente'}</span>
-                    </button>
+              {/* Controles de Paginação (Locais) */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100 px-2">
+                <span className="text-xs text-gray-500">
+                  Mostrando{' '}
+                  <strong className="text-gray-900">
+                    {(placePage - 1) * PLACES_PER_PAGE + 1}
+                  </strong>{' '}
+                  a{' '}
+                  <strong className="text-gray-900">
+                    {Math.min(placePage * PLACES_PER_PAGE, filteredPlaces.length)}
+                  </strong>{' '}
+                  de <strong className="text-gray-900">{filteredPlaces.length}</strong> locais
+                </span>
 
-                    {/* Editar */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingPlace(place);
-                        setIsPlaceModalOpen(true);
-                      }}
-                      className="p-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-                      title="Editar dados do local"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPlacePage((p) => Math.max(1, p - 1))}
+                    disabled={placePage <= 1}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Anterior</span>
+                  </button>
 
-                    {/* Excluir */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDeleteTarget({
-                          type: 'local',
-                          id: place.id,
-                          title: place.name,
-                        })
-                      }
-                      className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition"
-                      title="Excluir local"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <span className="text-xs font-bold text-gray-700 px-2">
+                    {placePage} / {totalPlacePages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setPlacePage((p) => Math.min(totalPlacePages, p + 1))}
+                    disabled={placePage >= totalPlacePages}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <span>Próxima</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
@@ -692,86 +770,129 @@ export const AdminDashboardPage: React.FC = () => {
               Nenhum evento encontrado para os filtros selecionados.
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
-              {filteredEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-gray-50/50 p-2 rounded-2xl transition"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <img
-                      src={event.cover_image}
-                      alt={event.title}
-                      className="w-14 h-14 rounded-2xl object-cover shrink-0 border border-gray-100"
-                    />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-gray-900 truncate">{event.title}</h4>
-                        {event.is_free && (
-                          <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[9px] rounded-md">
-                            Gratuito
-                          </span>
-                        )}
-                        {event.is_featured && (
-                          <span className="px-1.5 py-0.5 bg-[#FDE8E9] text-[#DE1F2A] font-bold text-[9px] rounded-md">
-                            Destaque
-                          </span>
-                        )}
+            <div className="space-y-4">
+              <div className="divide-y divide-gray-100">
+                {paginatedEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-gray-50/50 p-2 rounded-2xl transition"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={event.cover_image}
+                        alt={event.title}
+                        className="w-14 h-14 rounded-2xl object-cover shrink-0 border border-gray-100"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-gray-900 truncate">{event.title}</h4>
+                          {event.is_free && (
+                            <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[9px] rounded-md">
+                              Gratuito
+                            </span>
+                          )}
+                          {event.is_featured && (
+                            <span className="px-1.5 py-0.5 bg-[#FDE8E9] text-[#DE1F2A] font-bold text-[9px] rounded-md">
+                              Destaque
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">
+                          {event.display_date} às {event.start_time} • {event.place_name}, {event.city_name}
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                          {event.category} • {event.price_text} {event.ticket_url ? '• Com Link Oficial' : ''}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">
-                        {event.display_date} às {event.start_time} • {event.place_name}, {event.city_name}
-                      </p>
-                      <p className="text-[11px] text-gray-400 mt-0.5 truncate">
-                        {event.category} • {event.price_text} {event.ticket_url ? '• Com Link Oficial' : ''}
-                      </p>
+                    </div>
+
+                    {/* Ações */}
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleEventStatus(event)}
+                        title="Clique para alternar status"
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition flex items-center gap-1 ${
+                          event.status === 'published'
+                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        <span>{event.status === 'published' ? 'Publicado' : 'Rascunho'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingEvent(event);
+                          setIsEventModalOpen(true);
+                        }}
+                        className="p-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                        title="Editar evento"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDeleteTarget({
+                            type: 'evento',
+                            id: event.id,
+                            title: event.title,
+                          })
+                        }
+                        className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition"
+                        title="Excluir evento"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
+                ))}
+              </div>
 
-                  {/* Ações */}
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleEventStatus(event)}
-                      title="Clique para alternar status"
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition flex items-center gap-1 ${
-                        event.status === 'published'
-                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                      <span>{event.status === 'published' ? 'Publicado' : 'Rascunho'}</span>
-                    </button>
+              {/* Controles de Paginação (Eventos) */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100 px-2">
+                <span className="text-xs text-gray-500">
+                  Mostrando{' '}
+                  <strong className="text-gray-900">
+                    {(eventPage - 1) * EVENTS_PER_PAGE + 1}
+                  </strong>{' '}
+                  a{' '}
+                  <strong className="text-gray-900">
+                    {Math.min(eventPage * EVENTS_PER_PAGE, filteredEvents.length)}
+                  </strong>{' '}
+                  de <strong className="text-gray-900">{filteredEvents.length}</strong> eventos
+                </span>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingEvent(event);
-                        setIsEventModalOpen(true);
-                      }}
-                      className="p-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-                      title="Editar evento"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setEventPage((p) => Math.max(1, p - 1))}
+                    disabled={eventPage <= 1}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Anterior</span>
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDeleteTarget({
-                          type: 'evento',
-                          id: event.id,
-                          title: event.title,
-                        })
-                      }
-                      className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition"
-                      title="Excluir evento"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <span className="text-xs font-bold text-gray-700 px-2">
+                    {eventPage} / {totalEventPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setEventPage((p) => Math.min(totalEventPages, p + 1))}
+                    disabled={eventPage >= totalEventPages}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <span>Próxima</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
@@ -964,81 +1085,124 @@ export const AdminDashboardPage: React.FC = () => {
               Nenhuma solicitação de empresa pendente no momento.
             </p>
           ) : (
-            <div className="space-y-3">
-              {claims.map((claim) => (
-                <div
-                  key={claim.id}
-                  className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-2.5"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                      <span className="text-[11px] font-bold text-[#DE1F2A] uppercase">
-                        {claim.place_name}
-                      </span>
-                      <h4 className="text-sm font-bold text-gray-900">
-                        {claim.user_name} ({claim.user_email})
-                      </h4>
-                      {claim.phone && (
-                        <p className="text-xs text-gray-500 font-medium flex items-center gap-1 mt-0.5">
-                          <Phone className="w-3 h-3 text-emerald-600" />
-                          <span>WhatsApp: {claim.phone}</span>
-                        </p>
-                      )}
-                    </div>
+            <div className="space-y-4">
+              <div className="space-y-3">
+                {paginatedClaims.map((claim) => (
+                  <div
+                    key={claim.id}
+                    className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-2.5"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[11px] font-bold text-[#DE1F2A] uppercase">
+                          {claim.place_name}
+                        </span>
+                        <h4 className="text-sm font-bold text-gray-900">
+                          {claim.user_name} ({claim.user_email})
+                        </h4>
+                        {claim.phone && (
+                          <p className="text-xs text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+                            <Phone className="w-3 h-3 text-emerald-600" />
+                            <span>WhatsApp: {claim.phone}</span>
+                          </p>
+                        )}
+                      </div>
 
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                          claim.status === 'approved'
-                            ? 'bg-emerald-100 text-emerald-700'
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                            claim.status === 'approved'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : claim.status === 'rejected'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
+                          {claim.status === 'approved'
+                            ? 'Aprovado'
                             : claim.status === 'rejected'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-amber-100 text-amber-700'
-                        }`}
-                      >
-                        {claim.status === 'approved'
-                          ? 'Aprovado'
-                          : claim.status === 'rejected'
-                          ? 'Rejeitado'
-                          : 'Pendente de Análise'}
-                      </span>
-                      <span className="text-[10px] text-gray-400">{claim.created_at}</span>
+                            ? 'Rejeitado'
+                            : 'Pendente de Análise'}
+                        </span>
+                        <span className="text-[10px] text-gray-400">{claim.created_at}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <p className="text-xs text-gray-700 bg-white p-3 rounded-xl border border-gray-100 leading-relaxed">
-                    "{claim.message}"
-                  </p>
-
-                  {claim.proof && (
-                    <p className="text-[11px] text-gray-500">
-                      <strong>Comprovante / CNPJ:</strong> {claim.proof}
+                    <p className="text-xs text-gray-700 bg-white p-3 rounded-xl border border-gray-100 leading-relaxed">
+                      "{claim.message}"
                     </p>
-                  )}
 
-                  {claim.status === 'pending' && (
-                    <div className="pt-1 flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setRejectingClaim(claim)}
-                        className="px-3 py-1.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition flex items-center gap-1"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        <span>Rejeitar</span>
-                      </button>
+                    {claim.proof && (
+                      <p className="text-[11px] text-gray-500">
+                        <strong>Comprovante / CNPJ:</strong> {claim.proof}
+                      </p>
+                    )}
 
-                      <button
-                        type="button"
-                        onClick={() => handleApproveClaim(claim)}
-                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-2xs"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>Aprovar Gestor</span>
-                      </button>
-                    </div>
-                  )}
+                    {claim.status === 'pending' && (
+                      <div className="pt-1 flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setRejectingClaim(claim)}
+                          className="px-3 py-1.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition flex items-center gap-1"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          <span>Rejeitar</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleApproveClaim(claim)}
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-2xs"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          <span>Aprovar Gestor</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Controles de Paginação (Reivindicações) */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100 px-2">
+                <span className="text-xs text-gray-500">
+                  Mostrando{' '}
+                  <strong className="text-gray-900">
+                    {(claimPage - 1) * CLAIMS_PER_PAGE + 1}
+                  </strong>{' '}
+                  a{' '}
+                  <strong className="text-gray-900">
+                    {Math.min(claimPage * CLAIMS_PER_PAGE, claims.length)}
+                  </strong>{' '}
+                  de <strong className="text-gray-900">{claims.length}</strong> solicitações
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setClaimPage((p) => Math.max(1, p - 1))}
+                    disabled={claimPage <= 1}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Anterior</span>
+                  </button>
+
+                  <span className="text-xs font-bold text-gray-700 px-2">
+                    {claimPage} / {totalClaimPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setClaimPage((p) => Math.min(totalClaimPages, p + 1))}
+                    disabled={claimPage >= totalClaimPages}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <span>Próxima</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
@@ -1160,6 +1324,8 @@ export const AdminDashboardPage: React.FC = () => {
         onSave={handleSaveEvent}
         event={editingEvent}
         cities={cities}
+        categories={categories}
+        places={places}
       />
 
       <RejectClaimModal

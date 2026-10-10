@@ -47,14 +47,24 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     if (event) {
       setTitle(event.title || '');
       setSlug(event.slug || '');
-      setCityId(event.city_id || 1);
-      setCategoryId(event.category_id || 1);
-      setPlaceId(event.place_id ?? '');
+      setCityId(event.city_id || cities[0]?.id || 1);
+      setCategoryId(event.category_id || categories[0]?.id || 1);
+      const targetPlaceId = event.place_id ?? '';
+      setPlaceId(targetPlaceId);
       setPlaceName(event.place_name || '');
       setAddress(event.address || '');
+      if (targetPlaceId && places.length > 0) {
+        const found = places.find((p) => p.id === Number(targetPlaceId));
+        if (found) {
+          if (!event.place_name) setPlaceName(found.name);
+          if (!event.address) setAddress(found.address);
+        }
+      }
       setStartDate(event.start_date || '');
       setEndDate(event.end_date || '');
       setStartTime(event.start_time || '19:00');
@@ -89,7 +99,18 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       setIsFeatured(false);
     }
     setErrorMsg(null);
-  }, [event, isOpen, cities, categories]);
+  }, [event, isOpen]);
+
+  // Se a lista de locais carregar após a abertura do modal e houver placeId selecionado
+  useEffect(() => {
+    if (isOpen && placeId && places.length > 0 && !placeName) {
+      const found = places.find((p) => p.id === Number(placeId));
+      if (found) {
+        setPlaceName(found.name);
+        if (!address) setAddress(found.address);
+      }
+    }
+  }, [places, placeId, isOpen, placeName, address]);
 
   const handleTitleChange = (val: string) => {
     setTitle(val);

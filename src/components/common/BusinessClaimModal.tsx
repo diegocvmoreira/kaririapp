@@ -65,7 +65,7 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#FDE8E9] flex items-center justify-center text-[#D9262E]">
+            <div className="w-8 h-8 rounded-xl bg-[#FDE8E9] flex items-center justify-center text-[#DE1F2A]">
               <Building2 className="w-4 h-4" />
             </div>
             <div>
@@ -115,7 +115,7 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
               </p>
 
               {errorMsg && (
-                <div className="p-3 bg-red-50 text-[#D9262E] text-xs font-semibold rounded-xl">
+                <div className="p-3 bg-red-50 text-[#DE1F2A] text-xs font-semibold rounded-xl">
                   {errorMsg}
                 </div>
               )}
@@ -130,7 +130,7 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Nome do gestor ou proprietário"
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#D9262E] focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A] focus:bg-white"
                 />
               </div>
 
@@ -145,7 +145,7 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="email@comercial.com"
-                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#D9262E] focus:bg-white"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A] focus:bg-white"
                   />
                 </div>
 
@@ -158,7 +158,7 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="(88) 99999-9999"
-                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#D9262E] focus:bg-white"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A] focus:bg-white"
                   />
                 </div>
               </div>
@@ -173,7 +173,7 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Ex: Sou fundador e administrador do local..."
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#D9262E] focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A] focus:bg-white"
                 />
               </div>
 
@@ -186,7 +186,7 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
                   value={proof}
                   onChange={(e) => setProof(e.target.value)}
                   placeholder="CNPJ, link do Instagram comercial ou site oficial"
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#D9262E] focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A] focus:bg-white"
                 />
               </div>
 
@@ -201,7 +201,7 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-[#D9262E] text-white font-bold hover:bg-[#BF1E25] active:scale-95 transition disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-[#DE1F2A] text-white font-bold hover:bg-[#C51620] active:scale-95 transition disabled:opacity-50"
                 >
                   {isSubmitting ? 'Enviando...' : 'Enviar Solicitação'}
                 </button>

@@ -25,7 +25,7 @@ export const mapService = {
 
   createCustomIcon(categorySlug?: string, isSelected: boolean = false): L.DivIcon {
     const size = isSelected ? 44 : 36;
-    const bgClass = isSelected ? 'bg-[#D9262E] scale-110 shadow-lg ring-4 ring-white' : 'bg-[#1F2024] hover:bg-[#D9262E] shadow-md';
+    const bgClass = isSelected ? 'bg-[#DE1F2A] scale-110 shadow-lg ring-4 ring-white' : 'bg-[#000000] hover:bg-[#DE1F2A] shadow-md';
 
     const html = `
       <div style="position: relative; width: ${size}px; height: ${size}px;" class="transition-transform duration-200">
@@ -35,7 +35,7 @@ export const mapService = {
             <circle cx="12" cy="10" r="3"/>
           </svg>
         </div>
-        <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background-color: #D9262E; border-radius: 9999px;"></div>
+        <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background-color: #DE1F2A; border-radius: 9999px;"></div>
       </div>
     `;
 

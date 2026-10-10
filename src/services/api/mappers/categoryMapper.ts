@@ -36,7 +36,7 @@ const ICON_MAP: Record<string, string> = {
 
 // Cores temáticas para categorias da região do Cariri
 const CATEGORY_COLORS: Record<string, string> = {
-  gastronomia: '#D9262E',
+  gastronomia: '#DE1F2A',
   turismo: '#0284C7',
   'cultura-arte': '#D97706',
   cultura: '#D97706',
@@ -45,7 +45,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   hospedagem: '#4F46E5',
   compras: '#EA580C',
   servicos: '#6B7280',
-  eventos: '#D9262E',
+  eventos: '#DE1F2A',
 };
 
 /**
@@ -71,7 +71,7 @@ export function mapApiCategoryToCategory(raw: ApiCategoryRaw): Category {
     parent_id: raw.parent_id !== null && raw.parent_id !== undefined ? Number(raw.parent_id) : null,
     sort_order: Number(raw.sort_order || 0),
     status: (raw.status as Category['status']) || 'published',
-    color: raw.color || CATEGORY_COLORS[slug] || '#D9262E',
+    color: raw.color || CATEGORY_COLORS[slug] || '#DE1F2A',
     count: typeof raw.count === 'number' ? raw.count : undefined,
     subcategories: Array.isArray(raw.subcategories)
       ? raw.subcategories.map(mapApiCategoryToCategory)

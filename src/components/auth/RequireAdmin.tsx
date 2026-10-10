@@ -33,10 +33,23 @@ export const RequireAdmin: React.FC<RequireAdminProps> = ({ children }) => {
           <ShieldAlert className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-black text-gray-900">Acesso Restrito a Administradores</h2>
-        <p className="text-xs text-gray-500 leading-relaxed">
-          Sua conta atual não possui permissões administrativas ativas para gerenciar a plataforma.
+        <p className="text-xs text-gray-500 leading-relaxed max-w-sm mx-auto">
+          Sua conta atual ({user.email}) não possui permissões administrativas para acessar esta área de gerenciamento.
         </p>
-        <Navigate to="/perfil" replace />
+        <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-2">
+          <a
+            href="/perfil"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-900 text-white font-bold text-xs hover:bg-black transition"
+          >
+            Voltar para o Perfil
+          </a>
+          <a
+            href="/"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 transition"
+          >
+            Ir para a Página Inicial
+          </a>
+        </div>
       </div>
     );
   }

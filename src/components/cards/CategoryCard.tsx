@@ -52,11 +52,11 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         onClick={onClick}
         className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
           isSelected
-            ? 'bg-[#D9262E] text-white shadow-sm scale-102 ring-2 ring-[#D9262E]/20'
+            ? 'bg-[#DE1F2A] text-white shadow-sm scale-102 ring-2 ring-[#DE1F2A]/20'
             : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
         }`}
       >
-        <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-[#D9262E]'}`} />
+        <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-[#DE1F2A]'}`} />
         <span>{category.name}</span>
         {category.count !== undefined && (
           <span
@@ -76,13 +76,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
     <div
       className={`group flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-200 ${
         isSelected
-          ? 'bg-[#D9262E] text-white shadow-md scale-105'
+          ? 'bg-[#DE1F2A] text-white shadow-md scale-105'
           : 'bg-white border border-gray-100 text-gray-800 shadow-xs hover:shadow-md hover:-translate-y-0.5'
       }`}
     >
       <div
         className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-2 transition-transform duration-200 group-hover:scale-110 ${
-          isSelected ? 'bg-white/20 text-white' : 'bg-[#FDE8E9] text-[#D9262E]'
+          isSelected ? 'bg-white/20 text-white' : 'bg-[#FDE8E9] text-[#DE1F2A]'
         }`}
       >
         <IconComponent className="w-5 h-5" />
