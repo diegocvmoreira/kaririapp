@@ -2,10 +2,13 @@ import {
   apiClient,
   simulateNetworkDelay,
   USE_MOCK_DATA,
+  ApiError,
 } from './config';
 import { Place, EventItem } from '../../types';
 import { mockPlaces } from '../../mocks/mockPlaces';
 import { mockEvents } from '../../mocks/mockEvents';
+import { placesApi } from './places';
+import { eventsApi } from './events';
 
 const FAVORITES_STORAGE_KEY = 'kariri_favorite_place_ids';
 const FAVORITES_EVENTS_STORAGE_KEY = 'kariri_favorite_event_ids';
@@ -99,12 +102,20 @@ interface ApiEvent {
   } | null;
 }
 
+function getAuthToken(): string | null {
+  try {
+    return localStorage.getItem('kariri_auth_token');
+  } catch {
+    return null;
+  }
+}
+
 function getStoredFavoriteIds(): number[] {
   try {
     const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [1, 2];
+    return raw ? JSON.parse(raw) : [];
   } catch {
-    return [1, 2];
+    return [];
   }
 }
 
@@ -119,9 +130,9 @@ function saveStoredFavoriteIds(ids: number[]): void {
 function getStoredFavoriteEventIds(): number[] {
   try {
     const raw = localStorage.getItem(FAVORITES_EVENTS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [1, 2];
+    return raw ? JSON.parse(raw) : [];
   } catch {
-    return [1, 2];
+    return [];
   }
 }
 
@@ -248,114 +259,212 @@ function mapApiEventToEvent(event: ApiEvent): EventItem {
 }
 
 async function getFavoriteRecords(): Promise<FavoriteRecord[]> {
-  const response = await apiClient<
-    FavoriteRecord[] | FavoriteListResponse
-  >('/favorites');
+  const token = getAuthToken();
+  if (!token) {
+    return [];
+  }
 
-  return extractFavoriteRecords(response);
+  try {
+    const response = await apiClient<
+      FavoriteRecord[] | FavoriteListResponse
+    >('/favorites');
+
+    return extractFavoriteRecords(response);
+  } catch (err: unknown) {
+    if (err instanceof ApiError && err.status === 401) {
+      return [];
+    }
+    if (
+      err &&
+      typeof err === 'object' &&
+      'status' in err &&
+      (err as { status: number }).status === 401
+    ) {
+      return [];
+    }
+    console.warn('Erro ao obter registros de favoritos da API:', err);
+    return [];
+  }
 }
 
 async function findPlaceFavoriteId(
   placeId: number
 ): Promise<number | null> {
-  const records = await getFavoriteRecords();
-
-  const favorite = records.find(
-    (record) => Number(record.place_id) === placeId
-  );
-
-  return favorite?.id ?? null;
+  const token = getAuthToken();
+  if (!token) return null;
+  try {
+    const records = await getFavoriteRecords();
+    const favorite = records.find(
+      (record) => Number(record.place_id) === placeId
+    );
+    return favorite?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function findEventFavoriteId(
   eventId: number
 ): Promise<number | null> {
-  const records = await getFavoriteRecords();
-
-  const favorite = records.find(
-    (record) => Number(record.event_id) === eventId
-  );
-
-  return favorite?.id ?? null;
+  const token = getAuthToken();
+  if (!token) return null;
+  try {
+    const records = await getFavoriteRecords();
+    const favorite = records.find(
+      (record) => Number(record.event_id) === eventId
+    );
+    return favorite?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export const favoritesApi = {
+  getInitialIds(): number[] {
+    return getStoredFavoriteIds();
+  },
+
+  getInitialEventIds(): number[] {
+    return getStoredFavoriteEventIds();
+  },
+
   async getFavorites(): Promise<Place[]> {
     if (USE_MOCK_DATA) {
       const ids = getStoredFavoriteIds();
       const favorites = mockPlaces.filter((place) =>
         ids.includes(place.id)
       );
-
       return simulateNetworkDelay(favorites, 100);
     }
 
-    const records = await getFavoriteRecords();
+    const token = getAuthToken();
+    if (!token) {
+      const ids = getStoredFavoriteIds();
+      if (ids.length === 0) return [];
+      try {
+        const allPlaces = await placesApi.getAll();
+        return allPlaces.filter((p) => ids.includes(p.id));
+      } catch {
+        return mockPlaces.filter((p) => ids.includes(p.id));
+      }
+    }
 
-    return records
-      .filter((record) => record.place)
-      .map((record) => mapApiPlaceToPlace(record.place!));
+    try {
+      const records = await getFavoriteRecords();
+      if (records.length > 0) {
+        const apiPlaces = records
+          .filter((record) => record.place)
+          .map((record) => mapApiPlaceToPlace(record.place!));
+
+        const placeIds = apiPlaces.map((p) => p.id);
+        if (placeIds.length > 0) {
+          saveStoredFavoriteIds(placeIds);
+        }
+        return apiPlaces;
+      }
+
+      // Se a API não tiver registros, verifica os IDs salvos localmente
+      const ids = getStoredFavoriteIds();
+      if (ids.length === 0) return [];
+      const allPlaces = await placesApi.getAll().catch(() => mockPlaces);
+      return allPlaces.filter((p) => ids.includes(p.id));
+    } catch {
+      const ids = getStoredFavoriteIds();
+      if (ids.length === 0) return [];
+      const allPlaces = await placesApi.getAll().catch(() => mockPlaces);
+      return allPlaces.filter((p) => ids.includes(p.id));
+    }
   },
 
   async addFavorite(placeId: number): Promise<boolean> {
+    const ids = getStoredFavoriteIds();
+    if (!ids.includes(placeId)) {
+      saveStoredFavoriteIds([...ids, placeId]);
+    }
+
     if (USE_MOCK_DATA) {
-      const ids = getStoredFavoriteIds();
-
-      if (!ids.includes(placeId)) {
-        saveStoredFavoriteIds([...ids, placeId]);
-      }
-
       return simulateNetworkDelay(true, 50);
     }
 
-    await apiClient('/favorites', {
-      method: 'POST',
-      body: JSON.stringify({
-        place_id: placeId,
-      }),
-    });
+    const token = getAuthToken();
+    if (!token) {
+      return true;
+    }
 
-    return true;
+    try {
+      await apiClient('/favorites', {
+        method: 'POST',
+        body: JSON.stringify({
+          place_id: placeId,
+        }),
+      });
+      return true;
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        return true;
+      }
+      console.warn('Erro ao sincronizar adição de favorito na API:', err);
+      return true;
+    }
   },
 
   async removeFavorite(placeId: number): Promise<boolean> {
+    const ids = getStoredFavoriteIds().filter(
+      (id) => id !== placeId
+    );
+    saveStoredFavoriteIds(ids);
+
     if (USE_MOCK_DATA) {
-      const ids = getStoredFavoriteIds().filter(
-        (id) => id !== placeId
-      );
-
-      saveStoredFavoriteIds(ids);
-
       return simulateNetworkDelay(true, 50);
     }
 
-    const favoriteId = await findPlaceFavoriteId(placeId);
-
-    if (!favoriteId) {
-      return false;
+    const token = getAuthToken();
+    if (!token) {
+      return true;
     }
 
-    await apiClient(`/favorites/${favoriteId}`, {
-      method: 'DELETE',
-    });
+    try {
+      const favoriteId = await findPlaceFavoriteId(placeId);
+      if (!favoriteId) {
+        return false;
+      }
 
-    return true;
+      await apiClient(`/favorites/${favoriteId}`, {
+        method: 'DELETE',
+      });
+      return true;
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        return true;
+      }
+      console.warn('Erro ao sincronizar remoção de favorito na API:', err);
+      return true;
+    }
   },
 
   async isFavorite(placeId: number): Promise<boolean> {
-    if (USE_MOCK_DATA) {
-      return getStoredFavoriteIds().includes(placeId);
+    const ids = getStoredFavoriteIds();
+    if (ids.includes(placeId)) {
+      return true;
     }
 
-    const records = await getFavoriteRecords();
+    if (USE_MOCK_DATA) {
+      return false;
+    }
 
-    return records.some(
-      (record) => Number(record.place_id) === placeId
-    );
-  },
+    const token = getAuthToken();
+    if (!token) {
+      return false;
+    }
 
-  getInitialIds(): number[] {
-    return USE_MOCK_DATA ? getStoredFavoriteIds() : [];
+    try {
+      const records = await getFavoriteRecords();
+      return records.some(
+        (record) => Number(record.place_id) === placeId
+      );
+    } catch {
+      return false;
+    }
   },
 
   async getFavoriteEvents(): Promise<EventItem[]> {
@@ -364,65 +473,110 @@ export const favoritesApi = {
       const favorites = mockEvents.filter((event) =>
         ids.includes(event.id)
       );
-
       return simulateNetworkDelay(favorites, 100);
     }
 
-    const records = await getFavoriteRecords();
+    const token = getAuthToken();
+    if (!token) {
+      const ids = getStoredFavoriteEventIds();
+      if (ids.length === 0) return [];
+      try {
+        const allEvents = await eventsApi.getAll();
+        return allEvents.filter((e) => ids.includes(e.id));
+      } catch {
+        return mockEvents.filter((e) => ids.includes(e.id));
+      }
+    }
 
-    return records
-      .filter((record) => record.event)
-      .map((record) => mapApiEventToEvent(record.event!));
+    try {
+      const records = await getFavoriteRecords();
+      if (records.length > 0) {
+        const apiEvents = records
+          .filter((record) => record.event)
+          .map((record) => mapApiEventToEvent(record.event!));
+
+        const eventIds = apiEvents.map((e) => e.id);
+        if (eventIds.length > 0) {
+          saveStoredFavoriteEventIds(eventIds);
+        }
+        return apiEvents;
+      }
+
+      const ids = getStoredFavoriteEventIds();
+      if (ids.length === 0) return [];
+      const allEvents = await eventsApi.getAll().catch(() => mockEvents);
+      return allEvents.filter((e) => ids.includes(e.id));
+    } catch {
+      const ids = getStoredFavoriteEventIds();
+      if (ids.length === 0) return [];
+      const allEvents = await eventsApi.getAll().catch(() => mockEvents);
+      return allEvents.filter((e) => ids.includes(e.id));
+    }
   },
 
   async addFavoriteEvent(eventId: number): Promise<boolean> {
+    const ids = getStoredFavoriteEventIds();
+    if (!ids.includes(eventId)) {
+      saveStoredFavoriteEventIds([...ids, eventId]);
+    }
+
     if (USE_MOCK_DATA) {
-      const ids = getStoredFavoriteEventIds();
-
-      if (!ids.includes(eventId)) {
-        saveStoredFavoriteEventIds([...ids, eventId]);
-      }
-
       return simulateNetworkDelay(true, 50);
     }
 
-    await apiClient('/favorites', {
-      method: 'POST',
-      body: JSON.stringify({
-        event_id: eventId,
-      }),
-    });
+    const token = getAuthToken();
+    if (!token) {
+      return true;
+    }
 
-    return true;
+    try {
+      await apiClient('/favorites', {
+        method: 'POST',
+        body: JSON.stringify({
+          event_id: eventId,
+        }),
+      });
+      return true;
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        return true;
+      }
+      console.warn('Erro ao sincronizar adição de evento favorito na API:', err);
+      return true;
+    }
   },
 
   async removeFavoriteEvent(eventId: number): Promise<boolean> {
+    const ids = getStoredFavoriteEventIds().filter(
+      (id) => id !== eventId
+    );
+    saveStoredFavoriteEventIds(ids);
+
     if (USE_MOCK_DATA) {
-      const ids = getStoredFavoriteEventIds().filter(
-        (id) => id !== eventId
-      );
-
-      saveStoredFavoriteEventIds(ids);
-
       return simulateNetworkDelay(true, 50);
     }
 
-    const favoriteId = await findEventFavoriteId(eventId);
-
-    if (!favoriteId) {
-      return false;
+    const token = getAuthToken();
+    if (!token) {
+      return true;
     }
 
-    await apiClient(`/favorites/${favoriteId}`, {
-      method: 'DELETE',
-    });
+    try {
+      const favoriteId = await findEventFavoriteId(eventId);
+      if (!favoriteId) {
+        return false;
+      }
 
-    return true;
-  },
-
-  getInitialEventIds(): number[] {
-    return USE_MOCK_DATA
-      ? getStoredFavoriteEventIds()
-      : [];
+      await apiClient(`/favorites/${favoriteId}`, {
+        method: 'DELETE',
+      });
+      return true;
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        return true;
+      }
+      console.warn('Erro ao sincronizar remoção de evento favorito na API:', err);
+      return true;
+    }
   },
 };

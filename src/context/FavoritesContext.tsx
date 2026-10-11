@@ -22,12 +22,27 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     // Initial sync
-    favoritesApi.getFavorites().then((favs) => {
-      setFavoriteIds(favs.map((p) => p.id));
-    });
-    favoritesApi.getFavoriteEvents().then((favEvents) => {
-      setFavoriteEventIds(favEvents.map((e) => e.id));
-    });
+    favoritesApi
+      .getFavorites()
+      .then((favs) => {
+        if (favs && favs.length > 0) {
+          setFavoriteIds(favs.map((p) => p.id));
+        }
+      })
+      .catch((err) => {
+        console.warn('Não foi possível sincronizar favoritos de locais:', err);
+      });
+
+    favoritesApi
+      .getFavoriteEvents()
+      .then((favEvents) => {
+        if (favEvents && favEvents.length > 0) {
+          setFavoriteEventIds(favEvents.map((e) => e.id));
+        }
+      })
+      .catch((err) => {
+        console.warn('Não foi possível sincronizar favoritos de eventos:', err);
+      });
   }, []);
 
   const isFavorite = useCallback(

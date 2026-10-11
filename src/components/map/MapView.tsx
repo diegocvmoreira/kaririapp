@@ -107,6 +107,22 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [selectedPlaceId, places]);
 
+  // Update marker visual state (size, ring, zIndex) when activePlace changes
+  useEffect(() => {
+    markersRef.current.forEach((marker, placeId) => {
+      const place = places.find((p) => p.id === placeId);
+      if (place) {
+        const isSelected = activePlace?.id === placeId;
+        marker.setIcon(mapService.createCustomIcon(place.category_slug, isSelected));
+        if (isSelected) {
+          marker.setZIndexOffset(1000);
+        } else {
+          marker.setZIndexOffset(0);
+        }
+      }
+    });
+  }, [activePlace, places]);
+
   // Handle current user location
   const handleLocateMe = async () => {
     const map = mapInstanceRef.current;
