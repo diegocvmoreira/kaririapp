@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad-compras" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#grad-compras)" />
+  <circle cx="200" cy="140" r="70" fill="white" opacity="0.15" />
+  <!-- Shopping Bag Icon -->
+  <path d="M165 125 L160 175 C160 180 165 185 170 185 L230 185 C235 185 240 180 240 175 L235 125 Z" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M180 125 C180 110 190 100 200 100 C210 100 220 110 220 125" stroke="white" stroke-width="6" stroke-linecap="round" fill="none" />
+  <text x="200" y="240" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="white" text-anchor="middle" letter-spacing="1">COMPRAS &amp; ARTESANATO</text>
+</svg>

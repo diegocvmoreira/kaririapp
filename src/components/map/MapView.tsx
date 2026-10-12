@@ -61,27 +61,29 @@ export const MapView: React.FC<MapViewProps> = ({
 
     const group = L.featureGroup();
 
-    // Filtra apenas locais com coordenadas válidas (evita posicionar locais nulos no oceano ou ponto falso)
+    // Filtra marcadores para renderizar somente locais com coordenadas válidas confirmadas
     const validPlaces = places.filter(
       (place) =>
         typeof place.latitude === 'number' &&
         typeof place.longitude === 'number' &&
-        !isNaN(place.latitude) &&
-        !isNaN(place.longitude) &&
-        Math.abs(place.latitude) > 0.001 &&
-        Math.abs(place.longitude) > 0.001
+        Number.isFinite(place.latitude) &&
+        Number.isFinite(place.longitude)
     );
 
     validPlaces.forEach((place) => {
       const isSelected = activePlace?.id === place.id;
       const icon = mapService.createCustomIcon(place.category_slug, isSelected);
 
-      const marker = L.marker([place.latitude, place.longitude], { icon }).addTo(map);
+      const lat = place.latitude as number;
+      const lng = place.longitude as number;
+      const marker = L.marker([lat, lng], { icon }).addTo(map);
 
       marker.on('click', () => {
         setActivePlace(place);
         if (onPlaceSelect) onPlaceSelect(place);
-        map.panTo([place.latitude, place.longitude], { animate: true });
+        if (typeof place.latitude === 'number' && typeof place.longitude === 'number') {
+          map.panTo([place.latitude, place.longitude], { animate: true });
+        }
       });
 
       markersRef.current.set(place.id, marker);
@@ -100,7 +102,13 @@ export const MapView: React.FC<MapViewProps> = ({
       const match = places.find((p) => p.id === selectedPlaceId);
       if (match) {
         setActivePlace(match);
-        if (mapInstanceRef.current) {
+        if (
+          mapInstanceRef.current &&
+          typeof match.latitude === 'number' &&
+          typeof match.longitude === 'number' &&
+          Number.isFinite(match.latitude) &&
+          Number.isFinite(match.longitude)
+        ) {
           mapInstanceRef.current.setView([match.latitude, match.longitude], 15, { animate: true });
         }
       }

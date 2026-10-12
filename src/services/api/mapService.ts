@@ -30,13 +30,8 @@ function normalizeCategorySlug(slug?: string): string {
 function getCategoryVisualConfig(categorySlug?: string): { color: string; svgContent: string } {
   const normalized = normalizeCategorySlug(categorySlug);
 
-  // 1. Gastronomia / Restaurante (Laranja, Ícone de Garfo)
-  if (
-    normalized.includes('gastronomia') ||
-    normalized.includes('restaurante') ||
-    normalized.includes('lanche') ||
-    normalized.includes('cafe')
-  ) {
+  // 1. gastronomia: laranja (#EA580C)
+  if (normalized === 'gastronomia' || normalized.includes('gastronomia') || normalized.includes('restaurante')) {
     return {
       color: '#EA580C',
       svgContent: `
@@ -46,22 +41,8 @@ function getCategoryVisualConfig(categorySlug?: string): { color: string; svgCon
     };
   }
 
-  // 2. Bares (Roxo, Ícone de Copo)
-  if (normalized.includes('bar') || normalized.includes('pub') || normalized.includes('bebida')) {
-    return {
-      color: '#7C3AED',
-      svgContent: `
-        <path d="M8 22h8M12 15v7M5 3h14l-2 7a5 5 0 0 1-10 0L5 3z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      `,
-    };
-  }
-
-  // 3. Turismo / Atrações (Azul, Ícone de Montanha)
-  if (
-    normalized.includes('turismo') ||
-    normalized.includes('atrac') ||
-    normalized.includes('ponto-turistico')
-  ) {
+  // 2. turismo: azul (#0284C7)
+  if (normalized === 'turismo' || normalized.includes('turismo') || normalized.includes('atrac')) {
     return {
       color: '#0284C7',
       svgContent: `
@@ -70,31 +51,10 @@ function getCategoryVisualConfig(categorySlug?: string): { color: string; svgCon
     };
   }
 
-  // 4. Natureza / Trilhas (Verde, Ícone de Folha)
-  if (
-    normalized.includes('natureza') ||
-    normalized.includes('trilha') ||
-    normalized.includes('parque') ||
-    normalized.includes('eco')
-  ) {
+  // 3. cultura-arte: vermelho (#DE1F2A)
+  if (normalized === 'cultura-arte' || normalized.includes('cultura') || normalized.includes('arte') || normalized.includes('museu')) {
     return {
-      color: '#16A34A',
-      svgContent: `
-        <path d="M11 20A7 7 0 0 1 4 13a10 10 0 0 1 10-10 7 7 0 0 1 7 7c0 5.5-4.5 10-10 10zM2 21c0-4.5 4-8.5 8.5-8.5" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      `,
-    };
-  }
-
-  // 5. Cultura / Cultura & Arte (Vermelho, Ícone de Música)
-  if (
-    normalized.includes('cultura') ||
-    normalized.includes('arte') ||
-    normalized.includes('musica') ||
-    normalized.includes('museu') ||
-    normalized.includes('artesanato')
-  ) {
-    return {
-      color: '#DC2626',
+      color: '#DE1F2A',
       svgContent: `
         <path d="M9 18V5l12-2v13" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx="6" cy="18" r="3" fill="#FFFFFF"/>
@@ -103,30 +63,28 @@ function getCategoryVisualConfig(categorySlug?: string): { color: string; svgCon
     };
   }
 
-  // 6. Eventos (Laranja, Ícone de Calendário)
-  if (
-    normalized.includes('evento') ||
-    normalized.includes('festa') ||
-    normalized.includes('show')
-  ) {
+  // 4. vida-noturna: roxo (#9333EA)
+  if (normalized === 'vida-noturna' || normalized.includes('vida-noturna') || normalized.includes('bar') || normalized.includes('noite')) {
     return {
-      color: '#F97316',
+      color: '#9333EA',
       svgContent: `
-        <rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="#FFFFFF" stroke-width="2"/>
-        <line x1="16" y1="2" x2="16" y2="6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-        <line x1="8" y1="2" x2="8" y2="6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-        <line x1="3" y1="10" x2="21" y2="10" stroke="#FFFFFF" stroke-width="2"/>
+        <path d="M8 22h8M12 15v7M5 3h14l-2 7a5 5 0 0 1-10 0L5 3z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       `,
     };
   }
 
-  // 7. Compras (Bege / Laranja, Ícone de Sacola)
-  if (
-    normalized.includes('compra') ||
-    normalized.includes('loja') ||
-    normalized.includes('mercado') ||
-    normalized.includes('feira')
-  ) {
+  // 5. natureza-e-trilhas: verde (#16A34A)
+  if (normalized === 'natureza-e-trilhas' || normalized.includes('natureza') || normalized.includes('trilha') || normalized.includes('parque')) {
+    return {
+      color: '#16A34A',
+      svgContent: `
+        <path d="M11 20A7 7 0 0 1 4 13a10 10 0 0 1 10-10 7 7 0 0 1 7 7c0 5.5-4.5 10-10 10zM2 21c0-4.5 4-8.5 8.5-8.5" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      `,
+    };
+  }
+
+  // 6. compras-e-artesanato: dourado (#D97706)
+  if (normalized === 'compras-e-artesanato' || normalized.includes('compra') || normalized.includes('artesanato') || normalized.includes('shopping')) {
     return {
       color: '#D97706',
       svgContent: `
@@ -136,10 +94,20 @@ function getCategoryVisualConfig(categorySlug?: string): { color: string; svgCon
     };
   }
 
-  // 8. Serviços (Azul acinzentado, Ícone de Pasta)
-  if (normalized.includes('servico') || normalized.includes('utilidade')) {
+  // 7. religiosidade: roxo escuro (#581C87)
+  if (normalized === 'religiosidade' || normalized.includes('religia') || normalized.includes('fe') || normalized.includes('igreja') || normalized.includes('santuario')) {
     return {
-      color: '#4B5563',
+      color: '#581C87',
+      svgContent: `
+        <path d="M12 2v20M7 8h10" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+      `,
+    };
+  }
+
+  // 8. servicos: cinza azulado (#475569)
+  if (normalized === 'servicos' || normalized.includes('servico') || normalized.includes('utilidade')) {
+    return {
+      color: '#475569',
       svgContent: `
         <rect x="2" y="7" width="20" height="14" rx="2" fill="none" stroke="#FFFFFF" stroke-width="2"/>
         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" fill="none" stroke="#FFFFFF" stroke-width="2"/>
@@ -147,22 +115,20 @@ function getCategoryVisualConfig(categorySlug?: string): { color: string; svgCon
     };
   }
 
-  // 9. Religião / Fé (Roxo escuro, Ícone de Estrela)
-  if (
-    normalized.includes('religia') ||
-    normalized.includes('fe') ||
-    normalized.includes('igreja') ||
-    normalized.includes('santuario')
-  ) {
+  // 9. eventos: laranja (#F59E0B)
+  if (normalized === 'eventos' || normalized.includes('evento') || normalized.includes('show') || normalized.includes('festa')) {
     return {
-      color: '#5B21B6',
+      color: '#F59E0B',
       svgContent: `
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+        <line x1="16" y1="2" x2="16" y2="6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+        <line x1="8" y1="2" x2="8" y2="6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+        <line x1="3" y1="10" x2="21" y2="10" stroke="#FFFFFF" stroke-width="2"/>
       `,
     };
   }
 
-  // 10. Categoria Desconhecida / Padrão (Preto padrão, Ícone de Localização)
+  // Categoria padrão
   return {
     color: '#000000',
     svgContent: `

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad-cultura" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F43F5E" />
+      <stop offset="100%" stop-color="#DE1F2A" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#grad-cultura)" />
+  <circle cx="200" cy="140" r="70" fill="white" opacity="0.15" />
+  <!-- Palette / Theater Masks Icon -->
+  <path d="M200 95 C165 95 140 120 140 150 C140 175 160 185 180 185 C186 185 190 180 190 174 C190 168 195 165 200 165 C220 165 260 160 260 135 C260 110 230 95 200 95 Z" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="170" cy="130" r="8" fill="white" />
+  <circle cx="195" cy="120" r="8" fill="white" />
+  <circle cx="225" cy="130" r="8" fill="white" />
+  <text x="200" y="240" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="white" text-anchor="middle" letter-spacing="1">CULTURA &amp; ARTE</text>
+</svg>

@@ -53,18 +53,31 @@ const CATEGORY_NAMES_BY_ID: Record<number, { name: string; slug: string }> = {
   2: { name: 'Turismo', slug: 'turismo' },
   3: { name: 'Cultura & Arte', slug: 'cultura-arte' },
   4: { name: 'Vida Noturna', slug: 'vida-noturna' },
+  5: { name: 'Natureza & Trilhas', slug: 'natureza-e-trilhas' },
+  6: { name: 'Compras & Artesanato', slug: 'compras-e-artesanato' },
+  7: { name: 'Religiosidade', slug: 'religiosidade' },
+  8: { name: 'Serviços', slug: 'servicos' },
+  9: { name: 'Eventos', slug: 'eventos' },
 };
 
-// Imagem neutra e realística para estabelecimentos cadastrados sem foto de capa inicial
-const DEFAULT_PLACEHOLDER_COVER =
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80';
+export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
+  gastronomia: '/placeholders/gastronomia.svg',
+  turismo: '/placeholders/turismo.svg',
+  'cultura-arte': '/placeholders/cultura.svg',
+  'vida-noturna': '/placeholders/local.svg',
+  'natureza-e-trilhas': '/placeholders/natureza.svg',
+  'compras-e-artesanato': '/placeholders/compras.svg',
+  religiosidade: '/placeholders/religiosidade.svg',
+  servicos: '/placeholders/servicos.svg',
+  eventos: '/placeholders/eventos.svg',
+};
 
 /**
  * Normaliza os dados brutos da API Laravel para o tipo Place do TypeScript.
- * - Não insere dados fictícios como se fossem reais.
+ * - Jamais insere coordenadas padrão (Crato/Juazeiro/Barbalha) quando latitude ou longitude forem nulas/indefinidas.
+ * - Preserva null estrito para locais sem coordenadas confirmadas.
  * - Converte números decimais em strings ("4.60" -> 4.6).
  * - Converte flags numéricas para booleanos (featured: 1 -> is_featured: true).
- * - Preserva valores ausentes como vazios/indefinidos.
  */
 export function mapApiPlaceToPlace(raw: ApiPlaceRaw): Place {
   const cityInfo = CITY_NAMES_BY_ID[raw.city_id || 1] || { name: 'Cariri', slug: 'cariri' };
@@ -78,23 +91,24 @@ export function mapApiPlaceToPlace(raw: ApiPlaceRaw): Place {
       : 0;
 
   const latNumber =
-    raw.latitude !== null && raw.latitude !== undefined
-      ? typeof raw.latitude === 'string'
-        ? parseFloat(raw.latitude)
-        : Number(raw.latitude)
-      : -7.2341; // Centro de referência para evitar quebra no Leaflet
+    raw.latitude === null || raw.latitude === undefined || raw.latitude === ''
+      ? null
+      : Number(raw.latitude);
 
   const lngNumber =
-    raw.longitude !== null && raw.longitude !== undefined
-      ? typeof raw.longitude === 'string'
-        ? parseFloat(raw.longitude)
-        : Number(raw.longitude)
-      : -39.4124;
+    raw.longitude === null || raw.longitude === undefined || raw.longitude === ''
+      ? null
+      : Number(raw.longitude);
 
-  const cover = raw.cover_image || raw.image || DEFAULT_PLACEHOLDER_COVER;
+  const finalLatitude = Number.isFinite(latNumber) ? (latNumber as number) : null;
+  const finalLongitude = Number.isFinite(lngNumber) ? (lngNumber as number) : null;
+
+  const categorySlug = raw.category_slug || catInfo.slug;
+  const placeholderCover = CATEGORY_PLACEHOLDERS[categorySlug] || '/placeholders/local.svg';
+  const cover = raw.cover_image || raw.image || placeholderCover;
   const images = Array.isArray(raw.images) && raw.images.length > 0
     ? raw.images
-    : [cover];
+    : [];
 
   return {
     id: Number(raw.id),
@@ -105,15 +119,20 @@ export function mapApiPlaceToPlace(raw: ApiPlaceRaw): Place {
     description: raw.description || raw.short_description || '',
     category_id: Number(raw.category_id || 1),
     category_name: raw.category_name || catInfo.name,
-    category_slug: raw.category_slug || catInfo.slug,
+    category_slug: categorySlug,
     city_id: Number(raw.city_id || 1),
     city_name: raw.city_name || cityInfo.name,
     city_slug: raw.city_slug || cityInfo.slug,
     neighborhood: raw.neighborhood || '',
     address: raw.address || `${cityInfo.name} - CE`,
     zipcode: raw.zipcode || undefined,
-    latitude: isNaN(latNumber) ? -7.2341 : latNumber,
-    longitude: isNaN(lngNumber) ? -39.4124 : lngNumber,
+    latitude: finalLatitude,
+    longitude: finalLongitude,
+    coordinate_source: (raw as Record<string, unknown>).coordinate_source as string | undefined,
+    coordinate_confidence: (raw as Record<string, unknown>).coordinate_confidence as string | undefined,
+    needs_review: (raw as Record<string, unknown>).needs_review !== undefined
+      ? Boolean((raw as Record<string, unknown>).needs_review)
+      : true,
     cover_image: cover,
     images,
     rating: isNaN(parsedRating) ? 0 : parsedRating,
@@ -128,7 +147,7 @@ export function mapApiPlaceToPlace(raw: ApiPlaceRaw): Place {
     instagram: raw.instagram || undefined,
     facebook: raw.facebook || undefined,
     website: raw.website || undefined,
-    status: (raw.status as Place['status']) || 'published',
+    status: (raw.status as Place['status']) || 'pending',
     tags: Array.isArray(raw.tags) ? raw.tags : [],
     distance_km: typeof raw.distance_km === 'number' ? raw.distance_km : undefined,
   };

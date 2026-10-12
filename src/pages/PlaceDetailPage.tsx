@@ -98,17 +98,12 @@ export const PlaceDetailPage: React.FC = () => {
   const hasCoordinates =
     typeof place?.latitude === 'number' &&
     typeof place?.longitude === 'number' &&
-    !isNaN(place.latitude) &&
-    !isNaN(place.longitude) &&
-    Math.abs(place.latitude) > 0.001;
+    Number.isFinite(place.latitude) &&
+    Number.isFinite(place.longitude);
 
   const handleOpenGoogleMapsRoute = () => {
-    if (!place) return;
-    const url = hasCoordinates
-      ? `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          `${place.name}, ${place.address || place.city_name || 'Cariri, CE'}`
-        )}`;
+    if (!place || !hasCoordinates || place.latitude === null || place.longitude === null) return;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -223,14 +218,21 @@ export const PlaceDetailPage: React.FC = () => {
 
         {/* Action Route Button */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <button
-            type="button"
-            onClick={handleOpenGoogleMapsRoute}
-            className="flex-1 py-3 px-4 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition"
-          >
-            <Navigation2 className="w-4 h-4 fill-white" />
-            <span>Como Chegar (Rota no Maps)</span>
-          </button>
+          {hasCoordinates ? (
+            <button
+              type="button"
+              onClick={handleOpenGoogleMapsRoute}
+              className="flex-1 py-3 px-4 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition"
+            >
+              <Navigation2 className="w-4 h-4 fill-white" />
+              <span>Como Chegar (Rota no Maps)</span>
+            </button>
+          ) : (
+            <div className="flex-1 py-3 px-4 bg-gray-50 text-gray-500 rounded-2xl font-medium text-xs sm:text-sm flex items-center justify-center gap-2 border border-gray-200">
+              <MapPin className="w-4 h-4 text-gray-400" />
+              <span>Localização ainda não confirmada</span>
+            </div>
+          )}
 
           {place.whatsapp && (
             <a
@@ -253,22 +255,24 @@ export const PlaceDetailPage: React.FC = () => {
           <span>Sobre o Local</span>
         </h2>
         <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-          {place.description}
+          {place.description || place.short_description || 'Informação ausente'}
         </p>
 
         {/* Tags */}
-        {place.tags && place.tags.length > 0 && (
-          <div className="pt-2 flex flex-wrap gap-1.5">
-            {place.tags.map((tag, idx) => (
+        <div className="pt-2 flex flex-wrap gap-1.5">
+          {place.tags && place.tags.length > 0 ? (
+            place.tags.map((tag, idx) => (
               <span
                 key={idx}
                 className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-xl"
               >
                 #{tag}
               </span>
-            ))}
-          </div>
-        )}
+            ))
+          ) : (
+            <span className="text-xs text-gray-400 italic">Informação ausente</span>
+          )}
+        </div>
       </div>
 
       {/* 5. Contact & Opening Hours */}
@@ -281,7 +285,7 @@ export const PlaceDetailPage: React.FC = () => {
             <MapPin className="w-4 h-4 text-[#DE1F2A] shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-gray-800">Endereço</p>
-              <p className="text-gray-600 mt-0.5">{place.address}</p>
+              <p className="text-gray-600 mt-0.5">{place.address || 'Informação ausente'}</p>
             </div>
           </div>
 
@@ -290,7 +294,7 @@ export const PlaceDetailPage: React.FC = () => {
             <Clock className="w-4 h-4 text-[#DE1F2A] shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-gray-800">Horário de Funcionamento</p>
-              <p className="text-gray-600 mt-0.5">{place.opening_hours || 'Não informado'}</p>
+              <p className="text-gray-600 mt-0.5">{place.opening_hours || 'Informação ausente'}</p>
               {place.is_open_now && (
                 <span className="inline-block mt-1 text-[10px] font-bold text-emerald-600 bg-emerald-100/80 px-2 py-0.5 rounded-md">
                   Aberto agora
@@ -300,27 +304,29 @@ export const PlaceDetailPage: React.FC = () => {
           </div>
 
           {/* Telefone */}
-          {place.phone && (
-            <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50">
-              <Phone className="w-4 h-4 text-[#DE1F2A] shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-gray-800">Telefone</p>
+          <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50">
+            <Phone className="w-4 h-4 text-[#DE1F2A] shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-gray-800">Telefone</p>
+              {place.phone ? (
                 <a
                   href={`tel:${place.phone.replace(/\D/g, '')}`}
                   className="text-[#DE1F2A] font-semibold hover:underline mt-0.5 inline-block"
                 >
                   {place.phone}
                 </a>
-              </div>
+              ) : (
+                <p className="text-gray-500 mt-0.5">Informação ausente</p>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Instagram */}
-          {place.instagram && (
-            <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50">
-              <Instagram className="w-4 h-4 text-pink-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-gray-800">Instagram</p>
+          <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50">
+            <Instagram className="w-4 h-4 text-pink-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-gray-800">Instagram</p>
+              {place.instagram ? (
                 <a
                   href={`https://instagram.com/${place.instagram.replace('@', '')}`}
                   target="_blank"
@@ -329,16 +335,18 @@ export const PlaceDetailPage: React.FC = () => {
                 >
                   {place.instagram}
                 </a>
-              </div>
+              ) : (
+                <p className="text-gray-500 mt-0.5">Informação ausente</p>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Website */}
-          {place.website && (
-            <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50 sm:col-span-2">
-              <Globe className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-              <div className="min-w-0">
-                <p className="font-bold text-gray-800">Website Oficial</p>
+          <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50 sm:col-span-2">
+            <Globe className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="font-bold text-gray-800">Website Oficial</p>
+              {place.website ? (
                 <a
                   href={place.website}
                   target="_blank"
@@ -347,9 +355,11 @@ export const PlaceDetailPage: React.FC = () => {
                 >
                   {place.website}
                 </a>
-              </div>
+              ) : (
+                <p className="text-gray-500 mt-0.5">Informação ausente</p>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -357,18 +367,18 @@ export const PlaceDetailPage: React.FC = () => {
       <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-gray-900">Localização Geográfica</h2>
-          {hasCoordinates ? (
+          {hasCoordinates && place.latitude !== null && place.longitude !== null ? (
             <span className="text-xs text-gray-500">
               {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)}
             </span>
           ) : (
             <span className="text-[11px] text-amber-700 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-              Sem coordenadas GPS
+              Localização ainda não confirmada
             </span>
           )}
         </div>
 
-        {hasCoordinates ? (
+        {hasCoordinates && place.latitude !== null && place.longitude !== null ? (
           <div className="w-full h-48 rounded-2xl bg-slate-100 overflow-hidden relative border border-gray-200">
             <iframe
               title={`Mapa de ${place.name}`}
@@ -380,22 +390,14 @@ export const PlaceDetailPage: React.FC = () => {
             />
           </div>
         ) : (
-          <div className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-gray-800">Endereço textual:</p>
-              <p className="text-xs text-gray-600 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[#DE1F2A] shrink-0" />
-                <span>{place.address || `${place.neighborhood ? place.neighborhood + ', ' : ''}${place.city_name}`}</span>
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleOpenGoogleMapsRoute}
-              className="px-3.5 py-2 rounded-xl bg-black text-white text-xs font-bold hover:bg-gray-800 transition flex items-center gap-1.5 shrink-0"
-            >
-              <Navigation2 className="w-3.5 h-3.5" />
-              <span>Buscar no Google Maps</span>
-            </button>
+          <div className="w-full p-6 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex flex-col items-center justify-center text-center gap-2">
+            <MapPin className="w-6 h-6 text-amber-600 shrink-0" />
+            <p className="text-sm font-bold text-amber-900">
+              Localização ainda não confirmada
+            </p>
+            <p className="text-xs text-amber-700">
+              {place.address ? `Endereço indicado: ${place.address}` : 'Endereço em levantamento documental.'}
+            </p>
           </div>
         )}
       </div>

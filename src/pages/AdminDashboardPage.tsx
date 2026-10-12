@@ -15,6 +15,7 @@ import { API_BASE_URL, USE_MOCK_DATA } from '../services/api/config';
 import { setPageMeta } from '../utils/seo';
 import { BackButton } from '../components/common/BackButton';
 import { PlaceFormModal } from '../components/admin/PlaceFormModal';
+import { PlaceImportModal } from '../components/admin/PlaceImportModal';
 import { EventFormModal } from '../components/admin/EventFormModal';
 import { RejectClaimModal } from '../components/admin/RejectClaimModal';
 import { ConfirmDeleteModal } from '../components/admin/ConfirmDeleteModal';
@@ -43,6 +44,7 @@ import {
   Check,
   AlertCircle,
   RefreshCw,
+  UploadCloud,
 } from 'lucide-react';
 
 export const AdminDashboardPage: React.FC = () => {
@@ -91,6 +93,7 @@ export const AdminDashboardPage: React.FC = () => {
   // Modals state
   const [isPlaceModalOpen, setIsPlaceModalOpen] = useState(false);
   const [editingPlace, setEditingPlace] = useState<Place | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
@@ -543,17 +546,28 @@ export const AdminDashboardPage: React.FC = () => {
               <p className="text-xs text-gray-500">Criação, edição, exclusão e alteração de status em tempo real</p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setEditingPlace(null);
-                setIsPlaceModalOpen(true);
-              }}
-              className="px-4 py-2.5 bg-[#DE1F2A] hover:bg-[#C51620] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Novo Local</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(true)}
+                className="px-4 py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition"
+              >
+                <UploadCloud className="w-4 h-4 text-amber-400" />
+                <span>Importar locais JSON</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingPlace(null);
+                  setIsPlaceModalOpen(true);
+                }}
+                className="px-4 py-2.5 bg-[#DE1F2A] hover:bg-[#C51620] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Novo Local</span>
+              </button>
+            </div>
           </div>
 
           {/* Filtros e Busca */}
@@ -1326,6 +1340,15 @@ export const AdminDashboardPage: React.FC = () => {
         cities={cities}
         categories={categories}
         places={places}
+      />
+
+      <PlaceImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => {
+          showFeedback('success', 'Locais importados com sucesso! Status pendente atribuído.');
+          loadAllData();
+        }}
       />
 
       <RejectClaimModal

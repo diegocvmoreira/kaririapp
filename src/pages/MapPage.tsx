@@ -69,16 +69,25 @@ export const MapPage: React.FC = () => {
     loadPlaces();
   }, [loadPlaces]);
 
-  // Identifica locais que possuem apenas endereço textual sem coordenadas no mapa
+  // Filtra locais válidos com coordenadas para o mapa
+  const validPlaces = useMemo(() => {
+    return places.filter(
+      (place) =>
+        typeof place.latitude === 'number' &&
+        typeof place.longitude === 'number' &&
+        Number.isFinite(place.latitude) &&
+        Number.isFinite(place.longitude)
+    );
+  }, [places]);
+
+  // Identifica locais com coordenadas ausentes (em revisão)
   const placesWithoutCoords = useMemo(() => {
     return places.filter(
       (p) =>
         typeof p.latitude !== 'number' ||
         typeof p.longitude !== 'number' ||
-        isNaN(p.latitude) ||
-        isNaN(p.longitude) ||
-        Math.abs(p.latitude) <= 0.001 ||
-        Math.abs(p.longitude) <= 0.001
+        !Number.isFinite(p.latitude) ||
+        !Number.isFinite(p.longitude)
     );
   }, [places]);
 

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad-servicos" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64748B" />
+      <stop offset="100%" stop-color="#334155" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#grad-servicos)" />
+  <circle cx="200" cy="140" r="70" fill="white" opacity="0.15" />
+  <!-- Briefcase / Service Gear Icon -->
+  <rect x="160" y="120" width="80" height="55" rx="8" stroke="white" stroke-width="6" fill="none" />
+  <path d="M180 120 L180 105 C180 100 185 95 190 95 L210 95 C215 95 220 100 220 105 L220 120" stroke="white" stroke-width="6" fill="none" />
+  <line x1="160" y1="145" x2="240" y2="145" stroke="white" stroke-width="4" />
+  <text x="200" y="240" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="white" text-anchor="middle" letter-spacing="1">SERVIÇOS</text>
+</svg>

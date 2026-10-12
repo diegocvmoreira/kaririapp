@@ -84,8 +84,11 @@ export interface Place {
   neighborhood: string;
   address: string;
   zipcode?: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
+  coordinate_source?: string | null;
+  coordinate_confidence?: string | null;
+  needs_review?: boolean;
   cover_image: string;
   images: string[];
   rating: number;

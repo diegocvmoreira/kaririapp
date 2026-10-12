@@ -121,12 +121,18 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
               {place.name}
             </h3>
 
-            <LocationBadge
-              cityName={place.city_name}
-              neighborhood={place.neighborhood}
-              distanceKm={place.distance_km}
-              className="mt-1"
-            />
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              <LocationBadge
+                cityName={place.city_name}
+                neighborhood={place.neighborhood}
+                distanceKm={place.distance_km}
+              />
+              {(place.latitude === null || place.longitude === null || !Number.isFinite(place.latitude) || !Number.isFinite(place.longitude)) && (
+                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[9px] font-semibold">
+                  Localização ainda não confirmada
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-gray-50 text-xs">
@@ -193,7 +199,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
         />
 
         {/* Category & Status overlay */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10 max-w-[70%]">
           <span className="px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold text-gray-800 shadow-xs">
             {place.category_name}
           </span>
@@ -201,6 +207,11 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
             <span className="px-2 py-1 bg-emerald-500/90 backdrop-blur-md rounded-full text-[10px] font-bold text-white shadow-xs flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               Aberto
+            </span>
+          )}
+          {(place.latitude === null || place.longitude === null || !Number.isFinite(place.latitude) || !Number.isFinite(place.longitude)) && (
+            <span className="px-2 py-1 bg-amber-600/90 backdrop-blur-md rounded-full text-[10px] font-bold text-white shadow-xs">
+              Localização ainda não confirmada
             </span>
           )}
         </div>

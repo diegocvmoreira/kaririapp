@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad-gastronomia" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7A00" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#grad-gastronomia)" />
+  <circle cx="200" cy="140" r="70" fill="white" opacity="0.15" />
+  <!-- Fork and Knife Icon -->
+  <path d="M180 100 L180 180 M170 100 L170 135 C170 145 180 145 180 145 M190 100 L190 135 C190 145 180 145 180 145 M220 100 C220 120 215 135 215 150 L215 180" 
+        stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <text x="200" y="240" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="white" text-anchor="middle" letter-spacing="1">GASTRONOMIA</text>
+</svg>
