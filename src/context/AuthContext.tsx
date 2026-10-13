@@ -8,6 +8,8 @@ interface AuthContextType {
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<User>;
+  refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -17,15 +19,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const refreshUser = async () => {
+    try {
+      const currentUser = await authApi.getCurrentUser();
+      setUser(currentUser);
+    } catch {
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
-    authApi
-      .getCurrentUser()
-      .then((currentUser) => {
-        setUser(currentUser);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    refreshUser().finally(() => {
+      setIsLoading(false);
+    });
 
     const handleAuthExpired = () => {
       setUser(null);
@@ -57,6 +63,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfile = async (updates: Partial<User>) => {
+    const updated = await authApi.updateProfile(updates);
+    setUser(updated);
+    return updated;
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -75,6 +87,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         register,
+        updateProfile,
+        refreshUser,
         logout,
       }}
     >

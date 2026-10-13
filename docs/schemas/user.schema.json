@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://kariri.app.br/schemas/user.schema.json",
   "title": "User",
-  "description": "Schema canônico para usuários e perfis no Kariri.app",
+  "description": "Schema canônico para usuários e perfis no Kariri.app com distinção geográfica de procedência e residência",
   "type": "object",
   "required": [
     "id",
@@ -23,7 +23,15 @@
       "type": "string",
       "enum": ["active", "suspended", "pending"]
     },
+    "birth_city_id": { "type": ["integer", "null"] },
+    "birth_city_name": { "type": ["string", "null"] },
+    "current_city_id": { "type": ["integer", "null"] },
+    "current_city_name": { "type": ["string", "null"] },
+    "cariri_city_id": { "type": ["integer", "null"] },
     "city_preference": { "type": ["string", "null"] },
+    "marketing_consent": { "type": "boolean" },
+    "marketing_consent_at": { "type": ["string", "null"] },
+    "email_verified_at": { "type": ["string", "null"] },
     "created_at": { "type": "string" }
   },
   "additionalProperties": false

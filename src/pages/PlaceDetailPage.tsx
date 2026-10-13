@@ -17,6 +17,7 @@ import { ShareButton } from '../components/common/ShareButton';
 import { BusinessClaimModal } from '../components/common/BusinessClaimModal';
 import { ApiDiagnosticReport } from '../services/api/diagnostics';
 import { ApiError } from '../services/api/config';
+import { analytics } from '../services/analyticsService';
 import { setPageMeta } from '../utils/seo';
 import {
   MapPin,
@@ -72,6 +73,16 @@ export const PlaceDetailPage: React.FC = () => {
           image: data.cover_image,
         });
 
+        // Dispara evento place_view sem PII
+        analytics.track('place_view', {
+          place_id: data.id,
+          place_slug: data.slug,
+          place_name: data.name,
+          category_slug: data.category_slug,
+          city_slug: data.city_slug,
+          is_verified: data.is_verified,
+        });
+
         // Load similar places
         placesApi.getSimilar(data.id, data.category_slug).then(setSimilarPlaces).catch(() => {});
       })
@@ -103,6 +114,14 @@ export const PlaceDetailPage: React.FC = () => {
 
   const handleOpenGoogleMapsRoute = () => {
     if (!place || !hasCoordinates || place.latitude === null || place.longitude === null) return;
+    
+    analytics.track('directions_click', {
+      target_id: place.id,
+      target_type: 'place',
+      target_slug: place.slug,
+      city_slug: place.city_slug,
+    });
+
     const url = `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -110,6 +129,13 @@ export const PlaceDetailPage: React.FC = () => {
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!place || !reviewComment.trim()) return;
+
+    analytics.track('review_submit', {
+      place_id: place.id,
+      place_slug: place.slug,
+      rating: reviewRating,
+      has_title: false,
+    });
 
     setIsSubmittingReview(true);
     setReviewError(null);
@@ -121,6 +147,13 @@ export const PlaceDetailPage: React.FC = () => {
         user_avatar: user?.avatar,
         rating: reviewRating,
         comment: reviewComment,
+      });
+
+      // Avaliação publicada com sucesso
+      analytics.track('review_published', {
+        place_id: place.id,
+        place_slug: place.slug,
+        rating: reviewRating,
       });
 
       setPlace((prev) =>
@@ -239,6 +272,14 @@ export const PlaceDetailPage: React.FC = () => {
               href={`https://wa.me/${place.whatsapp}?text=${encodeURIComponent(`Olá! Encontrei o ${place.name} no Kariri.app.`)}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                analytics.track('whatsapp_click', {
+                  place_id: place.id,
+                  place_slug: place.slug,
+                  city_slug: place.city_slug,
+                  category_slug: place.category_slug,
+                });
+              }}
               className="py-3 px-5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition"
             >
               <MessageCircle className="w-4 h-4" />
@@ -311,6 +352,13 @@ export const PlaceDetailPage: React.FC = () => {
               {place.phone ? (
                 <a
                   href={`tel:${place.phone.replace(/\D/g, '')}`}
+                  onClick={() => {
+                    analytics.track('phone_click', {
+                      place_id: place.id,
+                      place_slug: place.slug,
+                      city_slug: place.city_slug,
+                    });
+                  }}
                   className="text-[#DE1F2A] font-semibold hover:underline mt-0.5 inline-block"
                 >
                   {place.phone}
@@ -351,6 +399,13 @@ export const PlaceDetailPage: React.FC = () => {
                   href={place.website}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => {
+                    analytics.track('website_click', {
+                      place_id: place.id,
+                      place_slug: place.slug,
+                      city_slug: place.city_slug,
+                    });
+                  }}
                   className="text-blue-600 font-semibold hover:underline mt-0.5 truncate block"
                 >
                   {place.website}

@@ -35,8 +35,11 @@ export interface ApiPlaceRaw {
   cover_image?: string | null;
   image?: string | null;
   images?: string[] | null;
-  tags?: string[] | null;
+  needs_review?: boolean | null;
+  coordinate_source?: string | null;
+  coordinate_confidence?: string | null;
   distance_km?: number | null;
+  tags?: string[] | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -128,11 +131,11 @@ export function mapApiPlaceToPlace(raw: ApiPlaceRaw): Place {
     zipcode: raw.zipcode || undefined,
     latitude: finalLatitude,
     longitude: finalLongitude,
-    coordinate_source: (raw as Record<string, unknown>).coordinate_source as string | undefined,
-    coordinate_confidence: (raw as Record<string, unknown>).coordinate_confidence as string | undefined,
-    needs_review: (raw as Record<string, unknown>).needs_review !== undefined
-      ? Boolean((raw as Record<string, unknown>).needs_review)
-      : true,
+    coordinate_source: raw.coordinate_source || undefined,
+    coordinate_confidence: raw.coordinate_confidence || undefined,
+    needs_review: raw.needs_review !== undefined && raw.needs_review !== null
+      ? Boolean(raw.needs_review)
+      : false,
     cover_image: cover,
     images,
     rating: isNaN(parsedRating) ? 0 : parsedRating,

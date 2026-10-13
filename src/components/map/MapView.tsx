@@ -3,6 +3,7 @@ import L from 'leaflet';
 import { Place } from '../../types';
 import { mapService, CARIRI_DEFAULT_CENTER } from '../../services/api/mapService';
 import { PlaceCard } from '../cards/PlaceCard';
+import { GeolocationConsentModal } from '../common/GeolocationConsentModal';
 import { Navigation, Layers, ZoomIn, ZoomOut, X } from 'lucide-react';
 
 interface MapViewProps {
@@ -11,6 +12,7 @@ interface MapViewProps {
   onPlaceSelect?: (place: Place | null) => void;
   className?: string;
   heightClass?: string;
+  onManualCitySelect?: () => void;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -19,6 +21,7 @@ export const MapView: React.FC<MapViewProps> = ({
   onPlaceSelect,
   className = '',
   heightClass = 'h-[calc(100vh-140px)]',
+  onManualCitySelect,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -27,6 +30,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const [activePlace, setActivePlace] = useState<Place | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [isGeoModalOpen, setIsGeoModalOpen] = useState(false);
 
   // Initialize Map
   useEffect(() => {
@@ -131,31 +135,25 @@ export const MapView: React.FC<MapViewProps> = ({
     });
   }, [activePlace, places]);
 
-  // Handle current user location
-  const handleLocateMe = async () => {
+  // Open consent modal before accessing geolocation
+  const handleLocateMeClick = () => {
+    setIsGeoModalOpen(true);
+  };
+
+  const handleConsentGranted = (coords: { latitude: number; longitude: number }) => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    setIsLocating(true);
-    try {
-      const coords = await mapService.getUserLocation();
-
-      if (userMarkerRef.current) {
-        userMarkerRef.current.remove();
-      }
-
-      const userIcon = mapService.createUserLocationIcon();
-      const marker = L.marker([coords.lat, coords.lng], { icon: userIcon }).addTo(map);
-      marker.bindPopup('Sua localização atual no Cariri').openPopup();
-      userMarkerRef.current = marker;
-
-      map.setView([coords.lat, coords.lng], 14, { animate: true });
-    } catch {
-      // Default to Juazeiro do Norte center if geolocation denied
-      map.setView([-7.2139, -39.3153], 13, { animate: true });
-    } finally {
-      setIsLocating(false);
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove();
     }
+
+    const userIcon = mapService.createUserLocationIcon();
+    const marker = L.marker([coords.latitude, coords.longitude], { icon: userIcon }).addTo(map);
+    marker.bindPopup('Sua localização aproximada no Cariri').openPopup();
+    userMarkerRef.current = marker;
+
+    map.setView([coords.latitude, coords.longitude], 14, { animate: true });
   };
 
   const handleZoomIn = () => mapInstanceRef.current?.zoomIn();
@@ -166,15 +164,28 @@ export const MapView: React.FC<MapViewProps> = ({
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full" />
 
+      {/* Geolocation consent modal with explicit purpose and manual choice */}
+      <GeolocationConsentModal
+        isOpen={isGeoModalOpen}
+        onClose={() => setIsGeoModalOpen(false)}
+        onConsentGranted={handleConsentGranted}
+        onManualSelect={() => {
+          setIsGeoModalOpen(false);
+          if (onManualCitySelect) {
+            onManualCitySelect();
+          }
+        }}
+      />
+
       {/* Floating Controls */}
       <div className="absolute right-3.5 top-3.5 z-20 flex flex-col gap-2">
         <button
           type="button"
-          onClick={handleLocateMe}
+          onClick={handleLocateMeClick}
           disabled={isLocating}
           className="w-10 h-10 rounded-2xl bg-white shadow-md flex items-center justify-center text-gray-700 hover:text-[#DE1F2A] hover:bg-gray-50 active:scale-95 transition"
-          aria-label="Minha localização atual"
-          title="Minha localização atual"
+          aria-label="Minha localização aproximada"
+          title="Minha localização aproximada (com explicação de finalidade)"
         >
           <Navigation className={`w-5 h-5 ${isLocating ? 'animate-spin text-[#DE1F2A]' : ''}`} />
         </button>

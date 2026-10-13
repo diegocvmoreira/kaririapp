@@ -17,6 +17,7 @@ import { ErrorState } from '../components/common/ErrorState';
 import { SectionHeader } from '../components/common/SectionHeader';
 import { ApiDiagnosticReport } from '../services/api/diagnostics';
 import { ApiError } from '../services/api/config';
+import { analytics } from '../services/analyticsService';
 import { setPageMeta } from '../utils/seo';
 
 export const ExplorePage: React.FC = () => {
@@ -119,6 +120,16 @@ export const ExplorePage: React.FC = () => {
 
       setPlaces(filteredPlaces);
       setEvents(filteredEvents);
+
+      // Dispara evento de search se houver termo de busca digitado
+      if (searchQuery.trim().length >= 2) {
+        analytics.track('search', {
+          search_term: searchQuery.trim(),
+          results_count: filteredPlaces.length + filteredEvents.length,
+          category_slug: filters.category_slug,
+          city_slug: filters.city_slug,
+        });
+      }
     } catch (err: unknown) {
       setHasError(true);
       if (err instanceof ApiError) {

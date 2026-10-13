@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kariri.app.br/schemas/city.schema.json",
+  "title": "City",
+  "description": "Schema canônico para cidades e territórios administráveis no Kariri.app",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "slug",
+    "state",
+    "is_active"
+  ],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string", "minLength": 2, "maxLength": 100 },
+    "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "state": { "type": "string", "minLength": 2, "maxLength": 2 },
+    "country": { "type": "string", "maxLength": 50 },
+    "latitude": { "type": ["number", "null"] },
+    "longitude": { "type": ["number", "null"] },
+    "image": { "type": ["string", "null"] },
+    "status": { "type": "string", "enum": ["active", "inactive"] },
+    "is_active": { "type": "boolean" },
+    "is_cariri_region": { "type": "boolean" },
+    "places_count": { "type": ["integer", "null"], "minimum": 0 },
+    "events_count": { "type": ["integer", "null"], "minimum": 0 },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { favoritesApi } from '../services/api/favorites';
+import { analytics } from '../services/analyticsService';
 
 interface FavoritesContextType {
   favoriteIds: number[];
   favoriteEventIds: number[];
   isFavorite: (placeId: number) => boolean;
-  toggleFavorite: (placeId: number) => Promise<void>;
+  toggleFavorite: (placeId: number, slug?: string) => Promise<void>;
   isEventFavorite: (eventId: number) => boolean;
-  toggleEventFavorite: (eventId: number) => Promise<void>;
+  toggleEventFavorite: (eventId: number, slug?: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -51,13 +52,23 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   );
 
   const toggleFavorite = useCallback(
-    async (placeId: number) => {
+    async (placeId: number, slug?: string) => {
       const isFav = favoriteIds.includes(placeId);
       if (isFav) {
         setFavoriteIds((prev) => prev.filter((id) => id !== placeId));
+        analytics.track('favorite_remove', {
+          item_id: placeId,
+          item_type: 'place',
+          item_slug: slug || `place-${placeId}`,
+        });
         await favoritesApi.removeFavorite(placeId);
       } else {
         setFavoriteIds((prev) => [...prev, placeId]);
+        analytics.track('favorite_add', {
+          item_id: placeId,
+          item_type: 'place',
+          item_slug: slug || `place-${placeId}`,
+        });
         await favoritesApi.addFavorite(placeId);
       }
     },
@@ -70,13 +81,23 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   );
 
   const toggleEventFavorite = useCallback(
-    async (eventId: number) => {
+    async (eventId: number, slug?: string) => {
       const isFav = favoriteEventIds.includes(eventId);
       if (isFav) {
         setFavoriteEventIds((prev) => prev.filter((id) => id !== eventId));
+        analytics.track('favorite_remove', {
+          item_id: eventId,
+          item_type: 'event',
+          item_slug: slug || `event-${eventId}`,
+        });
         await favoritesApi.removeFavoriteEvent(eventId);
       } else {
         setFavoriteEventIds((prev) => [...prev, eventId]);
+        analytics.track('favorite_add', {
+          item_id: eventId,
+          item_type: 'event',
+          item_slug: slug || `event-${eventId}`,
+        });
         await favoritesApi.addFavoriteEvent(eventId);
       }
     },

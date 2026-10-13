@@ -16,6 +16,7 @@ const PlaceDetailPage = lazy(() => import('../pages/PlaceDetailPage').then((m) =
 const EventDetailPage = lazy(() => import('../pages/EventDetailPage').then((m) => ({ default: m.EventDetailPage })));
 const CategoryDetailPage = lazy(() => import('../pages/CategoryDetailPage').then((m) => ({ default: m.CategoryDetailPage })));
 const AdminDashboardPage = lazy(() => import('../pages/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })));
+const LegalPrivacyPage = lazy(() => import('../pages/LegalPrivacyPage').then((m) => ({ default: m.LegalPrivacyPage })));
 
 const PageSuspenseFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center p-6">
@@ -82,6 +83,32 @@ export const AppRoutes: React.FC = () => {
         {/* Auth routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cadastro" element={<RegisterPage />} />
+
+        {/* Legal & Compliance routes */}
+        <Route
+          path="/privacidade"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <LegalPrivacyPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/cookies"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <LegalPrivacyPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/termos"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <LegalPrivacyPage />
+            </Suspense>
+          }
+        />
 
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />

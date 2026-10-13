@@ -12,6 +12,7 @@ import {
   ApiDiagnosticCategory,
 } from '../services/api/diagnostics';
 import { API_BASE_URL, USE_MOCK_DATA } from '../services/api/config';
+import { analytics } from '../services/analyticsService';
 import { setPageMeta } from '../utils/seo';
 import { BackButton } from '../components/common/BackButton';
 import { PlaceFormModal } from '../components/admin/PlaceFormModal';
@@ -19,6 +20,7 @@ import { PlaceImportModal } from '../components/admin/PlaceImportModal';
 import { EventFormModal } from '../components/admin/EventFormModal';
 import { RejectClaimModal } from '../components/admin/RejectClaimModal';
 import { ConfirmDeleteModal } from '../components/admin/ConfirmDeleteModal';
+import { CityFormModal } from '../components/admin/CityFormModal';
 import {
   Building2,
   Calendar,
@@ -55,7 +57,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [cities, setCities] = useState<City[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
-  const [activeTab, setActiveTab] = useState<'places' | 'events' | 'users' | 'claims' | 'diagnostics'>('places');
+  const [activeTab, setActiveTab] = useState<'places' | 'events' | 'cities' | 'users' | 'claims' | 'diagnostics'>('places');
   const [isLoading, setIsLoading] = useState(true);
 
   // Search & Filter states
@@ -68,6 +70,12 @@ export const AdminDashboardPage: React.FC = () => {
   const [eventCityFilter, setEventCityFilter] = useState('all');
   const [eventPage, setEventPage] = useState(1);
   const EVENTS_PER_PAGE = 6;
+
+  const [citySearch, setCitySearch] = useState('');
+  const [cityStatusFilter, setCityStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [cityRegionFilter, setCityRegionFilter] = useState<'all' | 'cariri' | 'outside'>('all');
+  const [cityPage, setCityPage] = useState(1);
+  const CITIES_PER_PAGE = 8;
 
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('all');
@@ -87,6 +95,10 @@ export const AdminDashboardPage: React.FC = () => {
   }, [eventSearch, eventCityFilter]);
 
   useEffect(() => {
+    setCityPage(1);
+  }, [citySearch, cityStatusFilter, cityRegionFilter]);
+
+  useEffect(() => {
     setUserPage(1);
   }, [userSearch, userRoleFilter, userStatusFilter]);
 
@@ -98,10 +110,13 @@ export const AdminDashboardPage: React.FC = () => {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
 
+  const [isCityModalOpen, setIsCityModalOpen] = useState(false);
+  const [editingCity, setEditingCity] = useState<City | null>(null);
+
   const [rejectingClaim, setRejectingClaim] = useState<BusinessClaim | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<{
-    type: 'local' | 'evento';
+    type: 'local' | 'evento' | 'cidade';
     id: number;
     title: string;
   } | null>(null);
@@ -220,16 +235,56 @@ export const AdminDashboardPage: React.FC = () => {
         await placesApi.delete(deleteTarget.id);
         setPlaces((prev) => prev.filter((p) => p.id !== deleteTarget.id));
         showFeedback('success', `Local "${deleteTarget.title}" excluído.`);
-      } else {
+      } else if (deleteTarget.type === 'evento') {
         await eventsApi.delete(deleteTarget.id);
         setEvents((prev) => prev.filter((e) => e.id !== deleteTarget.id));
         showFeedback('success', `Evento "${deleteTarget.title}" excluído.`);
+      } else {
+        await citiesApi.delete(deleteTarget.id);
+        setCities((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+        showFeedback('success', `Cidade "${deleteTarget.title}" excluída com sucesso.`);
       }
       setDeleteTarget(null);
     } catch (err: unknown) {
       showFeedback('error', 'Falha ao realizar exclusão no backend.');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // City handlers
+  const handleSaveCity = async (data: Partial<City>) => {
+    try {
+      if (editingCity) {
+        const updated = await citiesApi.update(editingCity.id, data);
+        setCities((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+        showFeedback('success', `Cidade "${updated.name}" atualizada com sucesso!`);
+      } else {
+        const created = await citiesApi.create(data);
+        setCities((prev) => [created, ...prev]);
+        showFeedback('success', `Cidade "${created.name}" cadastrada com sucesso!`);
+      }
+      setIsCityModalOpen(false);
+      setEditingCity(null);
+    } catch (err: any) {
+      showFeedback('error', err?.message || 'Falha ao salvar cidade.');
+    }
+  };
+
+  const handleToggleCityStatus = async (cityItem: City) => {
+    try {
+      const nextStatus = cityItem.is_active ? 'inactive' : 'active';
+      const updated = await citiesApi.update(cityItem.id, {
+        is_active: !cityItem.is_active,
+        status: nextStatus,
+      });
+      setCities((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      showFeedback(
+        'success',
+        `Cidade "${cityItem.name}" agora está ${updated.is_active ? 'ativa' : 'inativa'}.`
+      );
+    } catch {
+      showFeedback('error', 'Falha ao alterar status da cidade.');
     }
   };
 
@@ -240,6 +295,14 @@ export const AdminDashboardPage: React.FC = () => {
       setClaims((prev) =>
         prev.map((c) => (c.id === claim.id ? { ...c, status: 'approved' } : c))
       );
+
+      // Dispara evento claim_approved sem PII
+      analytics.track('claim_approved', {
+        place_id: claim.place_id,
+        place_slug: `place-${claim.place_id}`,
+        claim_role_type: 'business_owner',
+      });
+
       showFeedback('success', `Reivindicação de "${claim.place_name}" aprovada.`);
     } catch (err: unknown) {
       showFeedback('error', 'Falha ao aprovar reivindicação.');
@@ -328,6 +391,39 @@ export const AdminDashboardPage: React.FC = () => {
   const paginatedEvents = filteredEvents.slice(
     (eventPage - 1) * EVENTS_PER_PAGE,
     eventPage * EVENTS_PER_PAGE
+  );
+
+  // Filtering cities
+  const filteredCities = cities.filter((c) => {
+    const q = citySearch.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      c.name.toLowerCase().includes(q) ||
+      c.slug.toLowerCase().includes(q) ||
+      c.state.toLowerCase().includes(q) ||
+      (c.country || 'Brasil').toLowerCase().includes(q);
+
+    const matchesStatus =
+      cityStatusFilter === 'all'
+        ? true
+        : cityStatusFilter === 'active'
+        ? c.is_active
+        : !c.is_active;
+
+    const matchesRegion =
+      cityRegionFilter === 'all'
+        ? true
+        : cityRegionFilter === 'cariri'
+        ? c.is_cariri_region === true
+        : c.is_cariri_region === false;
+
+    return matchesSearch && matchesStatus && matchesRegion;
+  });
+
+  const totalCityPages = Math.max(1, Math.ceil(filteredCities.length / CITIES_PER_PAGE));
+  const paginatedCities = filteredCities.slice(
+    (cityPage - 1) * CITIES_PER_PAGE,
+    cityPage * CITIES_PER_PAGE
   );
 
   // Filtering users
@@ -490,6 +586,19 @@ export const AdminDashboardPage: React.FC = () => {
         >
           <Calendar className="w-3.5 h-3.5" />
           <span>Gestão de Eventos ({events.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('cities')}
+          className={`px-4 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 ${
+            activeTab === 'cities'
+              ? 'bg-black text-white shadow-xs'
+              : 'bg-white text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <MapPin className="w-3.5 h-3.5" />
+          <span>Gestão de Cidades ({cities.length})</span>
         </button>
 
         <button
@@ -900,6 +1009,229 @@ export const AdminDashboardPage: React.FC = () => {
                     type="button"
                     onClick={() => setEventPage((p) => Math.min(totalEventPages, p + 1))}
                     disabled={eventPage >= totalEventPages}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <span>Próxima</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ABA: GESTÃO DE CIDADES */}
+      {activeTab === 'cities' && (
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-xs p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+            <div>
+              <h2 className="text-base font-bold text-gray-900">
+                Gestão Territorial de Cidades
+              </h2>
+              <p className="text-xs text-gray-500">
+                Administre os municípios atendidos pelo catálogo do Cariri e cidades de referência para cadastro
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingCity(null);
+                setIsCityModalOpen(true);
+              }}
+              className="px-4 py-2 bg-[#DE1F2A] hover:bg-[#C51620] text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs w-fit"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Nova Cidade</span>
+            </button>
+          </div>
+
+          {/* Filtros de Cidades */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={citySearch}
+                onChange={(e) => setCitySearch(e.target.value)}
+                placeholder="Buscar por nome, estado ou país..."
+                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-[#DE1F2A]"
+              />
+            </div>
+
+            <select
+              value={cityStatusFilter}
+              onChange={(e) => setCityStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-[#DE1F2A]"
+            >
+              <option value="all">Todos os Status</option>
+              <option value="active">Apenas Ativas</option>
+              <option value="inactive">Apenas Inativas</option>
+            </select>
+
+            <select
+              value={cityRegionFilter}
+              onChange={(e) => setCityRegionFilter(e.target.value as 'all' | 'cariri' | 'outside')}
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-[#DE1F2A]"
+            >
+              <option value="all">Todas as Regiões</option>
+              <option value="cariri">Catálogo Cariri Cearense</option>
+              <option value="outside">Referência Fora do Cariri</option>
+            </select>
+          </div>
+
+          {/* Tabela de Cidades */}
+          {filteredCities.length === 0 ? (
+            <div className="text-center py-12 text-gray-400 text-xs">
+              Nenhuma cidade encontrada com os filtros aplicados.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-gray-100 text-gray-400 uppercase text-[10px] tracking-wider">
+                    <th className="py-2.5 px-3">Cidade / Território</th>
+                    <th className="py-2.5 px-3">Estado & País</th>
+                    <th className="py-2.5 px-3">Coordenadas</th>
+                    <th className="py-2.5 px-3">Abrangência</th>
+                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-3 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-gray-700">
+                  {paginatedCities.map((c) => (
+                    <tr key={c.id} className="hover:bg-gray-50/60 transition">
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2.5">
+                          {c.image ? (
+                            <img
+                              src={c.image}
+                              alt={c.name}
+                              className="w-8 h-8 rounded-xl object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-xl bg-red-50 text-[#DE1F2A] flex items-center justify-center shrink-0 font-bold text-xs">
+                              <MapPin className="w-4 h-4" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-bold text-gray-900">{c.name}</p>
+                            <p className="text-[10px] text-gray-400">slug: {c.slug}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-3">
+                        <span className="font-semibold text-gray-800">
+                          {c.state} — {c.country || 'Brasil'}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-3">
+                        {c.latitude !== null && c.longitude !== null && Number.isFinite(c.latitude) && Number.isFinite(c.longitude) ? (
+                          <span className="text-[11px] font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                            {c.latitude.toFixed(4)}, {c.longitude.toFixed(4)}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-medium">
+                            Coordenadas ausentes
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-3">
+                        {c.is_cariri_region ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            Catálogo do Cariri
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600">
+                            Referência Cadastral
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-3">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCityStatus(c)}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition ${
+                            c.is_active
+                              ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              : 'bg-red-50 text-red-600 hover:bg-red-100'
+                          }`}
+                        >
+                          {c.is_active ? 'Ativa' : 'Inativa'}
+                        </button>
+                      </td>
+
+                      <td className="py-3 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingCity(c);
+                              setIsCityModalOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition"
+                            title="Editar cidade"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeleteTarget({
+                                type: 'cidade',
+                                id: c.id,
+                                title: c.name,
+                              });
+                            }}
+                            className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
+                            title="Excluir cidade"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Paginação de Cidades */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100 px-3">
+                <span className="text-xs text-gray-500">
+                  Mostrando{' '}
+                  <strong className="text-gray-900">
+                    {(cityPage - 1) * CITIES_PER_PAGE + 1}
+                  </strong>{' '}
+                  a{' '}
+                  <strong className="text-gray-900">
+                    {Math.min(cityPage * CITIES_PER_PAGE, filteredCities.length)}
+                  </strong>{' '}
+                  de <strong className="text-gray-900">{filteredCities.length}</strong> cidades
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCityPage((p) => Math.max(1, p - 1))}
+                    disabled={cityPage <= 1}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Anterior</span>
+                  </button>
+
+                  <span className="text-xs font-bold text-gray-700 px-2">
+                    {cityPage} / {totalCityPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setCityPage((p) => Math.min(totalCityPages, p + 1))}
+                    disabled={cityPage >= totalCityPages}
                     className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 text-xs font-semibold px-2"
                   >
                     <span>Próxima</span>
@@ -1340,6 +1672,16 @@ export const AdminDashboardPage: React.FC = () => {
         cities={cities}
         categories={categories}
         places={places}
+      />
+
+      <CityFormModal
+        isOpen={isCityModalOpen}
+        onClose={() => {
+          setIsCityModalOpen(false);
+          setEditingCity(null);
+        }}
+        onSubmit={handleSaveCity}
+        city={editingCity}
       />
 
       <PlaceImportModal

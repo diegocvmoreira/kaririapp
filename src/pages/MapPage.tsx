@@ -9,6 +9,7 @@ import { ErrorState } from '../components/common/ErrorState';
 import { LoadingState } from '../components/common/LoadingState';
 import { ApiDiagnosticReport } from '../services/api/diagnostics';
 import { ApiError } from '../services/api/config';
+import { analytics } from '../services/analyticsService';
 import { setPageMeta } from '../utils/seo';
 import { Link } from 'react-router-dom';
 import { MapPin, ChevronUp, ChevronDown, ExternalLink } from 'lucide-react';
@@ -29,6 +30,11 @@ export const MapPage: React.FC = () => {
     setPageMeta({
       title: 'Mapa Interativo do Cariri Cearense',
       description: 'Navegue geograficamente por pontos turísticos, restaurantes e atrações em Juazeiro, Crato e Barbalha.',
+    });
+
+    analytics.track('map_open', {
+      source_context: 'navbar',
+      initial_city_slug: selectedCitySlug,
     });
   }, []);
 

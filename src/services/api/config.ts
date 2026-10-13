@@ -2,6 +2,7 @@
 // Configurado para Laravel REST API em https://kariri.app.br/kariri-api/public/index.php/api
 
 import { diagnoseApiIssue, ApiDiagnosticReport } from './diagnostics';
+import { analytics } from '../analyticsService';
 
 export const API_BASE_URL =
   (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL ||
@@ -29,6 +30,17 @@ export class ApiError extends Error {
     this.endpoint = endpoint;
     this.diagnostic = diagnoseApiIssue(status, message, data, endpoint);
     this.userFriendlyMessage = this.diagnostic.userMessage;
+
+    // Dispara evento de analytics agregado por status (Sem PII)
+    try {
+      analytics.track('api_error', {
+        http_status: status,
+        endpoint_path: (endpoint || 'unknown').split('?')[0],
+        diagnostic_category: this.diagnostic.category,
+      });
+    } catch {
+      // Ignora falhas no track para não interromper fluxo de tratamento de erro
+    }
   }
 }
 

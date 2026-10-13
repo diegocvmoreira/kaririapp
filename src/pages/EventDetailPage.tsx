@@ -11,6 +11,7 @@ import { EventCard } from '../components/cards/EventCard';
 import { SectionHeader } from '../components/common/SectionHeader';
 import { ApiDiagnosticReport } from '../services/api/diagnostics';
 import { ApiError } from '../services/api/config';
+import { analytics } from '../services/analyticsService';
 import { setPageMeta } from '../utils/seo';
 import {
   Calendar,
@@ -53,6 +54,15 @@ export const EventDetailPage: React.FC = () => {
           title: `${data.title} - ${data.city_name}`,
           description: data.description.slice(0, 150),
           image: data.cover_image,
+        });
+
+        // Dispara evento event_view sem PII
+        analytics.track('event_view', {
+          event_id: data.id,
+          event_slug: data.slug,
+          event_title: data.title,
+          city_slug: data.city_slug,
+          is_free: data.is_free,
         });
 
         // Carrega outros eventos recomendados
@@ -222,6 +232,14 @@ export const EventDetailPage: React.FC = () => {
             )}`}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              analytics.track('directions_click', {
+                target_id: event.id,
+                target_type: 'event',
+                target_slug: event.slug,
+                city_slug: event.city_slug,
+              });
+            }}
             className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-gray-800 border border-gray-200 rounded-xl text-xs font-semibold hover:bg-gray-50 transition shrink-0"
           >
             <Navigation className="w-3.5 h-3.5 text-[#DE1F2A]" />

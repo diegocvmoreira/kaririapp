@@ -1,12 +1,17 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import { Header } from '../components/common/Header';
 import { BottomNavigation } from '../components/common/BottomNavigation';
+import { CookieConsentBanner } from '../components/common/CookieConsentBanner';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, Shield } from 'lucide-react';
 
 export const MainLayout: React.FC = () => {
   const isOnline = useOnlineStatus();
+
+  const handleOpenCookiePreferences = () => {
+    window.dispatchEvent(new CustomEvent('kariri:open_cookie_preferences'));
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#000000] selection:bg-[#DE1F2A] selection:text-white pb-20 md:pb-0">
@@ -26,8 +31,43 @@ export const MainLayout: React.FC = () => {
         <Outlet />
       </main>
 
+      {/* Desktop / Tablet Minimal Footer with LGPD Compliance Links */}
+      <footer className="border-t border-gray-200/80 bg-white/70 py-6 px-4 mt-8">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-900 tracking-tight">KARIRI.APP</span>
+            <span>•</span>
+            <span>Guia Digital e Descoberta no Cariri Cearense</span>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link to="/privacidade" className="hover:text-[#DE1F2A] transition">
+              Aviso de Privacidade
+            </Link>
+            <Link to="/cookies" className="hover:text-[#DE1F2A] transition">
+              Política de Cookies
+            </Link>
+            <Link to="/termos" className="hover:text-[#DE1F2A] transition">
+              Termos de Uso
+            </Link>
+            <button
+              type="button"
+              onClick={handleOpenCookiePreferences}
+              className="text-[#DE1F2A] hover:underline font-semibold flex items-center gap-1"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Preferências de Cookies</span>
+            </button>
+          </div>
+        </div>
+      </footer>
+
       {/* Mobile Bottom Fixed Navigation */}
       <BottomNavigation />
+
+      {/* Cookie Consent Banner (Google Consent Mode v2 + LGPD) */}
+      <CookieConsentBanner />
     </div>
   );
 };
+

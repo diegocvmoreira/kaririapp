@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Share2, Check } from 'lucide-react';
+import { analytics } from '../../services/analyticsService';
 
 interface ShareButtonProps {
   title: string;
@@ -7,6 +8,9 @@ interface ShareButtonProps {
   url?: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  itemType?: 'place' | 'event';
+  itemId?: number;
+  itemSlug?: string;
 }
 
 export const ShareButton: React.FC<ShareButtonProps> = ({
@@ -15,6 +19,9 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   url,
   size = 'md',
   className = '',
+  itemType,
+  itemId,
+  itemSlug,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -28,6 +35,22 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
     sm: 'w-3.5 h-3.5',
     md: 'w-4 h-4',
     lg: 'w-5 h-5',
+  };
+
+  const trackShare = (channel: 'whatsapp' | 'native_share' | 'copy_link') => {
+    if (itemType === 'place' && itemId) {
+      analytics.track('share_place', {
+        place_id: itemId,
+        place_slug: itemSlug || `place-${itemId}`,
+        share_channel: channel,
+      });
+    } else if (itemType === 'event' && itemId) {
+      analytics.track('share_event', {
+        event_id: itemId,
+        event_slug: itemSlug || `event-${itemId}`,
+        share_channel: channel,
+      });
+    }
   };
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -44,6 +67,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
     if (navigator.share) {
       try {
         await navigator.share(shareData);
+        trackShare('native_share');
         return;
       } catch {
         // Fallback to clipboard
@@ -53,6 +77,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
+      trackShare('copy_link');
       setTimeout(() => setCopied(false), 2200);
     } catch {
       // ignore

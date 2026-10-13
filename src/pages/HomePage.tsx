@@ -15,6 +15,7 @@ import { ErrorState } from '../components/common/ErrorState';
 import { PWAInstallButton } from '../components/common/PWAInstallButton';
 import { ApiDiagnosticReport } from '../services/api/diagnostics';
 import { ApiError } from '../services/api/config';
+import { analytics } from '../services/analyticsService';
 import { setPageMeta } from '../utils/seo';
 import { Sparkles, Compass } from 'lucide-react';
 
@@ -85,6 +86,10 @@ export const HomePage: React.FC = () => {
   const handleSearchSubmit = (val: string) => {
     setSearchQuery(val);
     if (val.trim()) {
+      analytics.track('search', {
+        search_term: val.trim(),
+        city_slug: selectedCitySlug !== 'all' ? selectedCitySlug : undefined,
+      });
       navigate(`/explorar?q=${encodeURIComponent(val.trim())}`);
     }
   };

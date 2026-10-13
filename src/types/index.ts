@@ -4,7 +4,7 @@
 export type UserRole = 'visitor' | 'user' | 'business' | 'admin';
 export type EntityStatus = 'draft' | 'pending' | 'published' | 'rejected' | 'archived';
 export type ClaimStatus = 'pending' | 'reviewed' | 'approved' | 'rejected';
-export type UserStatus = 'active' | 'suspended' | 'pending';
+export type UserStatus = 'active' | 'suspended' | 'pending' | 'inactive' | 'deleted';
 
 export interface User {
   id: number;
@@ -14,6 +14,14 @@ export interface User {
   role: UserRole;
   status?: UserStatus;
   city_preference?: string;
+  birth_city_id?: number | null;
+  birth_city_name?: string | null;
+  current_city_id?: number | null;
+  current_city_name?: string | null;
+  cariri_city_id?: number | null;
+  marketing_consent?: boolean;
+  marketing_consent_at?: string | null;
+  email_verified_at?: string | null;
   created_at?: string;
 }
 
@@ -22,12 +30,15 @@ export interface City {
   name: string;
   slug: string;
   state: string;
-  latitude: number;
-  longitude: number;
+  country?: string;
+  latitude: number | null;
+  longitude: number | null;
   image?: string;
   status?: string;
   is_active: boolean;
+  is_cariri_region?: boolean;
   places_count?: number;
+  events_count?: number;
 }
 
 export interface Category {

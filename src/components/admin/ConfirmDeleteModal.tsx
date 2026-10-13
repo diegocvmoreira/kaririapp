@@ -6,7 +6,7 @@ interface ConfirmDeleteModalProps {
   onClose: () => void;
   onConfirm: () => Promise<void>;
   title: string;
-  itemType: 'local' | 'evento';
+  itemType: 'local' | 'evento' | 'cidade';
   isDeleting: boolean;
 }
 

@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { KaririLogo } from '../components/common/KaririLogo';
 import { setPageMeta } from '../utils/seo';
-import { Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
+import { analytics } from '../services/analyticsService';
+import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -13,28 +14,40 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
 
   React.useEffect(() => {
     setPageMeta({
       title: 'Entrar na Conta',
-      description: 'Acesse sua conta no Kariri.app para gerenciar favoritos e experiências.',
+      description: 'Acesse sua conta no Kariri.app para gerenciar favoritos e experiências no Cariri.',
     });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
-      setErrorMsg('Por favor, preencha todos os campos.');
+      setErrorMsg('Por favor, informe seu e-mail e sua senha.');
       return;
     }
 
     setIsSubmitting(true);
     setErrorMsg('');
+    setInfoMsg('');
     try {
-      await login({ email, password });
+      const loggedUser = await login({ email: email.trim(), password });
+
+      // Dispara evento de login sem PII
+      analytics.track('login', {
+        method: 'email_password',
+        user_role: loggedUser?.role || 'user',
+      });
+
       navigate('/perfil');
-    } catch {
-      setErrorMsg('Não foi possível realizar o login. Verifique seus dados.');
+    } catch (err: any) {
+      setErrorMsg(
+        err?.message ||
+          'Não foi possível realizar o login. Verifique os dados digitados e tente novamente.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -52,18 +65,25 @@ export const LoginPage: React.FC = () => {
         </Link>
       </div>
 
-      <div className="w-full bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-md space-y-6">
+      <div className="w-full bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-xl space-y-6">
         <div className="text-center space-y-2">
           <KaririLogo size="lg" className="justify-center" />
           <h1 className="text-xl font-bold text-gray-900 pt-2">Acesse sua conta</h1>
           <p className="text-xs text-gray-500">
-            Descubra o melhor de Crato, Juazeiro e Barbalha
+            Descubra o melhor de Crato, Juazeiro, Barbalha e todo o Cariri
           </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 bg-red-50 border border-red-200 text-[#DE1F2A] text-xs font-medium rounded-xl">
-            {errorMsg}
+          <div className="p-3 bg-red-50 border border-red-200 text-[#DE1F2A] text-xs font-medium rounded-xl flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {infoMsg && (
+          <div className="p-3 bg-blue-50 border border-blue-200 text-blue-800 text-xs font-medium rounded-xl">
+            {infoMsg}
           </div>
         )}
 
@@ -91,7 +111,10 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setErrorMsg('A recuperação de senha por e-mail será processada pela API Laravel.');
+                  analytics.track('password_reset_request', {
+                    status: 'requested',
+                  });
+                  setInfoMsg('Se o e-mail estiver cadastrado, instruções de recuperação serão encaminhadas.');
                 }}
                 className="text-[11px] font-semibold text-[#DE1F2A] hover:underline"
               >

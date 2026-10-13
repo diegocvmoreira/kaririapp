@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Place } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { businessClaimsApi } from '../../services/api/businessClaims';
+import { analytics } from '../../services/analyticsService';
 import { X, Building2, CheckCircle2 } from 'lucide-react';
 
 interface BusinessClaimModalProps {
@@ -26,6 +27,15 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  useEffect(() => {
+    if (isOpen && place) {
+      analytics.track('claim_start', {
+        place_id: place.id,
+        place_slug: place.slug,
+      });
+    }
+  }, [isOpen, place]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,6 +58,14 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
         message,
         proof,
       });
+
+      // Dispara evento claim_submit sem PII (telefone, email e proof são omitidos)
+      analytics.track('claim_submit', {
+        place_id: place.id,
+        place_slug: place.slug,
+        claim_role_type: 'business_owner',
+      });
+
       setIsSuccess(true);
     } catch {
       setErrorMsg('Falha ao enviar reivindicação. Tente novamente mais tarde.');

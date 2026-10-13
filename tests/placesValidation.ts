@@ -216,7 +216,8 @@ async function runAsyncTests() {
   });
   const uniqueColors = new Set(
     iconConfigs.map((cfg) => {
-      const match = cfg.html.match(/background-color:\s*([^;]+);/);
+      const htmlStr = typeof cfg.html === 'string' ? cfg.html : '';
+      const match = htmlStr.match(/background-color:\s*([^;]+);/);
       return match ? match[1].trim() : '';
     })
   );

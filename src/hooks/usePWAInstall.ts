@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { analytics } from '../services/analyticsService';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -44,7 +45,17 @@ export function usePWAInstall() {
   const install = async () => {
     if (!deferredPrompt) return false;
     await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    const { outcome, platform } = await deferredPrompt.userChoice;
+
+    try {
+      analytics.track('install_pwa', {
+        outcome,
+        platform: platform || (isIOS ? 'ios' : 'web'),
+      });
+    } catch {
+      // ignore
+    }
+
     if (outcome === 'accepted') {
       setIsInstalled(true);
       setDeferredPrompt(null);
