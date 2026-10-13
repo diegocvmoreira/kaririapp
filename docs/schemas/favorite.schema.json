@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kariri.app.br/schemas/favorite.schema.json",
+  "title": "Favorite",
+  "description": "Schema canônico para favoritos de locais e eventos no Kariri.app",
+  "type": "object",
+  "required": [
+    "id",
+    "user_id"
+  ],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "user_id": { "type": "integer", "minimum": 1 },
+    "place_id": { "type": ["integer", "null"] },
+    "event_id": { "type": ["integer", "null"] },
+    "place": { "$ref": "place.schema.json" },
+    "event": { "$ref": "event.schema.json" },
+    "created_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

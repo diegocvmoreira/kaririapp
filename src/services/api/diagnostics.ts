@@ -36,16 +36,26 @@ export interface EndpointDiagnosticResult {
   itemCount?: number;
 }
 
+export function sanitizeLogDetails(input: string): string {
+  if (!input) return '';
+  return input
+    .replace(/Bearer\s+[A-Za-z0-9_\-\.]+/gi, 'Bearer [REDACTED_TOKEN]')
+    .replace(/"password"\s*:\s*"[^"]+"/gi, '"password":"[REDACTED]"')
+    .replace(/"token"\s*:\s*"[^"]+"/gi, '"token":"[REDACTED]"')
+    .replace(/([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})/gi, '$1***@$2.$3');
+}
+
 export function diagnoseApiIssue(
   status: number,
   errorMessage: string = '',
   rawBody?: unknown,
   endpoint?: string
 ): ApiDiagnosticReport {
-  const msgLower = (errorMessage || '').toLowerCase();
-  const rawStr = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody || '');
+  const sanitizedMsg = sanitizeLogDetails(errorMessage);
+  const msgLower = (sanitizedMsg || '').toLowerCase();
+  const rawStr = sanitizeLogDetails(typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody || ''));
   const timestamp = new Date().toISOString();
-  const endpointInfo = endpoint ? ` [Endpoint: ${endpoint}]` : '';
+  const endpointInfo = endpoint ? ` [Endpoint: ${sanitizeLogDetails(endpoint)}]` : '';
 
   // 1. Diagnóstico de Rede Offline (Dispositivo sem internet)
   const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kariri.app.br/schemas/place.schema.json",
+  "title": "Place",
+  "description": "Schema canônico para estabelecimentos e atrativos no Kariri.app",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "slug",
+    "category_slug",
+    "city_slug",
+    "status",
+    "verified"
+  ],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "owner_id": { "type": ["integer", "null"] },
+    "name": { "type": "string", "minLength": 2, "maxLength": 255 },
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "short_description": { "type": ["string", "null"] },
+    "description": { "type": ["string", "null"] },
+    "category_id": { "type": "integer", "minimum": 1 },
+    "category_name": { "type": "string" },
+    "category_slug": {
+      "type": "string",
+      "enum": [
+        "gastronomia",
+        "turismo",
+        "cultura-arte",
+        "vida-noturna",
+        "natureza-e-trilhas",
+        "compras-e-artesanato",
+        "religiosidade",
+        "servicos",
+        "eventos"
+      ]
+    },
+    "city_id": { "type": "integer", "minimum": 1 },
+    "city_name": { "type": "string" },
+    "city_slug": {
+      "type": "string",
+      "enum": ["crato", "juazeiro-do-norte", "barbalha", "nova-olinda", "santana-do-cariri", "cariri"]
+    },
+    "neighborhood": { "type": ["string", "null"] },
+    "address": { "type": ["string", "null"] },
+    "zipcode": { "type": ["string", "null"] },
+    "latitude": { "type": ["number", "null"] },
+    "longitude": { "type": ["number", "null"] },
+    "coordinate_source": { "type": ["string", "null"] },
+    "coordinate_confidence": { "type": ["string", "null"] },
+    "needs_review": { "type": "boolean" },
+    "cover_image": { "type": "string" },
+    "images": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "rating": { "type": "number", "minimum": 0, "maximum": 5 },
+    "reviews_count": { "type": "integer", "minimum": 0 },
+    "price_level": { "type": "integer", "enum": [1, 2, 3, 4] },
+    "is_featured": { "type": "boolean" },
+    "verified": { "type": "boolean" },
+    "is_open_now": { "type": "boolean" },
+    "opening_hours": { "type": ["string", "null"] },
+    "phone": { "type": ["string", "null"] },
+    "whatsapp": { "type": ["string", "null"] },
+    "instagram": { "type": ["string", "null"] },
+    "facebook": { "type": ["string", "null"] },
+    "website": { "type": ["string", "null"] },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "pending", "published", "rejected", "archived"]
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

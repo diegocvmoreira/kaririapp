@@ -1,0 +1,228 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kariri.app REST API",
+    "version": "1.0.0",
+    "description": "API canônica para o guia digital e plataforma de descoberta local do Cariri Cearense (Crato, Juazeiro do Norte, Barbalha).",
+    "contact": {
+      "name": "Suporte Kariri.app",
+      "url": "https://kariri.app.br"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://kariri.app.br/kariri-api/public/index.php/api",
+      "description": "Servidor de Produção Laravel"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "SanctumToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum Token",
+        "description": "Token de autenticação gerado via POST /login ou POST /register"
+      }
+    },
+    "schemas": {
+      "Place": { "$ref": "place.schema.json" },
+      "Event": { "$ref": "event.schema.json" },
+      "User": { "$ref": "user.schema.json" },
+      "Favorite": { "$ref": "favorite.schema.json" },
+      "BusinessClaim": { "$ref": "claim.schema.json" },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string" },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/places": {
+      "get": {
+        "summary": "Lista locais com filtros e paginação",
+        "parameters": [
+          { "name": "city", "in": "query", "schema": { "type": "string" } },
+          { "name": "category", "in": "query", "schema": { "type": "string" } },
+          { "name": "q", "in": "query", "schema": { "type": "string" } },
+          { "name": "min_rating", "in": "query", "schema": { "type": "number" } },
+          { "name": "open_now", "in": "query", "schema": { "type": "integer", "enum": [0, 1] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de locais retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Place" } },
+                    "meta": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/places/{slug}": {
+      "get": {
+        "summary": "Detalhes de um local por slug",
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Local encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/Place" }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Local não encontrado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "summary": "Lista eventos culturais",
+        "parameters": [
+          { "name": "city", "in": "query", "schema": { "type": "string" } },
+          { "name": "category", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de eventos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Event" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/favorites": {
+      "get": {
+        "summary": "Lista favoritos do usuário logado",
+        "security": [{ "SanctumToken": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de favoritos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Favorite" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      },
+      "post": {
+        "summary": "Adiciona favorito",
+        "security": [{ "SanctumToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "place_id": { "type": "integer" },
+                  "event_id": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Favorito salvo com sucesso" },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/business-claims": {
+      "post": {
+        "summary": "Envia solicitação de reivindicação de local",
+        "security": [{ "SanctumToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["place_id", "message"],
+                "properties": {
+                  "place_id": { "type": "integer" },
+                  "message": { "type": "string", "minLength": 10 },
+                  "phone": { "type": "string" },
+                  "proof": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Reivindicação enviada para análise" }
+        }
+      }
+    },
+    "/admin/places/import": {
+      "post": {
+        "summary": "Importação administrativa em lote",
+        "security": [{ "SanctumToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["places"],
+                "properties": {
+                  "places": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/Place" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Importação concluída com relatório" }
+        }
+      }
+    }
+  }
+}

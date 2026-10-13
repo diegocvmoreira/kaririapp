@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kariri.app.br/schemas/event.schema.json",
+  "title": "Event",
+  "description": "Schema canônico para eventos e agenda cultural no Kariri.app",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "slug",
+    "start_date",
+    "display_date",
+    "city_slug",
+    "category",
+    "status"
+  ],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "place_id": { "type": ["integer", "null"] },
+    "city_id": { "type": "integer", "minimum": 1 },
+    "category_id": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 2, "maxLength": 255 },
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "description": { "type": "string" },
+    "cover_image": { "type": "string" },
+    "start_date": { "type": "string", "format": "date" },
+    "end_date": { "type": ["string", "null"] },
+    "display_date": { "type": "string" },
+    "start_time": { "type": "string" },
+    "end_time": { "type": ["string", "null"] },
+    "place_name": { "type": "string" },
+    "city_name": { "type": "string" },
+    "city_slug": { "type": "string" },
+    "address": { "type": "string" },
+    "price_text": { "type": "string" },
+    "price": { "type": ["number", "null"] },
+    "is_free": { "type": "boolean" },
+    "ticket_url": { "type": ["string", "null"] },
+    "organizer": { "type": ["string", "null"] },
+    "category": { "type": "string" },
+    "is_featured": { "type": "boolean" },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "pending", "published", "rejected", "archived"]
+    }
+  },
+  "additionalProperties": false
+}

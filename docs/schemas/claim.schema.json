@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kariri.app.br/schemas/claim.schema.json",
+  "title": "BusinessClaim",
+  "description": "Schema canônico para reivindicação de estabelecimentos comerciais no Kariri.app",
+  "type": "object",
+  "required": [
+    "id",
+    "user_id",
+    "place_id",
+    "message",
+    "status",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "user_id": { "type": "integer", "minimum": 1 },
+    "user_name": { "type": ["string", "null"] },
+    "user_email": { "type": ["string", "null"], "format": "email" },
+    "place_id": { "type": "integer", "minimum": 1 },
+    "place_name": { "type": ["string", "null"] },
+    "message": { "type": "string", "minLength": 10, "maxLength": 1000 },
+    "proof": { "type": ["string", "null"] },
+    "phone": { "type": ["string", "null"] },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "reviewed", "approved", "rejected"]
+    },
+    "reviewed_by": { "type": ["integer", "null"] },
+    "reviewed_at": { "type": ["string", "null"] },
+    "created_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

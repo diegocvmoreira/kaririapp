@@ -4,6 +4,7 @@
 export type UserRole = 'visitor' | 'user' | 'business' | 'admin';
 export type EntityStatus = 'draft' | 'pending' | 'published' | 'rejected' | 'archived';
 export type ClaimStatus = 'pending' | 'reviewed' | 'approved' | 'rejected';
+export type UserStatus = 'active' | 'suspended' | 'pending';
 
 export interface User {
   id: number;
@@ -11,7 +12,7 @@ export interface User {
   email: string;
   avatar?: string;
   role: UserRole;
-  status?: string;
+  status?: UserStatus;
   city_preference?: string;
   created_at?: string;
 }
@@ -150,6 +151,16 @@ export interface BusinessClaim {
   status: ClaimStatus;
   reviewed_by?: number | null;
   reviewed_at?: string | null;
+  created_at: string;
+}
+
+export interface Favorite {
+  id: number;
+  user_id: number;
+  place_id?: number | null;
+  event_id?: number | null;
+  place?: Place;
+  event?: EventItem;
   created_at: string;
 }
 
