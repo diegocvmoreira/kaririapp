@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { KaririLogo } from '../components/common/KaririLogo';
 import { CitySelectorInput } from '../components/common/CitySelectorInput';
@@ -23,6 +23,14 @@ import {
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Validação estrita para evitar vulnerabilidade de open redirect
+  const returnToRaw = searchParams.get('returnTo');
+  const safeReturnTo =
+    returnToRaw && returnToRaw.startsWith('/') && !returnToRaw.startsWith('//')
+      ? returnToRaw
+      : '/perfil';
 
   // Campos básicos
   const [name, setName] = useState('');
@@ -174,10 +182,10 @@ export const RegisterPage: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
-              onClick={() => navigate('/perfil')}
+              onClick={() => navigate(safeReturnTo)}
               className="flex-1 py-3 bg-[#DE1F2A] hover:bg-[#C51620] text-white rounded-xl font-bold text-xs sm:text-sm shadow-sm transition"
             >
-              Ver meu perfil
+              {safeReturnTo !== '/perfil' ? 'Continuar navegação' : 'Ver meu perfil'}
             </button>
             <button
               onClick={() => navigate('/explorar')}

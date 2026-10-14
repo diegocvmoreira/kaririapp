@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { KaririLogo } from '../components/common/KaririLogo';
 import { setPageMeta } from '../utils/seo';
@@ -9,6 +9,14 @@ import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Validação estrita para evitar vulnerabilidade de open redirect
+  const returnToRaw = searchParams.get('returnTo');
+  const safeReturnTo =
+    returnToRaw && returnToRaw.startsWith('/') && !returnToRaw.startsWith('//')
+      ? returnToRaw
+      : '/perfil';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,15 +42,16 @@ export const LoginPage: React.FC = () => {
     setErrorMsg('');
     setInfoMsg('');
     try {
-      const loggedUser = await login({ email: email.trim(), password });
+      await login({ email: email.trim(), password });
 
       // Dispara evento de login sem PII
       analytics.track('login', {
         method: 'email_password',
-        user_role: loggedUser?.role || 'user',
+        user_role: 'user',
       });
 
-      navigate('/perfil');
+      // Retorna para a página original que exigiu autenticação ou para o perfil
+      navigate(safeReturnTo);
     } catch (err: any) {
       setErrorMsg(
         err?.message ||
@@ -108,18 +117,12 @@ export const LoginPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold text-gray-700">Senha</label>
-              <button
-                type="button"
-                onClick={() => {
-                  analytics.track('password_reset_request', {
-                    status: 'requested',
-                  });
-                  setInfoMsg('Se o e-mail estiver cadastrado, instruções de recuperação serão encaminhadas.');
-                }}
+              <Link
+                to={`/esqueci-senha${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ''}`}
                 className="text-[11px] font-semibold text-[#DE1F2A] hover:underline"
               >
                 Esqueceu a senha?
-              </button>
+              </Link>
             </div>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -147,7 +150,10 @@ export const LoginPage: React.FC = () => {
         <div className="text-center pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-500">
             Ainda não tem conta?{' '}
-            <Link to="/cadastro" className="text-[#DE1F2A] font-bold hover:underline">
+            <Link
+              to={`/cadastro${returnToRaw ? `?returnTo=${encodeURIComponent(safeReturnTo)}` : ''}`}
+              className="text-[#DE1F2A] font-bold hover:underline"
+            >
               Criar conta gratuita
             </Link>
           </p>

@@ -4,10 +4,12 @@ import { Header } from '../components/common/Header';
 import { BottomNavigation } from '../components/common/BottomNavigation';
 import { CookieConsentBanner } from '../components/common/CookieConsentBanner';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { WifiOff, Shield } from 'lucide-react';
+import { useServiceWorkerUpdate } from '../hooks/useServiceWorkerUpdate';
+import { WifiOff, Shield, RefreshCw } from 'lucide-react';
 
 export const MainLayout: React.FC = () => {
   const isOnline = useOnlineStatus();
+  const { hasUpdate, updateApp, hasCachedData } = useServiceWorkerUpdate();
 
   const handleOpenCookiePreferences = () => {
     window.dispatchEvent(new CustomEvent('kariri:open_cookie_preferences'));
@@ -15,11 +17,30 @@ export const MainLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#000000] selection:bg-[#DE1F2A] selection:text-white pb-20 md:pb-0">
-      {/* Offline Toast */}
+      {/* Aviso de Nova Versão Disponível */}
+      {hasUpdate && (
+        <div className="bg-gray-900 text-white text-xs font-semibold py-2 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50 animate-fade-in shadow-md">
+          <RefreshCw className="w-3.5 h-3.5 text-[#DE1F2A] animate-spin" />
+          <span>Nova versão disponível</span>
+          <button
+            type="button"
+            onClick={updateApp}
+            className="ml-2 px-2.5 py-0.5 rounded-lg bg-[#DE1F2A] hover:bg-[#C51620] text-white text-[11px] font-bold transition"
+          >
+            Atualizar
+          </button>
+        </div>
+      )}
+
+      {/* Offline Toast Honesto */}
       {!isOnline && (
         <div className="bg-amber-500 text-white text-xs font-semibold py-1.5 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50">
           <WifiOff className="w-3.5 h-3.5" />
-          <span>Modo Offline: Visualizando dados armazenados no dispositivo.</span>
+          <span>
+            {hasCachedData
+              ? 'Modo Offline: Visualizando dados armazenados no dispositivo.'
+              : 'Você está offline. Algumas informações podem não estar disponíveis.'}
+          </span>
         </div>
       )}
 

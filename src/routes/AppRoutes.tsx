@@ -17,6 +17,8 @@ const EventDetailPage = lazy(() => import('../pages/EventDetailPage').then((m) =
 const CategoryDetailPage = lazy(() => import('../pages/CategoryDetailPage').then((m) => ({ default: m.CategoryDetailPage })));
 const AdminDashboardPage = lazy(() => import('../pages/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })));
 const LegalPrivacyPage = lazy(() => import('../pages/LegalPrivacyPage').then((m) => ({ default: m.LegalPrivacyPage })));
+const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })));
 
 const PageSuspenseFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center p-6">
@@ -83,6 +85,22 @@ export const AppRoutes: React.FC = () => {
         {/* Auth routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cadastro" element={<RegisterPage />} />
+        <Route
+          path="/esqueci-senha"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <ForgotPasswordPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/redefinir-senha"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <ResetPasswordPage />
+            </Suspense>
+          }
+        />
 
         {/* Legal & Compliance routes */}
         <Route

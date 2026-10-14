@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Place, Review } from '../types';
 import { placesApi } from '../services/api/places';
 import { reviewsApi } from '../services/api/reviews';
@@ -31,6 +31,8 @@ import {
   Building2,
   Star,
   Send,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 
 export const PlaceDetailPage: React.FC = () => {
@@ -52,6 +54,16 @@ export const PlaceDetailPage: React.FC = () => {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const hasTrackedReviewStart = useRef(false);
+
+  const handleReviewStart = () => {
+    if (hasTrackedReviewStart.current || !place) return;
+    hasTrackedReviewStart.current = true;
+    analytics.track('review_start', {
+      place_id: place.id,
+      place_slug: place.slug,
+    });
+  };
 
   const loadPlaceDetail = (placeSlug: string) => {
     setIsLoading(true);
@@ -80,7 +92,7 @@ export const PlaceDetailPage: React.FC = () => {
           place_name: data.name,
           category_slug: data.category_slug,
           city_slug: data.city_slug,
-          is_verified: data.is_verified,
+          is_verified: data.verified,
         });
 
         // Load similar places
@@ -128,7 +140,17 @@ export const PlaceDetailPage: React.FC = () => {
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!place || !reviewComment.trim()) return;
+    if (!place) return;
+
+    if (!isAuthenticated) {
+      setReviewError('Você precisa estar conectado à sua conta para publicar uma avaliação.');
+      return;
+    }
+
+    if (reviewComment.trim().length < 10) {
+      setReviewError('Por favor, escreva pelo menos 10 caracteres para que sua avaliação ajude outros visitantes.');
+      return;
+    }
 
     analytics.track('review_submit', {
       place_id: place.id,
@@ -140,13 +162,10 @@ export const PlaceDetailPage: React.FC = () => {
     setIsSubmittingReview(true);
     setReviewError(null);
     try {
+      // O autor é identificado exclusivamente pelo token Sanctum no backend
       const newRev = await reviewsApi.addReview(place.id, {
-        place_id: place.id,
-        user_id: user?.id || 1,
-        user_name: user?.name || 'Explorador do Cariri',
-        user_avatar: user?.avatar,
         rating: reviewRating,
-        comment: reviewComment,
+        comment: reviewComment.trim(),
       });
 
       // Avaliação publicada com sucesso
@@ -471,65 +490,125 @@ export const PlaceDetailPage: React.FC = () => {
           </span>
         </div>
 
-        {/* Submit Review Form */}
-        <form onSubmit={handleReviewSubmit} className="bg-gray-50 p-4 rounded-2xl space-y-3 border border-gray-100">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-800">Deixe sua nota:</span>
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setReviewRating(star)}
-                  className="p-1 text-amber-400 hover:scale-110 transition"
-                  aria-label={`${star} estrelas`}
-                >
-                  <Star
-                    className={`w-5 h-5 ${
-                      star <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'
-                    }`}
-                  />
-                </button>
-              ))}
+        {/* Submit Review Form or Invite to Login */}
+        {!isAuthenticated ? (
+          <div className="bg-gray-50/80 p-5 sm:p-6 rounded-2xl border border-gray-200/80 text-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-red-50 text-[#DE1F2A] flex items-center justify-center mx-auto">
+              <Star className="w-5 h-5 fill-[#DE1F2A]" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-gray-900">Entre para avaliar este local</h3>
+              <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                Crie sua conta ou acesse para avaliar, favoritar locais e acompanhar suas contribuições no Kariri.app.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2.5 pt-1">
+              <Link
+                to={`/login?returnTo=${encodeURIComponent(`/locais/${place.slug}`)}`}
+                className="px-4 py-2 bg-[#DE1F2A] hover:bg-[#C51620] text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Entrar</span>
+              </Link>
+              <Link
+                to={`/cadastro?returnTo=${encodeURIComponent(`/locais/${place.slug}`)}`}
+                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-bold rounded-xl transition flex items-center gap-1.5"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Criar conta</span>
+              </Link>
             </div>
           </div>
-
-          <textarea
-            required
-            rows={2}
-            value={reviewComment}
-            onChange={(e) => setReviewComment(e.target.value)}
-            placeholder="Como foi sua experiência neste local?"
-            className="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
-          />
-
-          {reviewError && (
-            <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold">
-              {reviewError}
+        ) : (
+          <form onSubmit={handleReviewSubmit} className="bg-gray-50 p-4 rounded-2xl space-y-3 border border-gray-100">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-800">Deixe sua nota:</span>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => {
+                      setReviewRating(star);
+                      handleReviewStart();
+                    }}
+                    className="p-1 text-amber-400 hover:scale-110 transition"
+                    aria-label={`${star} estrelas`}
+                  >
+                    <Star
+                      className={`w-5 h-5 ${
+                        star <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
 
-          <div className="flex items-center justify-between">
-            {reviewSuccess ? (
-              <span className="text-xs text-emerald-600 font-bold">
-                Avaliação publicada com sucesso!
-              </span>
-            ) : (
-              <span className="text-[11px] text-gray-400">
-                {isAuthenticated ? `Publicando como ${user?.name}` : 'Publicando como visitante'}
-              </span>
+            <div className="space-y-1">
+              <textarea
+                required
+                rows={3}
+                value={reviewComment}
+                onFocus={handleReviewStart}
+                onChange={(e) => {
+                  setReviewComment(e.target.value);
+                  handleReviewStart();
+                }}
+                placeholder="Como foi sua experiência neste local? Conte detalhes sobre o atendimento, espaço e qualidade..."
+                minLength={10}
+                className="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A] transition"
+              />
+              <div className="flex items-center justify-between px-1 text-[11px]">
+                <span
+                  className={
+                    reviewComment.trim().length >= 10
+                      ? 'text-emerald-600 font-semibold'
+                      : 'text-gray-400'
+                  }
+                >
+                  {reviewComment.trim().length}/10 caracteres mínimos
+                </span>
+                <span className="text-gray-400">Publicando como {user?.name}</span>
+              </div>
+            </div>
+
+            {reviewError && (
+              <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold flex items-start justify-between gap-2">
+                <span>{reviewError}</span>
+                {reviewError.toLowerCase().includes('sessão') && (
+                  <Link
+                    to={`/login?returnTo=${encodeURIComponent(`/locais/${place.slug}`)}`}
+                    className="underline font-bold shrink-0 text-[#DE1F2A]"
+                  >
+                    Entrar novamente
+                  </Link>
+                )}
+              </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isSubmittingReview}
-              className="px-4 py-2 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition disabled:opacity-50"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>{isSubmittingReview ? 'Enviando...' : 'Avaliar'}</span>
-            </button>
-          </div>
-        </form>
+            <div className="flex items-center justify-between pt-1">
+              {reviewSuccess ? (
+                <span className="text-xs text-emerald-600 font-bold">
+                  Avaliação publicada com sucesso!
+                </span>
+              ) : (
+                <span className="text-[11px] text-gray-500">
+                  Avaliações passam por diretrizes da comunidade
+                </span>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmittingReview || reviewComment.trim().length < 10}
+                className="px-4 py-2 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition disabled:opacity-40"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>{isSubmittingReview ? 'Enviando...' : 'Publicar Avaliação'}</span>
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* Existing Reviews List */}
         {place.reviews && place.reviews.length > 0 ? (

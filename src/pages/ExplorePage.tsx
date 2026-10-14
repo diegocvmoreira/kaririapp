@@ -19,15 +19,21 @@ import { ApiDiagnosticReport } from '../services/api/diagnostics';
 import { ApiError } from '../services/api/config';
 import { analytics } from '../services/analyticsService';
 import { setPageMeta } from '../utils/seo';
+import { fuzzyIncludes, normalizeText } from '../utils/textUtils';
 
 export const ExplorePage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { cities, selectedCitySlug } = useCity();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'places' | 'events'>('all');
+
+  // Leitura inicial de tab da URL (all | places | events)
+  const initialTabParam = searchParams.get('tab');
+  const initialTab: 'all' | 'places' | 'events' =
+    initialTabParam === 'places' || initialTabParam === 'events' ? initialTabParam : 'all';
+  const [activeTab, setActiveTab] = useState<'all' | 'places' | 'events'>(initialTab);
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -51,6 +57,20 @@ export const ExplorePage: React.FC = () => {
       description: 'Pesquise pontos turísticos, restaurantes, bares e festas no Cariri cearense.',
     });
   }, []);
+
+  // Sincroniza estado de busca, filtros e aba ativa com os parâmetros da URL
+  useEffect(() => {
+    const nextParams = new URLSearchParams();
+    if (searchQuery.trim()) nextParams.set('q', searchQuery.trim());
+    if (filters.city_slug) nextParams.set('city', filters.city_slug);
+    if (filters.category_slug) nextParams.set('cat', filters.category_slug);
+    if (activeTab !== 'all') nextParams.set('tab', activeTab);
+
+    // Atualiza a URL apenas se houver diferença real para não disparar re-render redundante
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchQuery, filters.city_slug, filters.category_slug, activeTab]);
 
   // Sync city selection if changed globally in Header
   useEffect(() => {
@@ -86,35 +106,36 @@ export const ExplorePage: React.FC = () => {
 
       if (filters.category_slug) {
         const catObj = categories.find((c) => c.slug === filters.category_slug);
-        const catName = catObj ? catObj.name.toLowerCase() : filters.category_slug.toLowerCase();
+        const catName = catObj ? catObj.name : filters.category_slug;
         filteredEvents = filteredEvents.filter(
           (e) =>
-            e.category.toLowerCase().includes(catName) ||
-            e.category.toLowerCase().includes(filters.category_slug!.toLowerCase()) ||
-            catName.includes(e.category.toLowerCase())
+            fuzzyIncludes(e.category, catName) ||
+            fuzzyIncludes(e.category, filters.category_slug) ||
+            fuzzyIncludes(catName, e.category)
         );
       }
 
+      // Busca client-side com normalização completa de acentos e caixa (ex.: 'cafe' encontra 'café')
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
         filteredPlaces = filteredPlaces.filter(
           (p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.short_description.toLowerCase().includes(q) ||
-            p.category_name.toLowerCase().includes(q) ||
-            p.city_name.toLowerCase().includes(q) ||
-            p.neighborhood.toLowerCase().includes(q) ||
-            p.tags.some((t) => t.toLowerCase().includes(q))
+            fuzzyIncludes(p.name, searchQuery) ||
+            fuzzyIncludes(p.short_description, searchQuery) ||
+            fuzzyIncludes(p.description, searchQuery) ||
+            fuzzyIncludes(p.category_name, searchQuery) ||
+            fuzzyIncludes(p.city_name, searchQuery) ||
+            fuzzyIncludes(p.neighborhood, searchQuery) ||
+            p.tags.some((t) => fuzzyIncludes(t, searchQuery))
         );
 
         filteredEvents = filteredEvents.filter(
           (e) =>
-            e.title.toLowerCase().includes(q) ||
-            e.category.toLowerCase().includes(q) ||
-            e.city_name.toLowerCase().includes(q) ||
-            e.place_name.toLowerCase().includes(q) ||
-            e.description.toLowerCase().includes(q) ||
-            (e.organizer && e.organizer.toLowerCase().includes(q))
+            fuzzyIncludes(e.title, searchQuery) ||
+            fuzzyIncludes(e.category, searchQuery) ||
+            fuzzyIncludes(e.city_name, searchQuery) ||
+            fuzzyIncludes(e.place_name, searchQuery) ||
+            fuzzyIncludes(e.description, searchQuery) ||
+            (e.organizer && fuzzyIncludes(e.organizer, searchQuery))
         );
       }
 
@@ -165,14 +186,20 @@ export const ExplorePage: React.FC = () => {
       (filters.price_levels && filters.price_levels.length > 0)
   );
 
-  // Matched categories for mixed results (Seção 13)
+  // Matched categories for mixed results (Seção 13) com busca insensível a acentos
   const matchedCategories = searchQuery.trim()
-    ? categories.filter((c) =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
-      )
+    ? categories.filter((c) => fuzzyIncludes(c.name, searchQuery))
     : [];
 
   const totalResults = places.length + events.length;
+
+  const activeCityName = filters.city_slug
+    ? cities.find((c) => c.slug === filters.city_slug)?.name || filters.city_slug
+    : null;
+
+  const activeCategoryName = filters.category_slug
+    ? categories.find((c) => c.slug === filters.category_slug)?.name || filters.category_slug
+    : null;
 
   return (
     <div className="space-y-4 px-4 py-4 max-w-7xl mx-auto pb-10">
@@ -242,18 +269,18 @@ export const ExplorePage: React.FC = () => {
         ))}
       </div>
 
-      {/* 4. Active Filter Tags Indicator */}
+      {/* 4. Active Filter Tags Indicator com NOMES em vez de slugs */}
       {hasActiveFilters && (
         <div className="flex items-center gap-2 text-xs text-gray-500 overflow-x-auto no-scrollbar py-1">
           <span className="font-semibold text-gray-400 shrink-0">Filtros:</span>
-          {filters.city_slug && (
+          {activeCityName && (
             <span className="px-2.5 py-1 bg-gray-100 rounded-full font-medium text-gray-700 shrink-0">
-              Cidade: {filters.city_slug}
+              Cidade: {activeCityName}
             </span>
           )}
-          {filters.category_slug && (
+          {activeCategoryName && (
             <span className="px-2.5 py-1 bg-gray-100 rounded-full font-medium text-gray-700 shrink-0">
-              Categoria: {filters.category_slug}
+              Categoria: {activeCategoryName}
             </span>
           )}
           {filters.open_now && (

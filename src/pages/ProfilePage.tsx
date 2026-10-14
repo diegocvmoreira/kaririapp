@@ -371,17 +371,6 @@ export const ProfilePage: React.FC = () => {
 
       {/* 5. Menu Actions */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-xs divide-y divide-gray-100 overflow-hidden">
-        <Link
-          to="/favoritos"
-          className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition"
-        >
-          <div className="flex items-center gap-3">
-            <Heart className="w-4 h-4 text-gray-400" />
-            <span className="font-semibold">Meus Favoritos</span>
-          </div>
-          <span className="text-xs text-gray-400 font-medium">{favoriteIds.length}</span>
-        </Link>
-
         {isAdmin && (
           <Link
             to="/admin"
@@ -397,7 +386,7 @@ export const ProfilePage: React.FC = () => {
           </Link>
         )}
 
-        <div className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition cursor-pointer">
+        <div className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition">
           <div className="flex items-center gap-3">
             <Settings className="w-4 h-4 text-gray-400" />
             <span className="font-semibold">Preferências de Notificação</span>
@@ -405,15 +394,18 @@ export const ProfilePage: React.FC = () => {
           <span className="text-xs text-gray-400">Ativo</span>
         </div>
 
-        <div className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition cursor-pointer">
+        <Link
+          to="/privacidade"
+          className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition"
+        >
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-4 h-4 text-gray-400" />
             <span className="font-semibold">Privacidade & Termos</span>
           </div>
           <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
-        </div>
+        </Link>
 
-        <div className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition cursor-pointer">
+        <div className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition">
           <div className="flex items-center gap-3">
             <HelpCircle className="w-4 h-4 text-gray-400" />
             <span className="font-semibold">Sobre o Kariri.app</span>

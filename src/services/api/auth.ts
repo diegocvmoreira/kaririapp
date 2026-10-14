@@ -27,6 +27,17 @@ export interface AuthResponse {
   requires_verification?: boolean;
 }
 
+export interface ResetPasswordData {
+  email: string;
+  token: string;
+  password: string;
+  password_confirmation: string;
+}
+
+export interface PasswordActionResponse {
+  message: string;
+}
+
 // Controle de tentativas para rate limiting local contra automação
 let authAttemptTimestamps: number[] = [];
 
@@ -116,6 +127,99 @@ export const authApi = {
             err.data,
             '/register'
           );
+        }
+      }
+      throw err;
+    }
+  },
+
+  async forgotPassword(email: string): Promise<PasswordActionResponse> {
+    if (!checkClientRateLimit()) {
+      throw new ApiError(
+        429,
+        'Muitas tentativas em curto período. Por favor, aguarde alguns instantes antes de tentar novamente.',
+        { rate_limit: true },
+        '/forgot-password'
+      );
+    }
+
+    if (USE_MOCK_DATA) {
+      return this.mockForgotPassword(email);
+    }
+
+    try {
+      const res = await apiClient<PasswordActionResponse>('/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      // Mensagem genérica padronizada para evitar enumeração de contas
+      return {
+        message: 'Se o e-mail informado estiver cadastrado, você receberá um link com instruções para redefinir sua senha.',
+      };
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 429) {
+        throw new ApiError(
+          429,
+          'Muitas tentativas em curto período. Por favor, aguarde alguns instantes antes de tentar novamente.',
+          err.data,
+          '/forgot-password'
+        );
+      }
+      // Sempre retorna a mesma mensagem para evitar enumeração, a menos que seja 429
+      return {
+        message: 'Se o e-mail informado estiver cadastrado, você receberá um link com instruções para redefinir sua senha.',
+      };
+    }
+  },
+
+  async resetPassword(data: ResetPasswordData): Promise<PasswordActionResponse> {
+    if (!checkClientRateLimit()) {
+      throw new ApiError(
+        429,
+        'Muitas tentativas em curto período. Por favor, aguarde alguns instantes antes de tentar novamente.',
+        { rate_limit: true },
+        '/reset-password'
+      );
+    }
+
+    if (USE_MOCK_DATA) {
+      return this.mockResetPassword(data);
+    }
+
+    try {
+      const res = await apiClient<PasswordActionResponse>('/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: data.email.trim().toLowerCase(),
+          token: data.token,
+          password: data.password,
+          password_confirmation: data.password_confirmation,
+        }),
+      });
+      return {
+        message: res.message || 'Senha redefinida com sucesso! Você já pode entrar com sua nova senha.',
+      };
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        if (err.status === 429) {
+          throw new ApiError(
+            429,
+            'Muitas tentativas em curto período. Por favor, aguarde alguns instantes antes de tentar novamente.',
+            err.data,
+            '/reset-password'
+          );
+        }
+        if (err.status === 400 || err.status === 422) {
+          const errData = err.data as { errors?: Record<string, string[]>; message?: string } | undefined;
+          const msg = errData?.message || (errData?.errors ? Object.values(errData.errors).flat().join(', ') : '');
+          if (msg.toLowerCase().includes('token') || msg.toLowerCase().includes('expir') || msg.toLowerCase().includes('inválid')) {
+            throw new ApiError(
+              400,
+              'O token de recuperação é inválido ou expirou. Por favor, solicite um novo link.',
+              err.data,
+              '/reset-password'
+            );
+          }
         }
       }
       throw err;
@@ -225,5 +329,67 @@ export const authApi = {
     localStorage.setItem('kariri_auth_token', token);
     localStorage.setItem('kariri_user_profile', JSON.stringify(newUser));
     return { user: newUser, token, requires_verification: true };
+  },
+
+  async mockForgotPassword(email: string): Promise<PasswordActionResponse> {
+    await simulateNetworkDelay(null, 400);
+
+    // Salva token simulado no localStorage para permitir teste local completo de redefinição
+    const demoToken = 'mock_valid_token_' + Math.random().toString(36).substring(2, 9);
+    try {
+      localStorage.setItem('kariri_mock_reset_token', JSON.stringify({ token: demoToken, email }));
+      console.info(
+        `[MOCK RECUPERAÇÃO DE SENHA] Link gerado para testes:\n/redefinir-senha?token=${demoToken}&email=${encodeURIComponent(email)}`
+      );
+    } catch {
+      // ignore
+    }
+
+    return {
+      message: 'Se o e-mail informado estiver cadastrado, você receberá um link com instruções para redefinir sua senha.',
+    };
+  },
+
+  async mockResetPassword(data: ResetPasswordData): Promise<PasswordActionResponse> {
+    await simulateNetworkDelay(null, 400);
+
+    // Permite testar estado de token expirado com a palavra 'expirado' ou 'invalido'
+    if (data.token.includes('expirado') || data.token.includes('invalido')) {
+      throw new ApiError(
+        400,
+        'O token de recuperação é inválido ou expirou. Por favor, solicite um novo link.',
+        { token: 'invalid_or_expired' },
+        '/reset-password'
+      );
+    }
+
+    if (data.password.length < 8) {
+      throw new ApiError(
+        422,
+        'A senha deve conter no mínimo 8 caracteres para sua segurança.',
+        { password: ['Mínimo 8 caracteres'] },
+        '/reset-password'
+      );
+    }
+
+    if (data.password !== data.password_confirmation) {
+      throw new ApiError(
+        422,
+        'A confirmação de senha não coincide com a senha informada.',
+        { password_confirmation: ['Não coincide'] },
+        '/reset-password'
+      );
+    }
+
+    // Limpa token mockado se existir
+    try {
+      localStorage.removeItem('kariri_mock_reset_token');
+    } catch {
+      // ignore
+    }
+
+    return {
+      message: 'Senha redefinida com sucesso! Você já pode entrar com sua nova senha.',
+    };
   },
 };
