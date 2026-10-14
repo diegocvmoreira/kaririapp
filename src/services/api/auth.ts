@@ -148,27 +148,59 @@ export const authApi = {
     }
 
     try {
-      const res = await apiClient<PasswordActionResponse>('/forgot-password', {
+      await apiClient<PasswordActionResponse>('/forgot-password', {
         method: 'POST',
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
-      // Mensagem genérica padronizada para evitar enumeração de contas
+
+      // Mensagem genérica padronizada para evitar enumeração de contas (quando a API responde adequadamente)
       return {
         message: 'Se o e-mail informado estiver cadastrado, você receberá um link com instruções para redefinir sua senha.',
       };
     } catch (err: unknown) {
-      if (err instanceof ApiError && err.status === 429) {
-        throw new ApiError(
-          429,
-          'Muitas tentativas em curto período. Por favor, aguarde alguns instantes antes de tentar novamente.',
-          err.data,
-          '/forgot-password'
-        );
+      if (err instanceof ApiError) {
+        if (err.status === 429) {
+          throw new ApiError(
+            429,
+            'Muitas tentativas em curto período. Por favor, aguarde alguns instantes antes de tentar novamente.',
+            err.data,
+            '/forgot-password'
+          );
+        }
+        if (err.status === 422) {
+          throw new ApiError(
+            422,
+            'Por favor, informe um endereço de e-mail válido.',
+            err.data,
+            '/forgot-password'
+          );
+        }
+        if (err.status >= 500) {
+          throw new ApiError(
+            err.status,
+            'O serviço de recuperação de senha está temporariamente indisponível. Por favor, tente novamente mais tarde.',
+            err.data,
+            '/forgot-password'
+          );
+        }
+        if (err.status === 0) {
+          throw new ApiError(
+            0,
+            'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.',
+            err.data,
+            '/forgot-password'
+          );
+        }
+        throw err;
       }
-      // Sempre retorna a mesma mensagem para evitar enumeração, a menos que seja 429
-      return {
-        message: 'Se o e-mail informado estiver cadastrado, você receberá um link com instruções para redefinir sua senha.',
-      };
+
+      // Falha de rede ou exceção não estruturada
+      throw new ApiError(
+        0,
+        'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.',
+        {},
+        '/forgot-password'
+      );
     }
   },
 

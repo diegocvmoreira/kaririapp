@@ -66,9 +66,19 @@ export const ForgotPasswordPage: React.FC = () => {
           err?.message ||
             'Muitas tentativas em curto período. Por favor, aguarde alguns instantes antes de tentar novamente.'
         );
+      } else if (err?.status === 0 || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+        setErrorMsg(
+          'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
+        );
+      } else if (err?.status >= 500) {
+        setErrorMsg(
+          'O serviço de recuperação de senha está temporariamente indisponível. Por favor, tente novamente mais tarde.'
+        );
       } else {
-        // Para qualquer outro erro de servidor que não seja rede, mantém a mensagem padronizada contra enumeração
-        setIsSuccess(true);
+        setErrorMsg(
+          err?.message ||
+            'Não foi possível processar a recuperação de senha no momento. Tente novamente mais tarde.'
+        );
       }
     } finally {
       setIsSubmitting(false);

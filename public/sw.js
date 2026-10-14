@@ -1,7 +1,7 @@
 // Kariri.app Production Service Worker
 // Estratégias estruturadas por tipo de recurso com isolamento anti-HTML em assets
 
-const SW_VERSION = '2026.1.2';
+const SW_VERSION = '2026.1.3';
 const CACHE_SHELL = `kariri-shell-${SW_VERSION}`;
 const CACHE_ASSETS = `kariri-assets-${SW_VERSION}`;
 const CACHE_API = `kariri-api-${SW_VERSION}`;
@@ -14,7 +14,9 @@ const SHELL_FILES = [
   '/manifest.json',
   '/icon.svg',
   '/pwa-192x192.png',
-  '/pwa-512x512.png'
+  '/pwa-512x512.png',
+  '/pwa-maskable-512x512.png',
+  '/apple-touch-icon.png'
 ];
 
 // URLs ou caminhos de API que NUNCA devem ser cacheados (dados privados/autenticados)
@@ -33,12 +35,48 @@ const BYPASS_API_PATTERNS = [
   /\/admin/i
 ];
 
-// Instalação: pré-cacheia o App Shell básico
+// Instalação: pré-cacheia o App Shell com tolerância a falhas de arquivos individuais
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_SHELL).then((cache) => {
-      return cache.addAll(SHELL_FILES);
-    })
+    (async () => {
+      const shellCache = await caches.open(CACHE_SHELL);
+      const assetsCache = await caches.open(CACHE_ASSETS);
+
+      // 1. Pré-cacheia os arquivos do shell com resiliência
+      await Promise.allSettled(
+        SHELL_FILES.map(async (file) => {
+          try {
+            const response = await fetch(file, { cache: 'no-cache' });
+            if (response && (response.ok || response.status === 200)) {
+              await shellCache.put(file, response.clone());
+              // Se for index.html, extrai e pré-cacheia os bundles estáticos do Vite
+              if (file === '/index.html' || file === '/') {
+                try {
+                  const htmlText = await response.text();
+                  const matches = htmlText.match(/\/assets\/[a-zA-Z0-9_\-\.]+\.(js|css)/g) || [];
+                  for (const assetUrl of new Set(matches)) {
+                    try {
+                      const assetResp = await fetch(assetUrl);
+                      if (assetResp && (assetResp.ok || assetResp.status === 200)) {
+                        await assetsCache.put(assetUrl, assetResp);
+                      }
+                    } catch {
+                      // Falha não crítica em asset secundário
+                    }
+                  }
+                } catch {
+                  // ignore
+                }
+              }
+            } else {
+              console.warn(`[SW] Aviso: recurso retornou status ${response?.status}: ${file}`);
+            }
+          } catch (err) {
+            console.warn(`[SW] Aviso: falha ao carregar ${file} no pré-cache:`, err);
+          }
+        })
+      );
+    })()
   );
   // Não força skipWaiting automaticamente para permitir controle do usuário
 });

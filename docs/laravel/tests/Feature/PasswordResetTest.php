@@ -98,4 +98,36 @@ class PasswordResetTest extends TestCase
 
         $response->assertStatus(429);
     }
+
+    public function test_forgot_password_returns_429_when_broker_throttles(): void
+    {
+        Password::shouldReceive('sendResetLink')
+            ->once()
+            ->andReturn(Password::RESET_THROTTLED);
+
+        $response = $this->postJson('/api/forgot-password', [
+            'email' => 'maria@cariri.app.br',
+        ]);
+
+        $response->assertStatus(429)
+            ->assertJson([
+                'message' => 'Muitas tentativas de recuperação para este e-mail. Por favor, aguarde alguns instantes antes de tentar novamente.',
+            ]);
+    }
+
+    public function test_forgot_password_returns_500_on_mail_transport_failure(): void
+    {
+        Password::shouldReceive('sendResetLink')
+            ->once()
+            ->andThrow(new \RuntimeException('Connection to SMTP server failed'));
+
+        $response = $this->postJson('/api/forgot-password', [
+            'email' => 'maria@cariri.app.br',
+        ]);
+
+        $response->assertStatus(500)
+            ->assertJson([
+                'message' => 'Falha temporária no serviço de e-mail. Por favor, tente novamente mais tarde.',
+            ]);
+    }
 }

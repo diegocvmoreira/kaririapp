@@ -8,6 +8,7 @@ use App\Http\Requests\ResetPasswordRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
 
@@ -15,18 +16,63 @@ class PasswordResetController extends Controller
 {
     /**
      * Envia link com token de redefinição de senha para o e-mail informado.
-     * Sempre retorna resposta genérica (HTTP 200) para evitar enumeração de contas.
+     * Verifica e registra o status de envio no servidor e trata erros de transporte,
+     * enquanto mantém resposta neutra para o usuário (evitando enumeração de contas).
      */
     public function sendResetLinkEmail(ForgotPasswordRequest $request): JsonResponse
     {
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $email = strtolower(trim((string) $request->input('email')));
+        $emailHash = hash('sha256', $email);
 
-        // Resposta sempre neutra e padronizada (anti-enumeração)
-        return response()->json([
-            'message' => 'Se o e-mail informado estiver cadastrado, você receberá um link com instruções para redefinir sua senha.',
-        ], 200);
+        try {
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+
+            // 1. Link gerado e enviado com sucesso pelo broker
+            if ($status === Password::RESET_LINK_SENT) {
+                Log::info('Password reset link successfully generated and dispatched', [
+                    'email_hash' => $emailHash,
+                ]);
+
+                return response()->json([
+                    'message' => 'Se o e-mail informado estiver cadastrado, você receberá um link com instruções para redefinir sua senha.',
+                ], 200);
+            }
+
+            // 2. Limite de requisições acionado pelo broker de senhas do Laravel
+            if ($status === Password::RESET_THROTTLED) {
+                Log::warning('Password reset request throttled by broker', [
+                    'email_hash' => $emailHash,
+                ]);
+
+                return response()->json([
+                    'message' => 'Muitas tentativas de recuperação para este e-mail. Por favor, aguarde alguns instantes antes de tentar novamente.',
+                ], 429);
+            }
+
+            // 3. Usuário inexistente (Password::INVALID_USER)
+            // Registra internamente no log para auditoria operacional, mas retorna
+            // a exata mesma resposta HTTP 200 para proteger a privacidade e evitar enumeração
+            Log::info('Password reset requested for non-existent email (neutral response returned)', [
+                'email_hash' => $emailHash,
+            ]);
+
+            return response()->json([
+                'message' => 'Se o e-mail informado estiver cadastrado, você receberá um link com instruções para redefinir sua senha.',
+            ], 200);
+
+        } catch (\Throwable $e) {
+            // Falha real na infraestrutura de e-mail (SMTP, transporte, fila, etc.)
+            Log::error('Critical failure while sending password reset email: ' . $e->getMessage(), [
+                'email_hash' => $emailHash,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'message' => 'Falha temporária no serviço de e-mail. Por favor, tente novamente mais tarde.',
+            ], 500);
+        }
     }
 
     /**
