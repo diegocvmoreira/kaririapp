@@ -20,10 +20,19 @@ import { ApiError } from '../services/api/config';
 import { analytics } from '../services/analyticsService';
 import { setPageMeta } from '../utils/seo';
 import { fuzzyIncludes, normalizeText } from '../utils/textUtils';
+import { useLocation } from '../context/LocationContext';
+import { GeolocationConsentModal } from '../components/common/GeolocationConsentModal';
 
 export const ExplorePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { cities, selectedCitySlug } = useCity();
+  const {
+    referenceCoords,
+    isConsentModalOpen,
+    openConsentModal,
+    closeConsentModal,
+    setUserCoords,
+  } = useLocation();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
@@ -94,6 +103,8 @@ export const ExplorePage: React.FC = () => {
         placesApi.getAll({
           ...filters,
           query: searchQuery,
+          latitude: referenceCoords?.latitude,
+          longitude: referenceCoords?.longitude,
         }),
         eventsApi.getAll({
           city_slug: filters.city_slug,
@@ -169,7 +180,7 @@ export const ExplorePage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, referenceCoords?.latitude, referenceCoords?.longitude]);
 
   const handleCategoryPillClick = (catSlug?: string) => {
     setFilters((prev) => ({
@@ -416,9 +427,27 @@ export const ExplorePage: React.FC = () => {
         isOpen={isFilterSheetOpen}
         onClose={() => setIsFilterSheetOpen(false)}
         filters={filters}
-        onApplyFilters={setFilters}
+        onApplyFilters={(next) => {
+          setFilters(next);
+          if (next.sort_by === 'distance' && !referenceCoords) {
+            openConsentModal();
+          }
+        }}
         cities={cities}
         categories={categories}
+      />
+
+      {/* Geolocation consent modal for proximity ordering */}
+      <GeolocationConsentModal
+        isOpen={isConsentModalOpen}
+        onClose={closeConsentModal}
+        onConsentGranted={(coords) => {
+          setUserCoords(coords);
+          closeConsentModal();
+        }}
+        onManualSelect={() => {
+          closeConsentModal();
+        }}
       />
     </div>
   );

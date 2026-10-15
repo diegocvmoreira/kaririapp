@@ -138,4 +138,66 @@ class PlaceApiTest extends TestCase
             'verified' => true,
         ]);
     }
+
+    public function test_places_sorted_by_proximity_changes_with_reference_point(): void
+    {
+        // 1. Local em Crato
+        $placeCrato = Place::create([
+            'name' => 'Praça da Sé Crato',
+            'slug' => 'praca-da-se-crato',
+            'city_id' => $this->city->id,
+            'category_id' => $this->category->id,
+            'city_slug' => 'crato',
+            'category_slug' => 'turismo',
+            'status' => 'published',
+            'latitude' => -7.2344,
+            'longitude' => -39.4089,
+        ]);
+
+        // 2. Local em Juazeiro do Norte (~12km de Crato)
+        $placeJuazeiro = Place::create([
+            'name' => 'Horto do Padre Cícero',
+            'slug' => 'horto-do-padre-cicero',
+            'city_id' => $this->city->id,
+            'category_id' => $this->category->id,
+            'city_slug' => 'juazeiro-do-norte',
+            'category_slug' => 'turismo',
+            'status' => 'published',
+            'latitude' => -7.1812,
+            'longitude' => -39.3308,
+        ]);
+
+        // 3. Local sem coordenadas cadastradas
+        $placeSemCoords = Place::create([
+            'name' => 'Artesanato Local sem Coordenadas',
+            'slug' => 'artesanato-local-sem-coordenadas',
+            'city_id' => $this->city->id,
+            'category_id' => $this->category->id,
+            'city_slug' => 'crato',
+            'category_slug' => 'compras',
+            'status' => 'published',
+            'latitude' => null,
+            'longitude' => null,
+        ]);
+
+        // Referência A: Centro do Crato (-7.2344, -39.4089)
+        // Praça da Sé deve ser a 1ª, Horto a 2ª, e o sem coordenadas por último sem distância inventada
+        $responseCrato = $this->getJson('/api/places?lat=-7.2344&lng=-39.4089&sort_by=distance');
+        $responseCrato->assertStatus(200);
+        $dataCrato = $responseCrato->json('data');
+
+        $this->assertEquals('praca-da-se-crato', $dataCrato[0]['slug']);
+        $this->assertEquals('horto-do-padre-cicero', $dataCrato[1]['slug']);
+        $this->assertNull($dataCrato[2]['distance_km'] ?? null);
+
+        // Referência B: Centro de Juazeiro (-7.1812, -39.3308)
+        // A ordem deve inverter: Horto passa a ser o 1º!
+        $responseJuazeiro = $this->getJson('/api/places?lat=-7.1812&lng=-39.3308&sort_by=distance');
+        $responseJuazeiro->assertStatus(200);
+        $dataJuazeiro = $responseJuazeiro->json('data');
+
+        $this->assertEquals('horto-do-padre-cicero', $dataJuazeiro[0]['slug']);
+        $this->assertEquals('praca-da-se-crato', $dataJuazeiro[1]['slug']);
+        $this->assertNull($dataJuazeiro[2]['distance_km'] ?? null);
+    }
 }

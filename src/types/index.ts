@@ -196,6 +196,9 @@ export interface SearchFilters {
   open_now?: boolean;
   is_featured?: boolean;
   sort_by?: 'featured' | 'rating' | 'reviews' | 'distance';
+  latitude?: number;
+  longitude?: number;
+  radius_km?: number;
 }
 
 export interface ApiResponse<T> {

@@ -2,6 +2,11 @@ import { apiClient, simulateNetworkDelay, USE_MOCK_DATA, ApiError } from './conf
 import { Place, SearchFilters } from '../../types';
 import { mockPlaces } from '../../mocks/mockPlaces';
 import { mapApiPlaceToPlace, ApiPlaceRaw } from './mappers/placeMapper';
+import {
+  isValidCoordinate,
+  enrichAndSortPlacesByDistance,
+  Coordinates,
+} from '../../utils/geoUtils';
 
 export const placesApi = {
   /**
@@ -14,7 +19,7 @@ export const placesApi = {
       return this.filterMockPlaces(filters);
     }
 
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && !navigator.onLine) {
       throw new ApiError(
         0,
         'Sem conexão com a internet. Verifique sua rede e tente novamente.',
@@ -30,6 +35,14 @@ export const placesApi = {
     if (filters?.min_rating) queryParams.set('min_rating', String(filters.min_rating));
     if (filters?.open_now) queryParams.set('open_now', '1');
     if (filters?.query) queryParams.set('q', filters.query);
+    if (filters?.sort_by) queryParams.set('sort_by', filters.sort_by);
+
+    const hasRefCoords = isValidCoordinate(filters?.latitude, filters?.longitude);
+    if (hasRefCoords) {
+      queryParams.set('lat', String(filters!.latitude));
+      queryParams.set('lng', String(filters!.longitude));
+      if (filters?.radius_km) queryParams.set('radius', String(filters.radius_km));
+    }
 
     const url = queryParams.toString() ? `/places?${queryParams.toString()}` : '/places';
     const response = await apiClient<unknown>(url);
@@ -57,6 +70,24 @@ export const placesApi = {
       places = places.filter((p) => filters.price_levels!.includes(p.price_level));
     }
 
+    // Aplica cálculo de distância real e ordenação garantida
+    if (hasRefCoords) {
+      places = enrichAndSortPlacesByDistance(
+        places,
+        { latitude: filters!.latitude!, longitude: filters!.longitude! },
+        filters?.sort_by === 'distance'
+      );
+    } else if (filters?.sort_by === 'distance') {
+      // Sem coordenadas de referência: não inventa distâncias
+      places = places.map((p) => ({ ...p, distance_km: undefined }));
+    }
+
+    if (filters?.sort_by === 'rating') {
+      places.sort((a, b) => b.rating - a.rating);
+    } else if (filters?.sort_by === 'reviews') {
+      places.sort((a, b) => b.reviews_count - a.reviews_count);
+    }
+
     return places;
   },
 
@@ -71,7 +102,7 @@ export const placesApi = {
       return simulateNetworkDelay(featured, 100);
     }
 
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && !navigator.onLine) {
       throw new ApiError(
         0,
         'Sem conexão com a internet. Verifique sua rede e tente novamente.',
@@ -87,20 +118,27 @@ export const placesApi = {
 
   /**
    * 3. placesApi.getNearby
-   * Obtém locais próximos. Filtra por município se informado.
-   * Trata 403, 404, 422 e erro de rede sem fallback falso.
+   * Obtém locais próximos ordenados por distância real a partir das coordenadas de referência.
+   * - Se fornecidas coordenadas de referência (GPS ou centro do município), calcula Haversine
+   *   e ordena da menor para a maior distância.
+   * - Lugares sem coordenadas válidas vão para o final sem distâncias inventadas.
+   * - Se não houver coordenadas, mantém a listagem sem inventar distâncias.
    */
-  async getNearby(citySlug?: string): Promise<Place[]> {
+  async getNearby(
+    citySlug?: string,
+    userCoords?: Coordinates | null,
+    limit: number = 6
+  ): Promise<Place[]> {
     if (USE_MOCK_DATA) {
       let places = [...mockPlaces];
       if (citySlug) {
         places = places.filter((p) => p.city_slug === citySlug);
       }
-      places.sort((a, b) => (a.distance_km || 99) - (b.distance_km || 99));
-      return simulateNetworkDelay(places.slice(0, 6), 100);
+      places = enrichAndSortPlacesByDistance(places, userCoords, !!userCoords);
+      return simulateNetworkDelay(places.slice(0, limit), 100);
     }
 
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && !navigator.onLine) {
       throw new ApiError(
         0,
         'Sem conexão com a internet. Verifique sua rede e tente novamente.',
@@ -109,8 +147,14 @@ export const placesApi = {
       );
     }
 
-    const allPlaces = await this.getAll({ city_slug: citySlug, sort_by: 'distance' });
-    return allPlaces.slice(0, 6);
+    const allPlaces = await this.getAll({
+      city_slug: citySlug,
+      sort_by: userCoords ? 'distance' : 'featured',
+      latitude: userCoords?.latitude,
+      longitude: userCoords?.longitude,
+    });
+
+    return allPlaces.slice(0, limit);
   },
 
   /**
@@ -125,7 +169,7 @@ export const placesApi = {
       return simulateNetworkDelay(place, 120);
     }
 
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && !navigator.onLine) {
       throw new ApiError(
         0,
         'Sem conexão com a internet. Verifique sua rede e tente novamente.',
@@ -156,7 +200,7 @@ export const placesApi = {
       return simulateNetworkDelay(similar.slice(0, 4), 100);
     }
 
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && !navigator.onLine) {
       throw new ApiError(
         0,
         'Sem conexão com a internet. Verifique sua rede e tente novamente.',
@@ -188,10 +232,19 @@ export const placesApi = {
       result = result.filter((p) => filters.price_levels!.includes(p.price_level));
     }
 
+    const refCoords =
+      isValidCoordinate(filters?.latitude, filters?.longitude)
+        ? { latitude: filters!.latitude!, longitude: filters!.longitude! }
+        : null;
+
+    result = enrichAndSortPlacesByDistance(
+      result,
+      refCoords,
+      filters?.sort_by === 'distance'
+    );
+
     if (filters?.sort_by === 'rating') {
       result.sort((a, b) => b.rating - a.rating);
-    } else if (filters?.sort_by === 'distance') {
-      result.sort((a, b) => (a.distance_km || 99) - (b.distance_km || 99));
     } else if (filters?.sort_by === 'reviews') {
       result.sort((a, b) => b.reviews_count - a.reviews_count);
     }

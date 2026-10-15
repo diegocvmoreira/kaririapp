@@ -17,11 +17,22 @@ import { ApiDiagnosticReport } from '../services/api/diagnostics';
 import { ApiError } from '../services/api/config';
 import { analytics } from '../services/analyticsService';
 import { setPageMeta } from '../utils/seo';
-import { Sparkles, Compass } from 'lucide-react';
+import { Sparkles, Compass, Navigation, X } from 'lucide-react';
+import { useLocation } from '../context/LocationContext';
+import { GeolocationConsentModal } from '../components/common/GeolocationConsentModal';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { selectedCitySlug, selectedCity } = useCity();
+  const {
+    referenceCoords,
+    isGpsActive,
+    isConsentModalOpen,
+    openConsentModal,
+    closeConsentModal,
+    setUserCoords,
+    clearGpsLocation,
+  } = useLocation();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredPlaces, setFeaturedPlaces] = useState<Place[]>([]);
@@ -54,8 +65,10 @@ export const HomePage: React.FC = () => {
         placesApi.getAll({
           city_slug: cityFilter,
           sort_by: 'featured',
+          latitude: referenceCoords?.latitude,
+          longitude: referenceCoords?.longitude,
         }),
-        placesApi.getNearby(cityFilter),
+        placesApi.getNearby(cityFilter, referenceCoords),
         eventsApi.getAll(cityFilter),
       ]);
 
@@ -81,7 +94,7 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [selectedCitySlug]);
+  }, [selectedCitySlug, referenceCoords?.latitude, referenceCoords?.longitude]);
 
   const handleSearchSubmit = (val: string) => {
     setSearchQuery(val);
@@ -222,15 +235,51 @@ export const HomePage: React.FC = () => {
             </section>
           )}
 
-          {/* 5. Locais Próximos / Bem Avaliados */}
-          <section className="px-4">
-            <SectionHeader
-              title="Perto de Você"
-              subtitle="Baseado no município selecionado"
-              actionText="Ver no mapa"
-              actionTo="/mapa"
-              className="px-0"
-            />
+          {/* 5. Locais Próximos / Ordenados por Proximidade */}
+          <section className="px-4 space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <SectionHeader
+                title="Perto de Você"
+                subtitle={
+                  isGpsActive
+                    ? 'Lugares ordenados por distância exata do seu GPS'
+                    : selectedCity
+                    ? `Distâncias calculadas a partir de ${selectedCity.name}`
+                    : 'Ative o GPS ou selecione uma cidade para ordenar por distância'
+                }
+                actionText="Ver no mapa"
+                actionTo="/mapa"
+                className="px-0"
+              />
+
+              <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 pb-1 sm:pb-0">
+                {isGpsActive ? (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold shadow-2xs">
+                    <Navigation className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                    <span>GPS Ativo</span>
+                    <button
+                      type="button"
+                      onClick={clearGpsLocation}
+                      className="ml-1 p-0.5 text-emerald-700 hover:text-emerald-950 rounded hover:bg-emerald-100 transition"
+                      aria-label="Desativar GPS"
+                      title="Desativar GPS e voltar à cidade"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={openConsentModal}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 rounded-xl text-xs font-semibold transition"
+                  >
+                    <Navigation className="w-3.5 h-3.5 text-[#DE1F2A]" />
+                    <span>Usar meu GPS</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {nearbyPlaces.map((place) => (
                 <PlaceCard
@@ -272,6 +321,20 @@ export const HomePage: React.FC = () => {
           </section>
         </>
       )}
+
+      {/* Modal de consentimento e ativação de GPS */}
+      <GeolocationConsentModal
+        isOpen={isConsentModalOpen}
+        onClose={closeConsentModal}
+        onConsentGranted={(coords) => {
+          setUserCoords(coords);
+          closeConsentModal();
+        }}
+        onManualSelect={() => {
+          closeConsentModal();
+          navigate('/explorar');
+        }}
+      />
     </div>
   );
 };

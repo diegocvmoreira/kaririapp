@@ -5,6 +5,7 @@ import { mapService, CARIRI_DEFAULT_CENTER } from '../../services/api/mapService
 import { PlaceCard } from '../cards/PlaceCard';
 import { GeolocationConsentModal } from '../common/GeolocationConsentModal';
 import { Navigation, Layers, ZoomIn, ZoomOut, X } from 'lucide-react';
+import { useLocation } from '../../context/LocationContext';
 
 interface MapViewProps {
   places: Place[];
@@ -23,6 +24,7 @@ export const MapView: React.FC<MapViewProps> = ({
   heightClass = 'h-[calc(100vh-140px)]',
   onManualCitySelect,
 }) => {
+  const { userCoords, setUserCoords } = useLocation();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<number, L.Marker>>(new Map());
@@ -141,6 +143,8 @@ export const MapView: React.FC<MapViewProps> = ({
   };
 
   const handleConsentGranted = (coords: { latitude: number; longitude: number }) => {
+    setUserCoords(coords);
+
     const map = mapInstanceRef.current;
     if (!map) return;
 
@@ -155,6 +159,18 @@ export const MapView: React.FC<MapViewProps> = ({
 
     map.setView([coords.latitude, coords.longitude], 14, { animate: true });
   };
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !userCoords) return;
+
+    if (!userMarkerRef.current) {
+      const userIcon = mapService.createUserLocationIcon();
+      const marker = L.marker([userCoords.latitude, userCoords.longitude], { icon: userIcon }).addTo(map);
+      marker.bindPopup('Sua localização aproximada no Cariri');
+      userMarkerRef.current = marker;
+    }
+  }, [userCoords]);
 
   const handleZoomIn = () => mapInstanceRef.current?.zoomIn();
   const handleZoomOut = () => mapInstanceRef.current?.zoomOut();

@@ -23,3 +23,8 @@ Route::get('/places/{placeId}/reviews', [App\Http\Controllers\Api\ReviewControll
 Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
     Route::post('/reviews', [App\Http\Controllers\Api\ReviewController::class, 'store']);
 });
+
+// 4. Lugares (Places): Catálogo público com suporte a geolocalização e ordenação por proximidade
+Route::get('/places', [App\Http\Controllers\Api\PlaceController::class, 'index']);
+Route::get('/places/nearby', [App\Http\Controllers\Api\PlaceController::class, 'nearby']);
+Route::get('/places/{slug}', [App\Http\Controllers\Api\PlaceController::class, 'show']);
