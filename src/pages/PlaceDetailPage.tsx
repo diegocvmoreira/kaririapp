@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Place, Review } from '../types';
 import { placesApi } from '../services/api/places';
 import { reviewsApi } from '../services/api/reviews';
+import { formatOpeningHours } from '../services/api/mappers/placeMapper';
 import { useAuth } from '../context/AuthContext';
 import { ImageGallery } from '../components/common/ImageGallery';
 import { Rating } from '../components/common/Rating';
@@ -352,11 +353,36 @@ export const PlaceDetailPage: React.FC = () => {
           {/* Horário */}
           <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50">
             <Clock className="w-4 h-4 text-[#DE1F2A] shrink-0 mt-0.5" />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="font-bold text-gray-800">Horário de Funcionamento</p>
-              <p className="text-gray-600 mt-0.5">{place.opening_hours || 'Informação ausente'}</p>
+              <div className="text-gray-600 mt-0.5 text-sm">
+                {(() => {
+                  const hoursStr =
+                    typeof place.opening_hours === 'string'
+                      ? place.opening_hours
+                      : formatOpeningHours(place.opening_hours);
+
+                  if (!hoursStr) {
+                    return <span className="text-gray-500">Informação ausente</span>;
+                  }
+
+                  if (hoursStr.includes(' • ')) {
+                    return (
+                      <div className="space-y-0.5 mt-0.5">
+                        {hoursStr.split(' • ').map((seg, idx) => (
+                          <div key={idx} className="text-xs text-gray-700 font-medium">
+                            {seg}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  return <span>{hoursStr}</span>;
+                })()}
+              </div>
               {place.is_open_now && (
-                <span className="inline-block mt-1 text-[10px] font-bold text-emerald-600 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                <span className="inline-block mt-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-100/80 px-2 py-0.5 rounded-md">
                   Aberto agora
                 </span>
               )}

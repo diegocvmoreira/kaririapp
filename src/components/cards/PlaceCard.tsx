@@ -6,6 +6,7 @@ import { FavoriteButton } from '../common/FavoriteButton';
 import { LocationBadge } from '../common/LocationBadge';
 import { PriceBadge } from '../common/PriceBadge';
 import { Clock } from 'lucide-react';
+import { formatOpeningHours } from '../../services/api/mappers/placeMapper';
 
 interface PlaceCardProps {
   place: Place;
@@ -245,12 +246,23 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
             neighborhood={place.neighborhood}
             distanceKm={place.distance_km}
           />
-          {place.opening_hours && (
-            <span className="text-[11px] text-gray-400 flex items-center gap-1 truncate max-w-[120px]" title={place.opening_hours}>
-              <Clock className="w-3 h-3 text-gray-400 shrink-0" />
-              <span className="truncate">{place.opening_hours.split('•')[0]}</span>
-            </span>
-          )}
+          {(() => {
+            const hoursStr =
+              typeof place.opening_hours === 'string'
+                ? place.opening_hours
+                : formatOpeningHours(place.opening_hours);
+            if (!hoursStr) return null;
+            const primaryHours = hoursStr.split('•')[0].trim();
+            return (
+              <span
+                className="text-[11px] text-gray-400 flex items-center gap-1 truncate max-w-[120px]"
+                title={hoursStr}
+              >
+                <Clock className="w-3 h-3 text-gray-400 shrink-0" />
+                <span className="truncate">{primaryHours}</span>
+              </span>
+            );
+          })()}
         </div>
       </div>
 

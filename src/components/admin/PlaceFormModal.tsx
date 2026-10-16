@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Place, City, Category, EntityStatus } from '../../types';
 import { X, Sparkles, MapPin, Phone, Globe, Instagram, Clock, DollarSign, Image as ImageIcon } from 'lucide-react';
+import { formatOpeningHours } from '../../services/api/mappers/placeMapper';
+import { OpeningHoursEditor } from './OpeningHoursEditor';
 
 interface PlaceFormModalProps {
   isOpen: boolean;
@@ -62,7 +64,11 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
       setWhatsapp(place.whatsapp || '');
       setWebsite(place.website || '');
       setInstagram(place.instagram || '');
-      setOpeningHours(place.opening_hours || '');
+      setOpeningHours(
+        typeof place.opening_hours === 'string'
+          ? place.opening_hours
+          : formatOpeningHours(place.opening_hours)
+      );
       setPriceLevel(place.price_level || 2);
       setStatus(place.status || 'published');
       setIsFeatured(!!place.is_featured);
@@ -138,7 +144,7 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
         whatsapp: whatsapp.trim() || undefined,
         website: website.trim() || undefined,
         instagram: instagram.trim() || undefined,
-        opening_hours: openingHours.trim(),
+        opening_hours: openingHours.trim().slice(0, 255),
         price_level: priceLevel,
         status,
         is_featured: isFeatured,
@@ -389,38 +395,31 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
             </div>
           </div>
 
-          {/* Horários e Preço */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-gray-500" />
-                <span>Horário de Funcionamento</span>
-              </label>
-              <input
-                type="text"
-                value={openingHours}
-                onChange={(e) => setOpeningHours(e.target.value)}
-                placeholder="Ex: Ter a Dom: 11h às 23h"
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
-              />
-            </div>
+          {/* Faixa de Preço */}
+          <div>
+            <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
+              <DollarSign className="w-3.5 h-3.5 text-gray-500" />
+              <span>Faixa de Preço</span>
+            </label>
+            <select
+              value={priceLevel}
+              onChange={(e) => setPriceLevel(Number(e.target.value) as 1 | 2 | 3 | 4)}
+              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
+            >
+              <option value={1}>$ - Econômico</option>
+              <option value={2}>$$ - Moderado</option>
+              <option value={3}>$$$ - Alto Padrão</option>
+              <option value={4}>$$$$ - Luxo / Premium</option>
+            </select>
+          </div>
 
-            <div>
-              <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
-                <DollarSign className="w-3.5 h-3.5 text-gray-500" />
-                <span>Faixa de Preço</span>
-              </label>
-              <select
-                value={priceLevel}
-                onChange={(e) => setPriceLevel(Number(e.target.value) as 1 | 2 | 3 | 4)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
-              >
-                <option value={1}>$ - Econômico</option>
-                <option value={2}>$$ - Moderado</option>
-                <option value={3}>$$$ - Alto Padrão</option>
-                <option value={4}>$$$$ - Luxo / Premium</option>
-              </select>
-            </div>
+          {/* Editor Intuitivo de Horário de Funcionamento */}
+          <div>
+            <OpeningHoursEditor
+              value={openingHours}
+              onChange={setOpeningHours}
+              maxChars={255}
+            />
           </div>
 
           {/* Imagem de Capa */}

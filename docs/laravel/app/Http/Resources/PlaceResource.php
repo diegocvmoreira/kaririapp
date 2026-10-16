@@ -27,6 +27,7 @@ class PlaceResource extends JsonResource
             'zipcode' => $this->zipcode,
             'latitude' => $this->latitude !== null ? (float) $this->latitude : null,
             'longitude' => $this->longitude !== null ? (float) $this->longitude : null,
+            'distance_km' => isset($this->distance_km) && $this->distance_km !== null ? round((float) $this->distance_km, 2) : null,
             'coordinate_source' => $this->coordinate_source,
             'coordinate_confidence' => $this->coordinate_confidence,
             'needs_review' => (bool) $this->needs_review,

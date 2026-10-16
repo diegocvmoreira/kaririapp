@@ -1,7 +1,7 @@
 import { apiClient, simulateNetworkDelay, USE_MOCK_DATA, ApiError } from './config';
 import { Place, SearchFilters } from '../../types';
 import { mockPlaces } from '../../mocks/mockPlaces';
-import { mapApiPlaceToPlace, ApiPlaceRaw } from './mappers/placeMapper';
+import { mapApiPlaceToPlace, formatOpeningHours, ApiPlaceRaw } from './mappers/placeMapper';
 import {
   isValidCoordinate,
   enrichAndSortPlacesByDistance,
@@ -561,7 +561,7 @@ export const placesApi = {
         website: (item.website as string) || null,
         instagram: (item.instagram as string) || null,
         facebook: (item.facebook as string) || null,
-        opening_hours: (item.opening_hours as string) || null,
+        opening_hours: formatOpeningHours(item.opening_hours) || null,
         price_level: (item.price_level as number) || 2,
         cover_image: (item.cover_image as string) || null,
         images: Array.isArray(item.images) ? (item.images as string[]) : [],

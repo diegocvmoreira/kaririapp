@@ -23,7 +23,7 @@ export interface ApiPlaceRaw {
   website?: string | null;
   instagram?: string | null;
   facebook?: string | null;
-  opening_hours?: string | null;
+  opening_hours?: string | Record<string, unknown> | null;
   price_level?: number | null;
   rating?: string | number | null;
   reviews_count?: number | null;
@@ -74,6 +74,162 @@ export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
   servicos: '/placeholders/servicos.svg',
   eventos: '/placeholders/eventos.svg',
 };
+
+/**
+ * Traduz e formata valores de horário de funcionamento para exibição limpa em português.
+ * Suporta strings, JSON em string e objetos com chaves de dias ({ monday, tuesday, ... }).
+ */
+export function formatOpeningHours(raw: unknown): string {
+  if (!raw) return '';
+
+  // Se for string, verifica se é um JSON serializado
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return formatOpeningHours(parsed);
+      } catch {
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+
+  // Se for array
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (item && typeof item === 'object') {
+          const rec = item as Record<string, unknown>;
+          const day = rec.day || rec.dia || '';
+          const hours = rec.hours || rec.horario || rec.time || '';
+          if (day && hours) return `${day}: ${hours}`;
+          return formatOpeningHours(item);
+        }
+        return String(item);
+      })
+      .filter(Boolean)
+      .join(' • ');
+  }
+
+  // Se for objeto com dias da semana (ex: { monday: "...", tuesday: "...", ... })
+  if (typeof raw === 'object' && raw !== null) {
+    const dayMap: Record<string, { label: string; order: number }> = {
+      monday: { label: 'Seg', order: 1 },
+      mon: { label: 'Seg', order: 1 },
+      segunda: { label: 'Seg', order: 1 },
+      seg: { label: 'Seg', order: 1 },
+
+      tuesday: { label: 'Ter', order: 2 },
+      tue: { label: 'Ter', order: 2 },
+      terca: { label: 'Ter', order: 2 },
+      terça: { label: 'Ter', order: 2 },
+      ter: { label: 'Ter', order: 2 },
+
+      wednesday: { label: 'Qua', order: 3 },
+      wed: { label: 'Qua', order: 3 },
+      quarta: { label: 'Qua', order: 3 },
+      qua: { label: 'Qua', order: 3 },
+
+      thursday: { label: 'Qui', order: 4 },
+      thu: { label: 'Qui', order: 4 },
+      quinta: { label: 'Qui', order: 4 },
+      qui: { label: 'Qui', order: 4 },
+
+      friday: { label: 'Sex', order: 5 },
+      fri: { label: 'Sex', order: 5 },
+      sexta: { label: 'Sex', order: 5 },
+      sex: { label: 'Sex', order: 5 },
+
+      saturday: { label: 'Sáb', order: 6 },
+      sat: { label: 'Sáb', order: 6 },
+      sabado: { label: 'Sáb', order: 6 },
+      sábado: { label: 'Sáb', order: 6 },
+      sab: { label: 'Sáb', order: 6 },
+
+      sunday: { label: 'Dom', order: 7 },
+      sun: { label: 'Dom', order: 7 },
+      domingo: { label: 'Dom', order: 7 },
+      dom: { label: 'Dom', order: 7 },
+    };
+
+    const normalizeHourValue = (val: unknown): string => {
+      if (val === null || val === undefined || val === false || val === '') return 'Fechado';
+      if (typeof val === 'string') {
+        const lower = val.trim().toLowerCase();
+        if (lower === 'closed' || lower === 'fechado') return 'Fechado';
+        if (lower === '24 hours' || lower === '24h' || lower === '24 horas') return '24 horas';
+        return val.trim();
+      }
+      if (typeof val === 'object' && val !== null) {
+        const v = val as Record<string, unknown>;
+        const open = v.open || v.start || v.from || v.opens;
+        const close = v.close || v.end || v.to || v.closes;
+        if (open && close) return `${open} - ${close}`;
+        if (v.closed || v.fechado) return 'Fechado';
+      }
+      return String(val);
+    };
+
+    const entries: { key: string; label: string; order: number; hours: string }[] = [];
+    const unrecognized: string[] = [];
+
+    for (const [key, val] of Object.entries(raw as Record<string, unknown>)) {
+      const lowerKey = key.toLowerCase();
+      const meta = dayMap[lowerKey];
+      const hours = normalizeHourValue(val);
+      if (meta) {
+        entries.push({ key: lowerKey, label: meta.label, order: meta.order, hours });
+      } else {
+        unrecognized.push(`${key}: ${hours}`);
+      }
+    }
+
+    if (entries.length === 0 && unrecognized.length > 0) {
+      return unrecognized.join(' • ');
+    }
+
+    entries.sort((a, b) => a.order - b.order);
+
+    // Se todos os 7 dias tiverem o mesmo horário
+    if (entries.length === 7 && entries.every((e) => e.hours === entries[0].hours)) {
+      return entries[0].hours === 'Fechado'
+        ? 'Temporariamente fechado'
+        : `Todos os dias: ${entries[0].hours}`;
+    }
+
+    // Agrupa dias consecutivos com horários idênticos
+    const groups: { startLabel: string; endLabel: string; hours: string }[] = [];
+    for (const entry of entries) {
+      const lastGroup = groups[groups.length - 1];
+      if (lastGroup && lastGroup.hours === entry.hours) {
+        lastGroup.endLabel = entry.label;
+      } else {
+        groups.push({
+          startLabel: entry.label,
+          endLabel: entry.label,
+          hours: entry.hours,
+        });
+      }
+    }
+
+    const formattedGroups = groups.map((g) => {
+      const range = g.startLabel === g.endLabel ? g.startLabel : `${g.startLabel} a ${g.endLabel}`;
+      return `${range}: ${g.hours}`;
+    });
+
+    if (unrecognized.length > 0) {
+      formattedGroups.push(...unrecognized);
+    }
+
+    return formattedGroups.join(' • ');
+  }
+
+  return String(raw);
+}
 
 /**
  * Normaliza os dados brutos da API Laravel para o tipo Place do TypeScript.
@@ -144,7 +300,7 @@ export function mapApiPlaceToPlace(raw: ApiPlaceRaw): Place {
     is_featured: Boolean(raw.featured === 1 || raw.featured === true || raw.is_featured === true),
     verified: Boolean(raw.verified === 1 || raw.verified === true),
     is_open_now: Boolean(raw.is_open_now ?? (raw.status === 'active')),
-    opening_hours: raw.opening_hours || '',
+    opening_hours: formatOpeningHours(raw.opening_hours),
     phone: raw.phone || undefined,
     whatsapp: raw.whatsapp || undefined,
     instagram: raw.instagram || undefined,

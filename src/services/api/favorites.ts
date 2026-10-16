@@ -9,6 +9,7 @@ import { mockPlaces } from '../../mocks/mockPlaces';
 import { mockEvents } from '../../mocks/mockEvents';
 import { placesApi } from './places';
 import { eventsApi } from './events';
+import { formatOpeningHours } from './mappers/placeMapper';
 
 const FAVORITES_STORAGE_KEY = 'kariri_favorite_place_ids';
 const FAVORITES_EVENTS_STORAGE_KEY = 'kariri_favorite_event_ids';
@@ -47,7 +48,7 @@ interface ApiPlace {
   website?: string | null;
   instagram?: string | null;
   facebook?: string | null;
-  opening_hours?: string | null;
+  opening_hours?: string | Record<string, unknown> | null;
   price_level?: number | null;
   rating?: number | string | null;
   reviews_count?: number | null;
@@ -206,7 +207,7 @@ function mapApiPlaceToPlace(place: ApiPlace): Place {
     is_featured: toBoolean(place.featured),
     verified: toBoolean(place.verified),
     is_open_now: false,
-    opening_hours: place.opening_hours || '',
+    opening_hours: formatOpeningHours(place.opening_hours),
     phone: place.phone || undefined,
     whatsapp: place.whatsapp || undefined,
     instagram: place.instagram || undefined,
