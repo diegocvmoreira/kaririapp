@@ -25,9 +25,11 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
       return (
         <div className={`bg-gradient-to-r from-gray-900 to-gray-800 text-white p-3.5 rounded-2xl shadow-lg flex items-center justify-between gap-3 ${className}`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#DE1F2A] flex items-center justify-center shrink-0 shadow-inner">
-              <Smartphone className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src="/app-icon.svg"
+              alt="App Kariri"
+              className="w-10 h-10 rounded-xl shrink-0 shadow-md object-contain"
+            />
             <div>
               <p className="text-xs font-bold leading-tight">Instale o App Kariri</p>
               <p className="text-[11px] text-gray-300 leading-tight">Acesso rápido e offline no seu celular</p>
@@ -73,9 +75,11 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
             <div className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#DE1F2A] flex items-center justify-center text-white">
-                    <Smartphone className="w-4 h-4" />
-                  </div>
+                  <img
+                    src="/app-icon.svg"
+                    alt="App Kariri"
+                    className="w-8 h-8 rounded-lg shadow-xs shrink-0 object-contain"
+                  />
                   <h3 className="text-base font-bold text-gray-900">Instalar no iPhone / iPad</h3>
                 </div>
                 <button

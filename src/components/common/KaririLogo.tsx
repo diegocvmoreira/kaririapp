@@ -1,69 +1,95 @@
 import React from 'react';
 
-interface KaririLogoProps {
+export interface KaririLogoProps {
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
-  showSubtitle?: boolean;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'dark' | 'white' | 'symbol' | 'icon' | 'icon-dark';
+  withSymbol?: boolean;
 }
+
+const LOGO_HEIGHTS: Record<string, string> = {
+  xs: 'h-5',
+  sm: 'h-7',
+  md: 'h-9',
+  lg: 'h-12',
+  xl: 'h-14',
+};
+
+const SYMBOL_SIZES: Record<string, string> = {
+  xs: 'w-5 h-5',
+  sm: 'w-7 h-7',
+  md: 'w-9 h-9',
+  lg: 'w-12 h-12',
+  xl: 'w-14 h-14',
+};
 
 export const KaririLogo: React.FC<KaririLogoProps> = ({
   className = '',
   size = 'md',
-  showSubtitle = true,
+  variant = 'dark',
+  withSymbol = false,
 }) => {
-  const heights = {
-    sm: 'h-7',
-    md: 'h-9',
-    lg: 'h-12',
-  };
+  // Símbolo compacto (gota/pássaro a 45°)
+  if (variant === 'symbol') {
+    return (
+      <img
+        src="/favicon.svg"
+        alt="Símbolo Kariri"
+        className={`${SYMBOL_SIZES[size]} shrink-0 object-contain ${className}`}
+        loading="eager"
+        decoding="async"
+      />
+    );
+  }
+
+  // Ícone de app squircle positivo (fundo vermelho)
+  if (variant === 'icon') {
+    return (
+      <img
+        src="/app-icon.svg"
+        alt="Ícone Kariri.app"
+        className={`${SYMBOL_SIZES[size]} shrink-0 object-contain rounded-2xl shadow-xs ${className}`}
+        loading="eager"
+        decoding="async"
+      />
+    );
+  }
+
+  // Ícone de app squircle escuro (fundo preto)
+  if (variant === 'icon-dark') {
+    return (
+      <img
+        src="/app-icon-dark.svg"
+        alt="Ícone Kariri.app Escuro"
+        className={`${SYMBOL_SIZES[size]} shrink-0 object-contain rounded-2xl shadow-xs ${className}`}
+        loading="eager"
+        decoding="async"
+      />
+    );
+  }
+
+  // Versão horizontal oficial (Positiva escura ou Negativa branca)
+  const logoSrc = variant === 'white' ? '/logo-white.svg' : '/logo.svg';
 
   return (
-    <div className={`inline-flex items-center gap-2 select-none ${className}`} aria-label="KARIRI app.br">
-      {/* Icon: The Soldadinho-do-Araripe Pin Marker */}
-      <svg
-        className={`${heights[size]} w-auto shrink-0`}
-        viewBox="0 0 110 120"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Red Feather Crest (Soldadinho do Araripe) */}
-        <path
-          d="M32 24 C30 14 36 8 46 8 C62 8 82 22 88 42 C89 45 88 48 85 48 C82 48 80 44 76 36 C70 24 56 16 44 16 C38 16 35 18 34 22 C33 26 36 28 38 29 C40 30 40 32 38 33 C34 35 32 30 32 24 Z"
-          fill="#DE1F2A"
+    <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
+      {withSymbol && (
+        <img
+          src="/favicon.svg"
+          alt=""
+          aria-hidden="true"
+          className={`${SYMBOL_SIZES[size]} shrink-0 object-contain`}
+          loading="eager"
+          decoding="async"
         />
-        <path
-          d="M84 46 C85 41 82 30 74 20 C64 10 50 6 36 8 C22 10 16 18 16 26 C16 32 20 36 24 36 C28 36 32 32 32 26 C32 22 28 20 28 17 C34 14 46 14 58 19 C70 25 78 35 80 44 L84 46 Z"
-          fill="#DE1F2A"
-        />
-
-        {/* Charcoal Pin Loop & Beak (Profile of the bird) */}
-        {/* Bird Beak jutting left */}
-        <path
-          d="M14 54 L2 60 L14 66 Z"
-          fill="#000000"
-        />
-
-        {/* Pin Body Outline */}
-        <path
-          d="M50 114 C50 114 12 78 12 56 C12 36 24 22 36 18 C38 22 42 26 44 26 C40 32 24 42 24 56 C24 72 44 94 50 102 C56 94 76 72 76 56 C76 42 66 32 58 26 C64 26 70 30 74 36 C82 44 84 50 84 56 C84 78 50 114 50 114 Z"
-          fill="#000000"
-        />
-
-        {/* Center eye / pupil */}
-        <circle cx="50" cy="54" r="14" fill="#000000" />
-      </svg>
-
-      {/* Typography: KARIRI with organic rustic brush feel + app.br */}
-      <div className="flex flex-col justify-center leading-none">
-        <span className="font-extrabold tracking-wider text-[#000000] text-xl font-['Plus_Jakarta_Sans'] flex items-center">
-          <span className="tracking-tight text-2xl font-black">KARIRI</span>
-        </span>
-        {showSubtitle && (
-          <span className="text-[#DE1F2A] font-bold text-xs tracking-wide -mt-0.5">
-            app.br
-          </span>
-        )}
-      </div>
+      )}
+      <img
+        src={logoSrc}
+        alt="Kariri.app.br"
+        className={`${LOGO_HEIGHTS[size]} w-auto shrink-0 object-contain`}
+        loading="eager"
+        decoding="async"
+      />
     </div>
   );
 };

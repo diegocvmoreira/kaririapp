@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { Header } from '../components/common/Header';
 import { BottomNavigation } from '../components/common/BottomNavigation';
+import { KaririLogo } from '../components/common/KaririLogo';
 import { CookieConsentBanner } from '../components/common/CookieConsentBanner';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useServiceWorkerUpdate } from '../hooks/useServiceWorkerUpdate';
@@ -55,9 +56,9 @@ export const MainLayout: React.FC = () => {
       {/* Desktop / Tablet Minimal Footer with LGPD Compliance Links */}
       <footer className="border-t border-gray-200/80 bg-white/70 py-6 px-4 mt-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900 tracking-tight">KARIRI.APP</span>
-            <span>•</span>
+          <div className="flex items-center gap-3">
+            <KaririLogo size="xs" />
+            <span className="text-gray-300">|</span>
             <span>Guia Digital e Descoberta no Cariri Cearense</span>
           </div>
 
