@@ -43,6 +43,7 @@ export const PlaceImportModal: React.FC<PlaceImportModalProps> = ({
   } | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [progressInfo, setProgressInfo] = useState<{ current: number; total: number; placeName: string } | null>(null);
   const [importReport, setImportReport] = useState<{
     total: number;
     created: number;
@@ -58,6 +59,7 @@ export const PlaceImportModal: React.FC<PlaceImportModalProps> = ({
   const analyzePlacesJson = (rawContent: string, name: string = 'arquivo.json') => {
     setParseError(null);
     setImportReport(null);
+    setProgressInfo(null);
 
     try {
       const data = JSON.parse(rawContent);
@@ -167,7 +169,9 @@ export const PlaceImportModal: React.FC<PlaceImportModalProps> = ({
     setIsSubmitting(true);
     setParseError(null);
     try {
-      const report = await placesApi.importPlaces(parsedData);
+      const report = await placesApi.importPlaces(parsedData, (info) => {
+        setProgressInfo(info);
+      });
       setImportReport(report);
       onSuccess();
     } catch (err: unknown) {
@@ -184,6 +188,7 @@ export const PlaceImportModal: React.FC<PlaceImportModalProps> = ({
     setStats(null);
     setImportReport(null);
     setParseError(null);
+    setProgressInfo(null);
   };
 
   return (
@@ -358,6 +363,39 @@ export const PlaceImportModal: React.FC<PlaceImportModalProps> = ({
                       <p className="text-[11px] text-rose-700 font-medium">Categorias inválidas</p>
                     </div>
                   </div>
+                  {/* Indicador de progresso em tempo real durante importação */}
+                  {isSubmitting && (
+                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2 animate-in fade-in">
+                      <div className="flex items-center justify-between text-xs font-bold text-amber-900">
+                        <span className="flex items-center gap-1.5">
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-700 shrink-0" />
+                          <span className="truncate max-w-[340px]">
+                            {progressInfo
+                              ? `Salvando ${progressInfo.current} de ${progressInfo.total}: ${progressInfo.placeName}`
+                              : 'Enviando requisição ao backend real...'}
+                          </span>
+                        </span>
+                        <span>
+                          {progressInfo && progressInfo.total > 0
+                            ? `${Math.round((progressInfo.current / progressInfo.total) * 100)}%`
+                            : '0%'}
+                        </span>
+                      </div>
+                      <div className="w-full bg-amber-200/60 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-[#DE1F2A] h-2 rounded-full transition-all duration-300"
+                          style={{
+                            width: progressInfo && progressInfo.total > 0
+                              ? `${Math.min(100, Math.round((progressInfo.current / progressInfo.total) * 100))}%`
+                              : '15%',
+                          }}
+                        />
+                      </div>
+                      <p className="text-[11px] text-amber-800">
+                        Inserindo registros no banco de dados via POST /admin/places. Os locais já cadastrados são ignorados com segurança.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Alertas específicos de validação */}
                   {stats.duplicates.length > 0 && (

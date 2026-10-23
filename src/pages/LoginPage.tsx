@@ -29,7 +29,11 @@ export const LoginPage: React.FC = () => {
       title: 'Entrar na Conta',
       description: 'Acesse sua conta no Kariri.app para gerenciar favoritos e experiências no Cariri.',
     });
-  }, []);
+
+    if (searchParams.get('expired') === '1') {
+      setErrorMsg('Sua sessão expirou (validade de 30 dias). Por favor, faça login novamente para continuar.');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

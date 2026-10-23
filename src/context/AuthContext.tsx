@@ -35,6 +35,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const handleAuthExpired = () => {
       setUser(null);
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        const isAuthPage = path === '/login' || path === '/cadastro' || path === '/esqueci-senha' || path === '/redefinir-senha';
+        if (!isAuthPage) {
+          const redirect = encodeURIComponent(path + window.location.search);
+          window.location.assign(`/login?expired=1&returnTo=${redirect}`);
+        }
+      }
     };
 
     window.addEventListener('auth:expired', handleAuthExpired);

@@ -90,19 +90,26 @@ export async function apiClient<T>(
 
     let errorMessage = (errorBody as { message?: string })?.message;
 
+    // Tratamento prioritário e incondicional de 401 (token expirado ou não autorizado)
+    if (response.status === 401) {
+      if (token || (typeof localStorage !== 'undefined' && localStorage.getItem('kariri_auth_token'))) {
+        localStorage.removeItem('kariri_auth_token');
+        localStorage.removeItem('kariri_user_profile');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:expired'));
+        }
+      }
+      if (!errorMessage || errorMessage.toLowerCase().includes('unauthenticated')) {
+        errorMessage = 'Sessão não autorizada ou expirada (validade máxima de 30 dias).';
+      }
+    }
+
     if (!errorMessage) {
       if (typeof errorBody === 'string' && errorBody.trim().startsWith('<')) {
         errorMessage = `Servidor retornou resposta não-JSON (${response.status})`;
       } else {
         switch (response.status) {
           case 401:
-            if (token) {
-              localStorage.removeItem('kariri_auth_token');
-              localStorage.removeItem('kariri_user_profile');
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('auth:expired'));
-              }
-            }
             errorMessage = 'Sessão não autorizada ou expirada.';
             break;
           case 403:

@@ -273,12 +273,37 @@ export const authApi = {
     }
 
     try {
-      const user = await apiClient<User>('/me');
-      localStorage.setItem('kariri_user_profile', JSON.stringify(user));
-      return user;
-    } catch {
-      localStorage.removeItem('kariri_auth_token');
-      localStorage.removeItem('kariri_user_profile');
+      let response: unknown;
+      try {
+        response = await apiClient<unknown>('/me');
+      } catch (err: unknown) {
+        if (err instanceof ApiError && err.status === 404) {
+          response = await apiClient<unknown>('/user');
+        } else {
+          throw err;
+        }
+      }
+
+      const raw = (response as { data?: User })?.data || (response as User);
+      if (raw && (raw.id || raw.email)) {
+        localStorage.setItem('kariri_user_profile', JSON.stringify(raw));
+        return raw;
+      }
+      return null;
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        localStorage.removeItem('kariri_auth_token');
+        localStorage.removeItem('kariri_user_profile');
+        return null;
+      }
+
+      // Se for falha de rede temporária ou offline, preserva perfil em cache
+      try {
+        const stored = localStorage.getItem('kariri_user_profile');
+        if (stored) return JSON.parse(stored);
+      } catch {
+        // ignore
+      }
       return null;
     }
   },
@@ -298,12 +323,30 @@ export const authApi = {
       return simulateNetworkDelay(updatedUser, 100);
     }
 
-    const updatedUser = await apiClient<User>('/me', {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
-    localStorage.setItem('kariri_user_profile', JSON.stringify(updatedUser));
-    return updatedUser;
+    let response: unknown;
+    try {
+      response = await apiClient<unknown>('/me', {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      });
+    } catch {
+      try {
+        response = await apiClient<unknown>('/me', {
+          method: 'PATCH',
+          body: JSON.stringify(updates),
+        });
+      } catch {
+        response = await apiClient<unknown>('/user', {
+          method: 'PUT',
+          body: JSON.stringify(updates),
+        });
+      }
+    }
+
+    const raw = (response as { data?: User })?.data || (response as User);
+    const finalUser = { ...current, ...raw };
+    localStorage.setItem('kariri_user_profile', JSON.stringify(finalUser));
+    return finalUser;
   },
 
   async logout(): Promise<void> {

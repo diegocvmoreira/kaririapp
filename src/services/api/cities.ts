@@ -160,10 +160,18 @@ export const citiesApi = {
       return simulateNetworkDelay(updated, 100);
     }
 
-    const response = await apiClient<unknown>(`/admin/cities/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+    let response: unknown;
+    try {
+      response = await apiClient<unknown>(`/admin/cities/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      response = await apiClient<unknown>(`/admin/cities/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    }
     const raw = (response as { data?: ApiCityRaw })?.data || (response as ApiCityRaw);
     return mapApiCityToCity(raw);
   },

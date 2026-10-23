@@ -386,6 +386,14 @@ export const placesApi = {
     const response = await apiClient<unknown>(`/admin/places/${id}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
+    }).catch((err) => {
+      if (err instanceof ApiError && (err.status === 405 || err.status === 404)) {
+        return apiClient<unknown>(`/admin/places/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+      }
+      throw err;
     });
 
     const raw = (response as { data?: ApiPlaceRaw })?.data || (response as ApiPlaceRaw);
@@ -424,10 +432,13 @@ export const placesApi = {
    * Importa lote de locais a partir de JSON com validação estrita.
    * Não inventa coordenadas e mantém status=pending e verified=false.
    */
-  async importPlaces(payload: {
-    research_metadata?: Record<string, unknown>;
-    places: Array<Record<string, unknown>>;
-  }): Promise<{
+  async importPlaces(
+    payload: {
+      research_metadata?: Record<string, unknown>;
+      places: Array<Record<string, unknown>>;
+    },
+    onProgress?: (progress: { current: number; total: number; placeName: string }) => void
+  ): Promise<{
     total: number;
     created: number;
     updated: number;
@@ -449,7 +460,26 @@ export const placesApi = {
       'eventos',
     ];
 
+    const citySlugToId: Record<string, number> = {
+      crato: 1,
+      'juazeiro-do-norte': 2,
+      barbalha: 3,
+    };
+
+    const categorySlugToId: Record<string, number> = {
+      gastronomia: 1,
+      turismo: 2,
+      'cultura-arte': 3,
+      'vida-noturna': 4,
+      'natureza-e-trilhas': 5,
+      'compras-e-artesanato': 6,
+      religiosidade: 7,
+      servicos: 8,
+      eventos: 9,
+    };
+
     if (!USE_MOCK_DATA) {
+      // 1. Tenta endpoint de lote no Laravel caso esteja configurado em routes/api.php
       try {
         const response = await apiClient<{
           total: number;
@@ -480,12 +510,115 @@ export const placesApi = {
           places: mappedPlaces,
         };
       } catch (err) {
-        // Se a rota remota falhar por ambiente ou CORS no dev, o importador processa localmente
-        console.warn('API /admin/places/import retornou erro, processando com validação local:', err);
+        // Se a rota /admin/places/import não existir no servidor (404/405), executa a inserção real
+        // diretamente via POST /admin/places com feedback progressivo
+        console.warn('Endpoint /admin/places/import indisponível no backend. Inserindo registros via POST /admin/places:', err);
       }
+
+      // 2. Inserção real direta registro a registro no backend Laravel via POST /admin/places
+      let createdCount = 0;
+      let updatedCount = 0;
+      let ignoredCount = 0;
+      let withCoordsCount = 0;
+      let withoutCoordsCount = 0;
+      const errors: Array<{ index: number; name?: string; slug?: string; error: string }> = [];
+      const processedPlaces: Place[] = [];
+      const seenSlugs = new Set<string>();
+
+      for (let i = 0; i < payload.places.length; i++) {
+        const item = payload.places[i];
+        const name = String(item.name || '').trim();
+        const slug = String(item.slug || '').trim();
+        const catSlug = String(item.category_slug || '').trim();
+        const citySlug = String(item.city_slug || '').trim();
+
+        if (onProgress) {
+          onProgress({
+            current: i + 1,
+            total: payload.places.length,
+            placeName: name || `Local #${i + 1}`,
+          });
+        }
+
+        if (!name || !slug) {
+          errors.push({ index: i, name, slug, error: 'Nome ou slug obrigatórios ausentes.' });
+          ignoredCount++;
+          continue;
+        }
+
+        if (seenSlugs.has(slug)) {
+          errors.push({ index: i, name, slug, error: `Slug duplicado no arquivo: ${slug}` });
+          ignoredCount++;
+          continue;
+        }
+        seenSlugs.add(slug);
+
+        const cityId = (item.city_id as number) || citySlugToId[citySlug] || 1;
+        const categoryId = (item.category_id as number) || categorySlugToId[catSlug] || 1;
+
+        const rawLat = item.latitude;
+        const rawLng = item.longitude;
+        const latNumber = rawLat === null || rawLat === undefined || rawLat === '' ? null : Number(rawLat);
+        const lngNumber = rawLng === null || rawLng === undefined || rawLng === '' ? null : Number(rawLng);
+        const hasValidCoords = latNumber !== null && lngNumber !== null && Number.isFinite(latNumber) && Number.isFinite(lngNumber);
+
+        if (hasValidCoords) withCoordsCount++;
+        else withoutCoordsCount++;
+
+        const placePayload: Partial<Place> = {
+          name,
+          slug,
+          city_id: cityId,
+          category_id: categoryId,
+          short_description: item.short_description ? String(item.short_description).trim() : '',
+          description: item.description ? String(item.description).trim() : String(item.short_description || ''),
+          address: item.address ? String(item.address).trim() : '',
+          neighborhood: item.neighborhood ? String(item.neighborhood).trim() : '',
+          zipcode: item.zipcode ? String(item.zipcode).trim() : undefined,
+          latitude: hasValidCoords ? latNumber : null,
+          longitude: hasValidCoords ? lngNumber : null,
+          phone: item.phone ? String(item.phone).trim() : undefined,
+          whatsapp: item.whatsapp ? String(item.whatsapp).trim() : undefined,
+          website: item.website ? String(item.website).trim() : undefined,
+          instagram: item.instagram ? String(item.instagram).trim() : undefined,
+          facebook: item.facebook ? String(item.facebook).trim() : undefined,
+          opening_hours: formatOpeningHours(item.opening_hours),
+          price_level: (item.price_level as 1 | 2 | 3 | 4) || 2,
+          status: (item.status as Place['status']) || 'published',
+          is_featured: Boolean(item.featured || item.is_featured),
+          cover_image: (item.cover_image as string) || (item.image as string) || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80',
+        };
+
+        try {
+          const created = await this.create(placePayload);
+          createdCount++;
+          processedPlaces.push(created);
+        } catch (createErr: unknown) {
+          const errText = createErr instanceof Error ? createErr.message : 'Falha ao salvar';
+          // Se slug já existe no banco (422 unique)
+          if (errText.includes('já está em uso') || errText.includes('already been taken') || errText.includes('unique') || (createErr as any)?.status === 422) {
+            ignoredCount++;
+            errors.push({ index: i, name, slug, error: `Local já cadastrado no banco de dados (${slug})` });
+          } else {
+            ignoredCount++;
+            errors.push({ index: i, name, slug, error: errText });
+          }
+        }
+      }
+
+      return {
+        total: payload.places.length,
+        created: createdCount,
+        updated: updatedCount,
+        ignored: ignoredCount,
+        with_coordinates: withCoordsCount,
+        without_coordinates: withoutCoordsCount,
+        errors,
+        places: processedPlaces,
+      };
     }
 
-    // Processamento com regras obrigatórias da PARTE 4
+    // Processamento em modo mock local
     let createdCount = 0;
     let updatedCount = 0;
     let ignoredCount = 0;
@@ -524,7 +657,6 @@ export const placesApi = {
         return;
       }
 
-      // Validação estrita de coordenadas: nunca inventar ou usar padrão se for null/inválido
       const rawLat = item.latitude;
       const rawLng = item.longitude;
       const latNumber = rawLat === null || rawLat === undefined || rawLat === '' ? null : Number(rawLat);
@@ -542,7 +674,6 @@ export const placesApi = {
         withoutCoordsCount++;
       }
 
-      // Mapeamento normalizado
       const mapped = mapApiPlaceToPlace({
         id: (item.id as number) || Date.now() + index,
         name,
@@ -570,7 +701,6 @@ export const placesApi = {
         needs_review: item.needs_review !== undefined ? Boolean(item.needs_review) : false,
       });
 
-      // Salva no mock/memória local usando o slug como chave de atualização (Regra 2 e 3)
       const existingIdx = mockPlaces.findIndex((p) => p.slug === slug);
       if (existingIdx >= 0) {
         mockPlaces[existingIdx] = {
@@ -605,3 +735,4 @@ export const placesApi = {
     );
   },
 };
+

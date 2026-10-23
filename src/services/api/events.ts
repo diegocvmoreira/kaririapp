@@ -296,10 +296,18 @@ export const eventsApi = {
       image: data.cover_image,
     };
 
-    const response = await apiClient<unknown>(`/admin/events/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
+    let response: unknown;
+    try {
+      response = await apiClient<unknown>(`/admin/events/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      response = await apiClient<unknown>(`/admin/events/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    }
 
     const raw =
       (response as { data?: Record<string, unknown> })?.data ||

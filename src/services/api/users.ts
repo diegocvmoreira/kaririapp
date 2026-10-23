@@ -101,10 +101,17 @@ export const usersApi = {
       return simulateNetworkDelay(true, 80);
     }
 
-    await apiClient(`/admin/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ role }),
-    });
+    try {
+      await apiClient(`/admin/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ role }),
+      });
+    } catch {
+      await apiClient(`/admin/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      });
+    }
     return true;
   },
 
@@ -115,10 +122,17 @@ export const usersApi = {
       return simulateNetworkDelay(true, 80);
     }
 
-    await apiClient(`/admin/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
+    try {
+      await apiClient(`/admin/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
+    } catch {
+      await apiClient(`/admin/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    }
     return true;
   },
 };

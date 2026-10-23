@@ -42,11 +42,19 @@ export const businessClaimsApi = {
     if (USE_MOCK_DATA) {
       return simulateNetworkDelay(getStoredClaims(), 100);
     }
-    const response = await apiClient<unknown>('/admin/business-claims');
-    const list = Array.isArray(response)
-      ? response
-      : (response as { data?: BusinessClaim[] })?.data || [];
-    return list as BusinessClaim[];
+    try {
+      const response = await apiClient<unknown>('/admin/business-claims');
+      const list = Array.isArray(response)
+        ? response
+        : (response as { data?: BusinessClaim[] })?.data || [];
+      return list as BusinessClaim[];
+    } catch {
+      const response = await apiClient<unknown>('/business-claims');
+      const list = Array.isArray(response)
+        ? response
+        : (response as { data?: BusinessClaim[] })?.data || [];
+      return list as BusinessClaim[];
+    }
   },
 
   async createClaim(data: Omit<BusinessClaim, 'id' | 'status' | 'created_at'>): Promise<BusinessClaim> {
@@ -63,12 +71,22 @@ export const businessClaimsApi = {
       return simulateNetworkDelay(newClaim, 150);
     }
 
-    const response = await apiClient<unknown>('/business-claims', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    const raw = (response as { data?: BusinessClaim })?.data || (response as BusinessClaim);
-    return raw;
+    try {
+      const response = await apiClient<unknown>('/business-claims', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      const raw = (response as { data?: BusinessClaim })?.data || (response as BusinessClaim);
+      return raw;
+    } catch (err: unknown) {
+      // Fallback para rota legada /claims caso o backend esteja com prefixo antigo
+      const response = await apiClient<unknown>('/claims', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      const raw = (response as { data?: BusinessClaim })?.data || (response as BusinessClaim);
+      return raw;
+    }
   },
 
   async updateStatus(id: number, status: BusinessClaim['status'], rejectReason?: string): Promise<boolean> {
@@ -86,10 +104,26 @@ export const businessClaimsApi = {
       return simulateNetworkDelay(true, 100);
     }
 
-    await apiClient(`/admin/business-claims/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ status, reject_reason: rejectReason }),
-    });
-    return true;
+    try {
+      await apiClient(`/admin/business-claims/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status, reject_reason: rejectReason }),
+      });
+      return true;
+    } catch {
+      try {
+        await apiClient(`/admin/business-claims/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status, reject_reason: rejectReason }),
+        });
+        return true;
+      } catch {
+        await apiClient(`/business-claims/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status, reject_reason: rejectReason }),
+        });
+        return true;
+      }
+    }
   },
 };
