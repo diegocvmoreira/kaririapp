@@ -298,7 +298,7 @@ export const authApi = {
       return simulateNetworkDelay(updatedUser, 100);
     }
 
-    const updatedUser = await apiClient<User>('/user/profile', {
+    const updatedUser = await apiClient<User>('/me', {
       method: 'PUT',
       body: JSON.stringify(updates),
     });

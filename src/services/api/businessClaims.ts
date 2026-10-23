@@ -16,8 +16,8 @@ function getStoredClaims(): BusinessClaim[] {
     {
       id: 1,
       user_id: 1,
-      user_name: 'Diego Medeiros',
-      user_email: 'diegocm582@gmail.com',
+      user_name: 'Usuário Exemplo',
+      user_email: 'usuario@example.com',
       place_id: 5,
       place_name: 'Café do Engenho & Bistrô',
       phone: '(88) 98122-3344',

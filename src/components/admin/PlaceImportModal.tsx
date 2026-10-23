@@ -161,18 +161,6 @@ export const PlaceImportModal: React.FC<PlaceImportModalProps> = ({
     }
   };
 
-  const handleLoadDefaultMvp = async () => {
-    try {
-      const res = await fetch('/kariri_places_mvp.json');
-      if (!res.ok) throw new Error('Não foi possível carregar kariri_places_mvp.json');
-      const text = await res.text();
-      setJsonText(text);
-      analyzePlacesJson(text, 'kariri_places_mvp.json');
-    } catch (err: unknown) {
-      setParseError(err instanceof Error ? err.message : 'Erro ao carregar arquivo padrão');
-    }
-  };
-
   const handleConfirmImport = async () => {
     if (!parsedData) return;
 
@@ -318,22 +306,6 @@ export const PlaceImportModal: React.FC<PlaceImportModalProps> = ({
                       className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0"
                     >
                       Carregar Aprovados
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-gray-500" />
-                      <span className="text-xs font-semibold text-gray-700">
-                        Arquivo preliminar de auditoria (kariri_places_mvp.json)
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleLoadDefaultMvp}
-                      className="px-3 py-1.5 bg-gray-800 hover:bg-black text-white rounded-xl text-xs font-bold transition"
-                    >
-                      Carregar Preliminar
                     </button>
                   </div>
                 </div>

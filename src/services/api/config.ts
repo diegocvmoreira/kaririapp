@@ -1,12 +1,12 @@
 // Central API Configuration for Kariri.app
-// Configurado para Laravel REST API em https://kariri.app.br/kariri-api/public/index.php/api
+// Configurado para Laravel REST API em https://api.kariri.app.br/api
 
 import { diagnoseApiIssue, ApiDiagnosticReport } from './diagnostics';
 import { analytics } from '../analyticsService';
 
 export const API_BASE_URL =
   (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL ||
-  'https://kariri.app.br/kariri-api/public/index.php/api';
+  'https://api.kariri.app.br/api';
 
 // Toggle mock mode via VITE_USE_MOCK_DATA:
 // Quando 'true', força dados mockados locais.

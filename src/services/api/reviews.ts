@@ -42,10 +42,9 @@ export const reviewsApi = {
 
     try {
       // O backend identifica o autor exclusivamente pelo token Sanctum no header Authorization
-      const response = await apiClient<unknown>('/reviews', {
+      const response = await apiClient<unknown>(`/places/${placeId}/reviews`, {
         method: 'POST',
         body: JSON.stringify({
-          place_id: placeId,
           rating: input.rating,
           comment: input.comment.trim(),
         }),
@@ -76,6 +75,9 @@ export const reviewsApi = {
             err.data,
             '/reviews'
           );
+        }
+        if (err.status === 409) {
+          throw new ApiError(409, 'Você já avaliou este local.', err.data, '/reviews');
         }
         if (err.status === 429) {
           throw new ApiError(
