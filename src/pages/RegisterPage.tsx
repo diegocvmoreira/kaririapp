@@ -27,10 +27,17 @@ export const RegisterPage: React.FC = () => {
 
   // Validação estrita para evitar vulnerabilidade de open redirect
   const returnToRaw = searchParams.get('returnTo');
-  const safeReturnTo =
+  const intentRaw = searchParams.get('intent');
+
+  const baseReturnTo =
     returnToRaw && returnToRaw.startsWith('/') && !returnToRaw.startsWith('//')
       ? returnToRaw
-      : '/perfil';
+      : '/';
+
+  const safeReturnTo =
+    intentRaw && ['create_place', 'create_event'].includes(intentRaw)
+      ? `${baseReturnTo}${baseReturnTo.includes('?') ? '&' : '?'}intent=${encodeURIComponent(intentRaw)}`
+      : (returnToRaw && returnToRaw.startsWith('/') && !returnToRaw.startsWith('//') ? returnToRaw : '/perfil');
 
   // Campos básicos
   const [name, setName] = useState('');

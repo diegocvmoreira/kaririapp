@@ -11,6 +11,7 @@ interface PlaceFormModalProps {
   place?: Place | null;
   cities: City[];
   categories: Category[];
+  isPublicContribution?: boolean;
 }
 
 export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
@@ -20,6 +21,7 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
   place,
   cities,
   categories,
+  isPublicContribution = false,
 }) => {
   const isEditing = !!place;
 
@@ -146,8 +148,8 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
         instagram: instagram.trim() || undefined,
         opening_hours: openingHours.trim().slice(0, 255),
         price_level: priceLevel,
-        status,
-        is_featured: isFeatured,
+        status: isPublicContribution ? 'pending' : status,
+        is_featured: isPublicContribution ? false : isFeatured,
         cover_image: coverImage.trim() || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80',
       });
       onClose();
@@ -171,10 +173,14 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {isEditing ? `Editar Local: ${place?.name}` : 'Cadastrar Novo Local'}
+              {isPublicContribution
+                ? (isEditing ? 'Editar Sugestão de Local' : 'Sugerir Novo Local')
+                : (isEditing ? `Editar Local: ${place?.name}` : 'Cadastrar Novo Local')}
             </h2>
             <p className="text-xs text-gray-500">
-              Preencha os dados cadastrais para publicação no Kariri.app
+              {isPublicContribution
+                ? 'Contribua com o guia do Cariri. O conteúdo será analisado antes da publicação.'
+                : 'Preencha os dados cadastrais para publicação no Kariri.app'}
             </p>
           </div>
           <button
@@ -189,6 +195,15 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm">
+          {isPublicContribution && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold">Colaboração da Comunidade:</span> O cadastro passará pela equipe de moderação para verificação e integridade dos dados antes de ficar visível publicamente no Kariri.app.
+              </div>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs font-semibold">
               {errorMsg}
@@ -449,35 +464,37 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
             )}
           </div>
 
-          {/* Status e Destaque */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Status de Publicação</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as EntityStatus)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
-              >
-                <option value="published">Publicado</option>
-                <option value="draft">Rascunho</option>
-                <option value="pending">Pendente de Revisão</option>
-                <option value="archived">Arquivado</option>
-              </select>
-            </div>
+          {/* Status e Destaque - apenas para administradores/moderadores */}
+          {!isPublicContribution && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Status de Publicação</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as EntityStatus)}
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
+                >
+                  <option value="published">Publicado</option>
+                  <option value="draft">Rascunho</option>
+                  <option value="pending">Pendente de Revisão</option>
+                  <option value="archived">Arquivado</option>
+                </select>
+              </div>
 
-            <div className="flex items-center gap-2 pt-6">
-              <input
-                type="checkbox"
-                id="isFeatured"
-                checked={isFeatured}
-                onChange={(e) => setIsFeatured(e.target.checked)}
-                className="w-4 h-4 text-[#DE1F2A] rounded border-gray-300 focus:ring-[#DE1F2A]"
-              />
-              <label htmlFor="isFeatured" className="font-bold text-gray-800 text-xs sm:text-sm select-none cursor-pointer">
-                Exibir na seção de Destaques
-              </label>
+              <div className="flex items-center gap-2 pt-6">
+                <input
+                  type="checkbox"
+                  id="isFeatured"
+                  checked={isFeatured}
+                  onChange={(e) => setIsFeatured(e.target.checked)}
+                  className="w-4 h-4 text-[#DE1F2A] rounded border-gray-300 focus:ring-[#DE1F2A]"
+                />
+                <label htmlFor="isFeatured" className="font-bold text-gray-800 text-xs sm:text-sm select-none cursor-pointer">
+                  Exibir na seção de Destaques
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Footer Actions */}
           <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
@@ -494,7 +511,13 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
               disabled={isSubmitting}
               className="px-6 py-2.5 rounded-xl bg-[#DE1F2A] hover:bg-[#C51620] text-white font-bold transition shadow-sm active:scale-98 disabled:opacity-50 flex items-center gap-2"
             >
-              {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar Local' : 'Cadastrar Local'}
+              {isSubmitting
+                ? 'Salvando...'
+                : isPublicContribution
+                ? 'Enviar para Moderação'
+                : isEditing
+                ? 'Atualizar Local'
+                : 'Cadastrar Local'}
             </button>
           </div>
         </form>

@@ -20,6 +20,7 @@ import {
   LogIn,
   CheckCircle2,
   Clock,
+  Calendar,
   Compass,
   Edit3,
   Save,
@@ -371,6 +372,42 @@ export const ProfilePage: React.FC = () => {
 
       {/* 5. Menu Actions */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-xs divide-y divide-gray-100 overflow-hidden">
+        {/* Contribuições Comunitárias */}
+        <Link
+          to="/minhas-contribuicoes"
+          className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition"
+        >
+          <div className="flex items-center gap-3">
+            <Clock className="w-4 h-4 text-[#DE1F2A]" />
+            <span className="font-semibold text-gray-900">Minhas Contribuições</span>
+          </div>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+            Moderação
+          </span>
+        </Link>
+
+        <Link
+          to="/novo-local"
+          className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition"
+        >
+          <div className="flex items-center gap-3">
+            <MapPin className="w-4 h-4 text-emerald-600" />
+            <span className="font-semibold text-gray-900">Sugerir Novo Local</span>
+          </div>
+          <span className="text-xs text-gray-400">+ Adicionar</span>
+        </Link>
+
+        <Link
+          to="/novo-evento"
+          className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-800 hover:bg-gray-50 transition"
+        >
+          <div className="flex items-center gap-3">
+            <Calendar className="w-4 h-4 text-indigo-600" />
+            <span className="font-semibold text-gray-900">Cadastrar Novo Evento</span>
+          </div>
+          <span className="text-xs text-gray-400">+ Divulgar</span>
+        </Link>
+
         {isAdmin && (
           <Link
             to="/admin"

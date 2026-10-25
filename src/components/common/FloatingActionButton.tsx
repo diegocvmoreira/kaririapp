@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, MapPin, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { placesApi } from '../../services/api/places';
 import { eventsApi } from '../../services/api/events';
 import { citiesApi } from '../../services/api/cities';
@@ -11,7 +12,15 @@ import { Place, EventItem, City, Category } from '../../types';
 import { mockCities } from '../../mocks/mockCities';
 import { mockCategories } from '../../mocks/mockCategories';
 
+// Rotas onde o botão flutuante não deve sobrepor formulários de autenticação
+const AUTH_ROUTES = ['/login', '/cadastro', '/esqueci-senha', '/redefinir-senha'];
+
 export const FloatingActionButton: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   const [isOpen, setIsOpen] = useState(false);
   const [isPlaceModalOpen, setIsPlaceModalOpen] = useState(false);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -21,57 +30,98 @@ export const FloatingActionButton: React.FC = () => {
   const [places, setPlaces] = useState<Place[]>([]);
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const navigate = useNavigate();
+  const mainButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Carrega opções de apoio para os modais em segundo plano
+  // Não renderiza o botão em rotas de autenticação
+  const isAuthRoute = AUTH_ROUTES.includes(location.pathname);
+
+  // Carrega opções de apoio em segundo plano
   useEffect(() => {
     citiesApi.getAll().then(setCities).catch(() => {});
     categoriesApi.getAll().then(setCategories).catch(() => {});
     placesApi.getAll().then(setPlaces).catch(() => {});
   }, []);
 
-  // Fecha o menu ao pressionar Escape
+  // Fecha o menu ao trocar de rota
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
+  // Retomada automática de intenção de cadastro caso venha pela URL
+  useEffect(() => {
+    const intent = searchParams.get('intent');
+    if (!intent) return;
+
+    if (intent === 'create_place') {
+      setIsPlaceModalOpen(true);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('intent');
+      const query = newParams.toString();
+      navigate(`${location.pathname}${query ? `?${query}` : ''}`, { replace: true });
+    } else if (intent === 'create_event') {
+      setIsEventModalOpen(true);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('intent');
+      const query = newParams.toString();
+      navigate(`${location.pathname}${query ? `?${query}` : ''}`, { replace: true });
+    }
+  }, [searchParams, navigate, location.pathname]);
+
+  // Fecha ao pressionar Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         setIsOpen(false);
+        mainButtonRef.current?.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
+  if (isAuthRoute) {
+    return null;
+  }
+
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => {
       setToast(null);
-    }, 4500);
+    }, 5500);
   };
 
-  const handleOpenPlaceModal = () => {
+  // Abre diretamente o modal de criação correspondente
+  const handleOpenPlaceOption = () => {
     setIsOpen(false);
     setIsPlaceModalOpen(true);
   };
 
-  const handleOpenEventModal = () => {
+  const handleOpenEventOption = () => {
     setIsOpen(false);
     setIsEventModalOpen(true);
   };
 
+  const isPublicUser = user?.role !== 'admin';
+
   const handleSavePlace = async (data: Partial<Place>) => {
     try {
       const created = await placesApi.create(data);
-      showToast('success', `Local "${created.name}" cadastrado com sucesso!`);
       setIsPlaceModalOpen(false);
 
-      // Dispara evento para sincronização em tempo real de listas abertas
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('kariri:places_updated', { detail: created }));
+      if (isPublicUser) {
+        showToast(
+          'success',
+          `Sua sugestão de local "${created.name}" foi enviada com sucesso! Ela passará por moderação antes de ser publicada no Kariri.app.`
+        );
+      } else {
+        showToast('success', `Local "${created.name}" salvo com sucesso!`);
+        if (created.status === 'published' && created.slug) {
+          navigate(`/locais/${created.slug}`);
+        }
       }
 
-      // Redireciona para o novo local caso possua slug
-      if (created.slug) {
-        navigate(`/locais/${created.slug}`);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('kariri:places_updated', { detail: created }));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Não foi possível cadastrar o local.';
@@ -83,17 +133,22 @@ export const FloatingActionButton: React.FC = () => {
   const handleSaveEvent = async (data: Partial<EventItem>) => {
     try {
       const created = await eventsApi.create(data);
-      showToast('success', `Evento "${created.title}" cadastrado com sucesso!`);
       setIsEventModalOpen(false);
 
-      // Dispara evento para sincronização em tempo real de agendas abertas
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('kariri:events_updated', { detail: created }));
+      if (isPublicUser) {
+        showToast(
+          'success',
+          `Sua sugestão de evento "${created.title}" foi enviada com sucesso! Ela passará pela equipe de moderação antes de ser publicada.`
+        );
+      } else {
+        showToast('success', `Evento "${created.title}" salvo com sucesso!`);
+        if (created.status === 'published' && created.slug) {
+          navigate(`/eventos/${created.slug}`);
+        }
       }
 
-      // Redireciona para o novo evento caso possua slug
-      if (created.slug) {
-        navigate(`/eventos/${created.slug}`);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('kariri:events_updated', { detail: created }));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Não foi possível cadastrar o evento.';
@@ -104,13 +159,13 @@ export const FloatingActionButton: React.FC = () => {
 
   return (
     <>
-      {/* Toast de notificação global pós-cadastro */}
+      {/* Toast flutuante de notificação */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 max-w-sm w-full animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="fixed top-5 right-5 z-[70] max-w-sm w-full animate-in fade-in slide-in-from-top-4 duration-300">
           <div
             className={`p-4 rounded-2xl shadow-xl border flex items-start gap-3 backdrop-blur-md ${
               toast.type === 'success'
-                ? 'bg-emerald-500/95 text-white border-emerald-400'
+                ? 'bg-emerald-600/95 text-white border-emerald-400'
                 : 'bg-rose-600/95 text-white border-rose-500'
             }`}
           >
@@ -126,52 +181,80 @@ export const FloatingActionButton: React.FC = () => {
         </div>
       )}
 
-      {/* Backdrop para fechar ao clicar fora quando o menu estiver aberto */}
+      {/* Backdrop para fechar ao clicar fora */}
       {isOpen && (
         <div
           role="button"
           tabIndex={0}
-          aria-label="Fechar menu de opções"
+          aria-label="Fechar menu de criação"
           onClick={() => setIsOpen(false)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') setIsOpen(false);
           }}
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-xs transition-opacity duration-200"
+          className="fixed inset-0 z-40 bg-black/35 backdrop-blur-xs transition-opacity duration-200"
         />
       )}
 
-      {/* Container fixo do Botão Flutuante (FAB) - no canto inferior direito em desktop e mobile */}
-      <div className="fixed right-4 bottom-[72px] md:bottom-8 md:right-8 z-[60] flex flex-col items-end">
-        {/* Menu Speed Dial suspenso com as 2 opções */}
+      {/* FAB Container: posicionado no canto inferior direito, logo acima do menu inferior no mobile (bottom-[72px]) e no desktop (md:bottom-8 md:right-8) */}
+      <div
+        className="fixed right-4 bottom-[72px] md:bottom-8 md:right-8 z-50 flex flex-col items-end pointer-events-auto"
+      >
+        {/* Menu suspenso com as 2 opções: Novo local e Novo evento */}
         {isOpen && (
-          <div className="mb-2.5 flex flex-col items-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div
+            role="menu"
+            aria-label="Opções de adição"
+            className="mb-3 flex flex-col items-end gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          >
             {/* Opção 1: Novo Evento */}
-            <div className="flex items-center gap-2 group cursor-pointer" onClick={handleOpenEventModal}>
-              <span className="px-2.5 py-1 rounded-xl bg-white text-gray-800 text-xs font-bold shadow-md border border-gray-100 select-none group-hover:bg-gray-50 transition">
-                Novo Evento
+            <div
+              role="menuitem"
+              tabIndex={0}
+              className="flex items-center gap-2 group cursor-pointer"
+              onClick={handleOpenEventOption}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleOpenEventOption();
+                }
+              }}
+            >
+              <span className="px-3 py-1.5 rounded-xl bg-white text-gray-800 text-xs font-bold shadow-md border border-gray-100 select-none group-hover:bg-gray-50 transition">
+                Novo evento
               </span>
               <button
                 type="button"
-                onClick={handleOpenEventModal}
-                className="w-10 h-10 rounded-full bg-white hover:bg-gray-50 text-[#DE1F2A] hover:text-[#C51620] border border-gray-200/90 shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-[#DE1F2A]"
-                title="Cadastrar Novo Evento"
-                aria-label="Cadastrar Novo Evento"
+                tabIndex={-1}
+                className="w-10 h-10 rounded-full bg-white hover:bg-gray-50 text-[#DE1F2A] hover:text-[#C51620] border border-gray-200 shadow-md flex items-center justify-center transition-transform duration-200 group-hover:scale-105 active:scale-95"
+                aria-label="Novo evento"
+                title="Novo evento"
               >
                 <Calendar className="w-4 h-4" />
               </button>
             </div>
 
             {/* Opção 2: Novo Local */}
-            <div className="flex items-center gap-2 group cursor-pointer" onClick={handleOpenPlaceModal}>
-              <span className="px-2.5 py-1 rounded-xl bg-white text-gray-800 text-xs font-bold shadow-md border border-gray-100 select-none group-hover:bg-gray-50 transition">
-                Novo Local
+            <div
+              role="menuitem"
+              tabIndex={0}
+              className="flex items-center gap-2 group cursor-pointer"
+              onClick={handleOpenPlaceOption}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleOpenPlaceOption();
+                }
+              }}
+            >
+              <span className="px-3 py-1.5 rounded-xl bg-white text-gray-800 text-xs font-bold shadow-md border border-gray-100 select-none group-hover:bg-gray-50 transition">
+                Novo local
               </span>
               <button
                 type="button"
-                onClick={handleOpenPlaceModal}
-                className="w-10 h-10 rounded-full bg-white hover:bg-gray-50 text-[#DE1F2A] hover:text-[#C51620] border border-gray-200/90 shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-[#DE1F2A]"
-                title="Cadastrar Novo Local"
-                aria-label="Cadastrar Novo Local"
+                tabIndex={-1}
+                className="w-10 h-10 rounded-full bg-white hover:bg-gray-50 text-[#DE1F2A] hover:text-[#C51620] border border-gray-200 shadow-md flex items-center justify-center transition-transform duration-200 group-hover:scale-105 active:scale-95"
+                aria-label="Novo local"
+                title="Novo local"
               >
                 <MapPin className="w-4 h-4" />
               </button>
@@ -179,14 +262,16 @@ export const FloatingActionButton: React.FC = () => {
           </div>
         )}
 
-        {/* Botão Flutuante Principal com o símbolo + (tamanho idêntico ao FavoriteButton: w-10 h-10) */}
+        {/* Botão Flutuante Principal com símbolo + (do mesmo tamanho do botão de favoritar: w-10 h-10) */}
         <button
+          ref={mainButtonRef}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
-          aria-label={isOpen ? 'Fechar menu de criação' : 'Adicionar novo local ou evento'}
-          title={isOpen ? 'Fechar menu' : 'Adicionar novo local ou evento (+)'}
-          className={`w-10 h-10 rounded-full bg-[#DE1F2A] hover:bg-[#C51620] text-white shadow-[0_4px_16px_rgba(222,31,42,0.45)] hover:shadow-[0_6px_20px_rgba(222,31,42,0.6)] flex items-center justify-center transition-all duration-300 transform active:scale-90 focus:outline-hidden focus:ring-2 focus:ring-red-400 ${
+          aria-haspopup="menu"
+          aria-label={isOpen ? 'Fechar opções de cadastro' : 'Adicionar novo local ou evento'}
+          title="Adicionar"
+          className={`w-10 h-10 rounded-full bg-[#DE1F2A] hover:bg-[#C51620] text-white shadow-[0_4px_16px_rgba(222,31,42,0.45)] hover:shadow-[0_6px_20px_rgba(222,31,42,0.6)] flex items-center justify-center transition-all duration-300 transform active:scale-90 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[#DE1F2A] ${
             isOpen ? 'rotate-45' : 'hover:scale-105'
           }`}
         >
@@ -194,16 +279,17 @@ export const FloatingActionButton: React.FC = () => {
         </button>
       </div>
 
-      {/* Modal de Criação de Local */}
+      {/* Modal de Criação / Sugestão de Local */}
       <PlaceFormModal
         isOpen={isPlaceModalOpen}
         onClose={() => setIsPlaceModalOpen(false)}
         onSave={handleSavePlace}
         cities={cities}
         categories={categories}
+        isPublicContribution={isPublicUser}
       />
 
-      {/* Modal de Criação de Evento */}
+      {/* Modal de Criação / Sugestão de Evento */}
       <EventFormModal
         isOpen={isEventModalOpen}
         onClose={() => setIsEventModalOpen(false)}
@@ -211,6 +297,7 @@ export const FloatingActionButton: React.FC = () => {
         cities={cities}
         categories={categories}
         places={places}
+        isPublicContribution={isPublicUser}
       />
     </>
   );

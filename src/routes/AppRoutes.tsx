@@ -19,6 +19,9 @@ const AdminDashboardPage = lazy(() => import('../pages/AdminDashboardPage').then
 const LegalPrivacyPage = lazy(() => import('../pages/LegalPrivacyPage').then((m) => ({ default: m.LegalPrivacyPage })));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })));
+const CreatePlacePage = lazy(() => import('../pages/CreatePlacePage').then((m) => ({ default: m.CreatePlacePage })));
+const CreateEventPage = lazy(() => import('../pages/CreateEventPage').then((m) => ({ default: m.CreateEventPage })));
+const MyContributionsPage = lazy(() => import('../pages/MyContributionsPage').then((m) => ({ default: m.MyContributionsPage })));
 
 const PageSuspenseFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center p-6">
@@ -43,6 +46,48 @@ export const AppRoutes: React.FC = () => {
         />
         <Route path="/favoritos" element={<FavoritesPage />} />
         <Route path="/perfil" element={<ProfilePage />} />
+
+        {/* Cadastro / Sugestão pública de locais e eventos */}
+        <Route
+          path="/novo-local"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <CreatePlacePage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/locais/novo"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <CreatePlacePage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/novo-evento"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <CreateEventPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/eventos/novo"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <CreateEventPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/minhas-contribuicoes"
+          element={
+            <Suspense fallback={<PageSuspenseFallback />}>
+              <MyContributionsPage />
+            </Suspense>
+          }
+        />
 
         {/* Dynamic detail pages */}
         <Route

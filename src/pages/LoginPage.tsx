@@ -13,10 +13,17 @@ export const LoginPage: React.FC = () => {
 
   // Validação estrita para evitar vulnerabilidade de open redirect
   const returnToRaw = searchParams.get('returnTo');
-  const safeReturnTo =
+  const intentRaw = searchParams.get('intent');
+
+  const baseReturnTo =
     returnToRaw && returnToRaw.startsWith('/') && !returnToRaw.startsWith('//')
       ? returnToRaw
-      : '/perfil';
+      : '/';
+
+  const safeReturnTo =
+    intentRaw && ['create_place', 'create_event'].includes(intentRaw)
+      ? `${baseReturnTo}${baseReturnTo.includes('?') ? '&' : '?'}intent=${encodeURIComponent(intentRaw)}`
+      : (returnToRaw && returnToRaw.startsWith('/') && !returnToRaw.startsWith('//') ? returnToRaw : '/perfil');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,8 +39,12 @@ export const LoginPage: React.FC = () => {
 
     if (searchParams.get('expired') === '1') {
       setErrorMsg('Sua sessão expirou (validade de 30 dias). Por favor, faça login novamente para continuar.');
+    } else if (intentRaw === 'create_place') {
+      setInfoMsg('Entre na sua conta para enviar uma sugestão de novo local para o guia.');
+    } else if (intentRaw === 'create_event') {
+      setInfoMsg('Entre na sua conta para cadastrar um novo evento cultural no Kariri.app.');
     }
-  }, [searchParams]);
+  }, [searchParams, intentRaw]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,7 +166,7 @@ export const LoginPage: React.FC = () => {
           <p className="text-xs text-gray-500">
             Ainda não tem conta?{' '}
             <Link
-              to={`/cadastro${returnToRaw ? `?returnTo=${encodeURIComponent(safeReturnTo)}` : ''}`}
+              to={`/cadastro${returnToRaw ? `?returnTo=${encodeURIComponent(returnToRaw)}` : ''}${intentRaw ? `${returnToRaw ? '&' : '?'}intent=${encodeURIComponent(intentRaw)}` : ''}`}
               className="text-[#DE1F2A] font-bold hover:underline"
             >
               Criar conta gratuita

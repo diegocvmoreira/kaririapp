@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Shield, Lock, FileText, CheckCircle2, RotateCcw, AlertTriangle, Mail } from 'lucide-react';
 import {
   getStoredConsent,
@@ -8,7 +9,14 @@ import {
 } from '../services/consentService';
 
 export const LegalPrivacyPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'privacy' | 'cookies' | 'terms'>('privacy');
+  const location = useLocation();
+  const getInitialTab = () => {
+    if (location.pathname === '/cookies') return 'cookies';
+    if (location.pathname === '/termos') return 'terms';
+    return 'privacy';
+  };
+
+  const [activeTab, setActiveTab] = useState<'privacy' | 'cookies' | 'terms'>(getInitialTab);
   const [consentPrefs, setConsentPrefs] = useState<CookieConsentPreferences>({
     necessary: true,
     functionality: false,
@@ -16,6 +24,16 @@ export const LegalPrivacyPage: React.FC = () => {
     marketing: false,
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (location.pathname === '/cookies') {
+      setActiveTab('cookies');
+    } else if (location.pathname === '/termos') {
+      setActiveTab('terms');
+    } else if (location.pathname === '/privacidade') {
+      setActiveTab('privacy');
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const stored = getStoredConsent();

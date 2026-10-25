@@ -10,6 +10,7 @@ interface EventFormModalProps {
   cities: City[];
   categories: Category[];
   places: Place[];
+  isPublicContribution?: boolean;
 }
 
 export const EventFormModal: React.FC<EventFormModalProps> = ({
@@ -20,6 +21,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   cities,
   categories,
   places,
+  isPublicContribution = false,
 }) => {
   const isEditing = !!event;
 
@@ -177,8 +179,8 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
         organizer: organizer.trim(),
         description: description.trim(),
         cover_image: coverImage.trim() || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1000&q=80',
-        status,
-        is_featured: isFeatured,
+        status: isPublicContribution ? 'pending' : status,
+        is_featured: isPublicContribution ? false : isFeatured,
       });
       onClose();
     } catch (err: unknown) {
@@ -201,10 +203,14 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {isEditing ? `Editar Evento: ${event?.title}` : 'Cadastrar Novo Evento'}
+              {isPublicContribution
+                ? (isEditing ? 'Editar Sugestão de Evento' : 'Sugerir Novo Evento')
+                : (isEditing ? `Editar Evento: ${event?.title}` : 'Cadastrar Novo Evento')}
             </h2>
             <p className="text-xs text-gray-500">
-              Agenda cultural, festividades e espetáculos do Cariri cearense
+              {isPublicContribution
+                ? 'Contribua com a agenda do Cariri. O evento passará por moderação antes de ser publicado.'
+                : 'Agenda cultural, festividades e espetáculos do Cariri cearense'}
             </p>
           </div>
           <button
@@ -219,6 +225,15 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm">
+          {isPublicContribution && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 flex items-start gap-2.5">
+              <Calendar className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold">Colaboração da Comunidade:</span> O evento será analisado pela equipe de moderação do Kariri.app antes de ser listado na agenda pública.
+              </div>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs font-semibold">
               {errorMsg}
@@ -492,35 +507,37 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
             )}
           </div>
 
-          {/* Status e Destaque */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Status de Publicação</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as EntityStatus)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
-              >
-                <option value="published">Publicado</option>
-                <option value="draft">Rascunho</option>
-                <option value="pending">Pendente de Revisão</option>
-                <option value="archived">Arquivado</option>
-              </select>
-            </div>
+          {/* Status e Destaque - apenas para administradores/moderadores */}
+          {!isPublicContribution && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Status de Publicação</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as EntityStatus)}
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
+                >
+                  <option value="published">Publicado</option>
+                  <option value="draft">Rascunho</option>
+                  <option value="pending">Pendente de Revisão</option>
+                  <option value="archived">Arquivado</option>
+                </select>
+              </div>
 
-            <div className="flex items-center gap-2 pt-6">
-              <input
-                type="checkbox"
-                id="eventFeatured"
-                checked={isFeatured}
-                onChange={(e) => setIsFeatured(e.target.checked)}
-                className="w-4 h-4 text-[#DE1F2A] rounded border-gray-300 focus:ring-[#DE1F2A]"
-              />
-              <label htmlFor="eventFeatured" className="font-bold text-gray-800 text-xs sm:text-sm select-none cursor-pointer">
-                Destacar na página inicial
-              </label>
+              <div className="flex items-center gap-2 pt-6">
+                <input
+                  type="checkbox"
+                  id="eventFeatured"
+                  checked={isFeatured}
+                  onChange={(e) => setIsFeatured(e.target.checked)}
+                  className="w-4 h-4 text-[#DE1F2A] rounded border-gray-300 focus:ring-[#DE1F2A]"
+                />
+                <label htmlFor="eventFeatured" className="font-bold text-gray-800 text-xs sm:text-sm select-none cursor-pointer">
+                  Destacar na página inicial
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Footer Actions */}
           <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
@@ -537,7 +554,13 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
               disabled={isSubmitting}
               className="px-6 py-2.5 rounded-xl bg-[#DE1F2A] hover:bg-[#C51620] text-white font-bold transition shadow-sm active:scale-98 disabled:opacity-50 flex items-center gap-2"
             >
-              {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar Evento' : 'Cadastrar Evento'}
+              {isSubmitting
+                ? 'Salvando...'
+                : isPublicContribution
+                ? 'Enviar Evento para Moderação'
+                : isEditing
+                ? 'Atualizar Evento'
+                : 'Cadastrar Evento'}
             </button>
           </div>
         </form>

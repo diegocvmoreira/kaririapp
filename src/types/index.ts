@@ -1,8 +1,8 @@
 // Entidades do Domínio para KARIRI.APP
 // Alinhado rigorosamente com o Documento Mestre Seção 24 (Banco de Dados) e Seção 25 (Relacionamentos)
 
-export type UserRole = 'visitor' | 'user' | 'business' | 'admin';
-export type EntityStatus = 'draft' | 'pending' | 'published' | 'rejected' | 'archived';
+export type UserRole = 'visitor' | 'user' | 'usuario' | 'business' | 'moderador' | 'admin';
+export type EntityStatus = 'draft' | 'pending' | 'changes_requested' | 'rejected' | 'published' | 'archived';
 export type ClaimStatus = 'pending' | 'reviewed' | 'approved' | 'rejected';
 export type UserStatus = 'active' | 'suspended' | 'pending' | 'inactive' | 'deleted';
 

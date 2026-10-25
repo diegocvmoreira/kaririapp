@@ -130,7 +130,7 @@ export const Header: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(true)}
-            className="md:hidden flex items-center justify-center p-2 rounded-xl border border-gray-200 text-gray-700 hover:text-[#DE1F2A] hover:bg-gray-50 active:scale-95 transition"
+            className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-700 hover:text-[#DE1F2A] hover:bg-gray-50 active:scale-95 transition"
             aria-label="Abrir menu de informações"
             title="Menu de informações"
           >
