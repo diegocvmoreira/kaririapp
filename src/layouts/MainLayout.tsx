@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { Header } from '../components/common/Header';
 import { BottomNavigation } from '../components/common/BottomNavigation';
+import { FloatingActionButton } from '../components/common/FloatingActionButton';
 import { KaririLogo } from '../components/common/KaririLogo';
 import { CookieConsentBanner } from '../components/common/CookieConsentBanner';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -53,8 +54,8 @@ export const MainLayout: React.FC = () => {
         <Outlet />
       </main>
 
-      {/* Desktop / Tablet Minimal Footer with LGPD Compliance Links */}
-      <footer className="border-t border-gray-200/80 bg-white/70 py-6 px-4 mt-8">
+      {/* Desktop / Tablet Minimal Footer with LGPD Compliance Links (Preservado e mantido no desktop e resoluções maiores) */}
+      <footer className="hidden md:block w-full border-t border-gray-200/80 bg-white/90 backdrop-blur-xs py-6 px-4 mt-auto">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <div className="flex items-center gap-3">
             <KaririLogo size="xs" />
@@ -86,6 +87,9 @@ export const MainLayout: React.FC = () => {
 
       {/* Mobile Bottom Fixed Navigation */}
       <BottomNavigation />
+
+      {/* Floating Action Button (+ Novo Local / Novo Evento) */}
+      <FloatingActionButton />
 
       {/* Cookie Consent Banner (Google Consent Mode v2 + LGPD) */}
       <CookieConsentBanner />

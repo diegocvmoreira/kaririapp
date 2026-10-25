@@ -180,6 +180,16 @@ export const ExplorePage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+
+    const handleUpdate = () => {
+      fetchData();
+    };
+    window.addEventListener('kariri:places_updated', handleUpdate);
+    window.addEventListener('kariri:events_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('kariri:places_updated', handleUpdate);
+      window.removeEventListener('kariri:events_updated', handleUpdate);
+    };
   }, [filters, searchQuery, referenceCoords?.latitude, referenceCoords?.longitude]);
 
   const handleCategoryPillClick = (catSlug?: string) => {

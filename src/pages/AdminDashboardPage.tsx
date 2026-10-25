@@ -160,6 +160,16 @@ export const AdminDashboardPage: React.FC = () => {
       description: 'Gestão de locais, eventos, usuários e reivindicações de empresas do Kariri.app.',
     });
     loadAllData();
+
+    const handleUpdate = () => {
+      loadAllData();
+    };
+    window.addEventListener('kariri:places_updated', handleUpdate);
+    window.addEventListener('kariri:events_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('kariri:places_updated', handleUpdate);
+      window.removeEventListener('kariri:events_updated', handleUpdate);
+    };
   }, []);
 
   // Place CRUD handlers

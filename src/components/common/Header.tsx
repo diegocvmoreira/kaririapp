@@ -4,12 +4,14 @@ import { KaririLogo } from './KaririLogo';
 import { PWAInstallButton } from './PWAInstallButton';
 import { useCity } from '../../context/CityContext';
 import { useAuth } from '../../context/AuthContext';
-import { MapPin, ChevronDown, User as UserIcon } from 'lucide-react';
+import { MapPin, ChevronDown, User as UserIcon, Menu } from 'lucide-react';
+import { MobileOffCanvasMenu } from './MobileOffCanvasMenu';
 
 export const Header: React.FC = () => {
   const { cities, selectedCitySlug, setSelectedCitySlug, selectedCity, isLoading, error } = useCity();
   const { user, isAuthenticated } = useAuth();
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   // Navigation Links for Desktop Topbar
@@ -120,9 +122,20 @@ export const Header: React.FC = () => {
           })}
         </nav>
 
-        {/* Right: Actions (PWA install + User Profile) */}
-        <div className="flex items-center gap-2.5">
+        {/* Right: Actions (PWA install + Mobile Menu + User Profile) */}
+        <div className="flex items-center gap-2">
           <PWAInstallButton variant="button" />
+
+          {/* Botão de Menu Off-Canvas para Mobile (ao lado esquerdo do botão de logar) */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="md:hidden flex items-center justify-center p-2 rounded-xl border border-gray-200 text-gray-700 hover:text-[#DE1F2A] hover:bg-gray-50 active:scale-95 transition"
+            aria-label="Abrir menu de informações"
+            title="Menu de informações"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
 
           {isAuthenticated && user ? (
             <Link
@@ -150,6 +163,12 @@ export const Header: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Menu Off-Canvas para Mobile com páginas do rodapé */}
+      <MobileOffCanvasMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
     </header>
   );
 };
