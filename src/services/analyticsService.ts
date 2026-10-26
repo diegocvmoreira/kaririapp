@@ -12,7 +12,7 @@ import { KaririEventMap, KaririEventName } from '../types/analytics';
 // ID do GA4 ou GTM a partir de variáveis de ambiente com fallback para desenvolvimento
 export const GA_MEASUREMENT_ID =
   (import.meta as unknown as { env?: { VITE_GA_MEASUREMENT_ID?: string } }).env?.VITE_GA_MEASUREMENT_ID ||
-  'G-KARIRI2026';
+  '';
 
 export const GTM_CONTAINER_ID =
   (import.meta as unknown as { env?: { VITE_GTM_CONTAINER_ID?: string } }).env?.VITE_GTM_CONTAINER_ID ||
@@ -123,6 +123,7 @@ export class AnalyticsService {
   public loadTagIfConsented(): void {
     if (typeof window === 'undefined') return;
     if (this.scriptLoaded) return;
+    if (!GA_MEASUREMENT_ID) return;
 
     if (!hasConsent('analytics')) {
       return;

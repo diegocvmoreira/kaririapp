@@ -27,10 +27,11 @@ import {
   X,
   Mail,
   AlertCircle,
+  Trash2,
 } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
-  const { user, isAuthenticated, logout, updateProfile } = useAuth();
+  const { user, isAuthenticated, logout, deleteAccount, updateProfile } = useAuth();
   const { favoriteIds } = useFavorites();
   const { cities } = useCity();
   const navigate = useNavigate();
@@ -48,6 +49,8 @@ export const ProfilePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     setPageMeta({
@@ -72,6 +75,29 @@ export const ProfilePage: React.FC = () => {
   const handleLogout = async () => {
     await logout();
     navigate('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user || isDeletingAccount) return;
+
+    const confirmed = window.confirm(
+      'Excluir sua conta removerá seu acesso e seus dados de usuário. Essa ação não pode ser desfeita. Deseja continuar?'
+    );
+    if (!confirmed) return;
+
+    const password = window.prompt('Digite sua senha para confirmar a exclusão da conta:');
+    if (!password) return;
+
+    setIsDeletingAccount(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount(password);
+      navigate('/');
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Não foi possível excluir sua conta.');
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
 
   const handleSaveGeo = async (e: React.FormEvent) => {
@@ -451,16 +477,34 @@ export const ProfilePage: React.FC = () => {
         </div>
 
         {isAuthenticated ? (
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-red-600 hover:bg-red-50 transition font-bold"
-          >
-            <div className="flex items-center gap-3">
-              <LogOut className="w-4 h-4" />
-              <span>Sair da Conta</span>
-            </div>
-          </button>
+          <>
+            {deleteError && (
+              <div className="px-5 py-3 text-xs text-red-700 bg-red-50 border-t border-red-100" role="alert">
+                {deleteError}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-red-600 hover:bg-red-50 transition font-bold"
+            >
+              <div className="flex items-center gap-3">
+                <LogOut className="w-4 h-4" />
+                <span>Sair da Conta</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              disabled={isDeletingAccount}
+              className="w-full px-5 py-3.5 flex items-center justify-between text-xs sm:text-sm text-gray-500 hover:bg-gray-50 transition disabled:opacity-50"
+            >
+              <div className="flex items-center gap-3">
+                <Trash2 className="w-4 h-4" />
+                <span>{isDeletingAccount ? 'Excluindo conta...' : 'Excluir minha conta'}</span>
+              </div>
+            </button>
+          </>
         ) : (
           <Link
             to="/login"

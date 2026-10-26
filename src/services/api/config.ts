@@ -5,14 +5,14 @@ import { diagnoseApiIssue, ApiDiagnosticReport } from './diagnostics';
 import { analytics } from '../analyticsService';
 
 export const API_BASE_URL =
-  (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
   'https://kariri.app.br/kariri-api/public/index.php/api';
 
 // Toggle mock mode via VITE_USE_MOCK_DATA:
 // Quando 'true', força dados mockados locais.
 // Quando 'false' ou indefinido, realiza chamadas HTTP reais à API Laravel.
 export const USE_MOCK_DATA =
-  (import.meta as unknown as { env?: { VITE_USE_MOCK_DATA?: string } }).env?.VITE_USE_MOCK_DATA === 'true';
+  import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
 // Classe de erro customizada para tipar e diagnosticar status HTTP e erros de rede
 export class ApiError extends Error {

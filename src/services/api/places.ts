@@ -510,9 +510,12 @@ export const placesApi = {
           places: mappedPlaces,
         };
       } catch (err) {
-        // Se a rota /admin/places/import não existir no servidor (404/405), executa a inserção real
-        // diretamente via POST /admin/places com feedback progressivo
-        console.warn('Endpoint /admin/places/import indisponível no backend. Inserindo registros via POST /admin/places:', err);
+        // Só usa o fallback legado quando o servidor antigo ainda não possui a rota.
+        // Erros 401/403/422/429/500 devem chegar à interface, não serem mascarados.
+        if (!(err instanceof ApiError) || ![404, 405].includes(err.status)) {
+          throw err;
+        }
+        console.warn('Endpoint /admin/places/import indisponível. Usando fallback compatível:', err);
       }
 
       // 2. Inserção real direta registro a registro no backend Laravel via POST /admin/places
@@ -735,4 +738,3 @@ export const placesApi = {
     );
   },
 };
-

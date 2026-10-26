@@ -4,14 +4,14 @@ import { mockUser } from '../../mocks/mockUser';
 
 export interface LoginCredentials {
   email: string;
-  password?: string;
+  password: string;
 }
 
 export interface RegisterData {
   name: string;
   email: string;
-  password?: string;
-  password_confirmation?: string;
+  password: string;
+  password_confirmation: string;
   birth_city_id?: number | null;
   birth_city_name?: string | null;
   current_city_id?: number | null;
@@ -358,6 +358,23 @@ export const authApi = {
       localStorage.removeItem('kariri_auth_token');
       localStorage.removeItem('kariri_user_profile');
     }
+  },
+
+  async deleteAccount(password: string): Promise<void> {
+    if (USE_MOCK_DATA) {
+      await simulateNetworkDelay(null, 150);
+      localStorage.removeItem('kariri_auth_token');
+      localStorage.removeItem('kariri_user_profile');
+      return;
+    }
+
+    await apiClient('/me', {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    });
+
+    localStorage.removeItem('kariri_auth_token');
+    localStorage.removeItem('kariri_user_profile');
   },
 
   mockLogin(credentials: LoginCredentials): AuthResponse {

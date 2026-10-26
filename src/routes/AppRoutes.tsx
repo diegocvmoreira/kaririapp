@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 import { HomePage } from '../pages/HomePage';
 import { ExplorePage } from '../pages/ExplorePage';
@@ -9,6 +9,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { RequireAdmin } from '../components/auth/RequireAdmin';
 import { LoadingState } from '../components/common/LoadingState';
+import { NotFoundPage } from '../pages/NotFoundPage';
 
 // Code Splitting / Lazy Loading (Audit Item 9)
 const MapPage = lazy(() => import('../pages/MapPage').then((m) => ({ default: m.MapPage })));
@@ -173,8 +174,8 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Catch-all real 404 */}
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   );
