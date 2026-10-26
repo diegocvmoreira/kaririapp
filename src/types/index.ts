@@ -18,6 +18,8 @@ export interface User {
   birth_city_name?: string | null;
   current_city_id?: number | null;
   current_city_name?: string | null;
+  current_city_ibge_code?: number | null;
+  current_city_state?: string | null;
   cariri_city_id?: number | null;
   marketing_consent?: boolean;
   marketing_consent_at?: string | null;
@@ -27,6 +29,7 @@ export interface User {
 
 export interface City {
   id: number;
+  ibge_code?: number;
   name: string;
   slug: string;
   state: string;

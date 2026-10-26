@@ -94,7 +94,7 @@ export const citiesApi = {
     }
 
     try {
-      const response = await apiClient<unknown>(`/cities/search?q=${encodeURIComponent(query)}`);
+      const response = await apiClient<unknown>(`/municipalities/search?q=${encodeURIComponent(query)}`);
       const list = Array.isArray(response)
         ? response
         : (response as { data?: unknown[] })?.data || [];

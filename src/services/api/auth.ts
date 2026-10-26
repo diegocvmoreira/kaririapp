@@ -5,6 +5,7 @@ import { mockUser } from '../../mocks/mockUser';
 export interface LoginCredentials {
   email: string;
   password: string;
+  turnstile_token?: string;
 }
 
 export interface RegisterData {
@@ -16,9 +17,12 @@ export interface RegisterData {
   birth_city_name?: string | null;
   current_city_id?: number | null;
   current_city_name?: string | null;
+  current_city_ibge_code?: number | null;
+  current_city_state?: string | null;
   cariri_city_id?: number | null;
   city_preference?: string;
   marketing_consent?: boolean;
+  turnstile_token?: string;
 }
 
 export interface AuthResponse {
@@ -133,7 +137,7 @@ export const authApi = {
     }
   },
 
-  async forgotPassword(email: string): Promise<PasswordActionResponse> {
+  async forgotPassword(email: string, turnstile_token?: string): Promise<PasswordActionResponse> {
     if (!checkClientRateLimit()) {
       throw new ApiError(
         429,
@@ -150,7 +154,7 @@ export const authApi = {
     try {
       await apiClient<PasswordActionResponse>('/forgot-password', {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), turnstile_token }),
       });
 
       // Mensagem genérica padronizada para evitar enumeração de contas (quando a API responde adequadamente)

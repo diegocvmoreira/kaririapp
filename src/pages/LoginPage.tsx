@@ -5,6 +5,7 @@ import { KaririLogo } from '../components/common/KaririLogo';
 import { setPageMeta } from '../utils/seo';
 import { analytics } from '../services/analyticsService';
 import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
+import { TurnstileWidget } from '../components/auth/TurnstileWidget';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -30,6 +31,7 @@ export const LoginPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   React.useEffect(() => {
     setPageMeta({
@@ -57,7 +59,7 @@ export const LoginPage: React.FC = () => {
     setErrorMsg('');
     setInfoMsg('');
     try {
-      await login({ email: email.trim(), password });
+      await login({ email: email.trim(), password, turnstile_token: turnstileToken });
 
       // Dispara evento de login sem PII
       analytics.track('login', {
@@ -152,9 +154,11 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
+          <TurnstileWidget onToken={setTurnstileToken} />
+
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !turnstileToken}
             className="w-full py-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
           >
             <span>{isSubmitting ? 'Entrando...' : 'Entrar'}</span>

@@ -9,7 +9,7 @@ interface CitySelectorInputProps {
   helperText?: string;
   selectedCityId?: number | null;
   selectedCityName?: string | null;
-  onSelect: (selection: { cityId: number | null; cityName: string; isCariri: boolean }) => void;
+  onSelect: (selection: { cityId: number | null; cityName: string; state?: string; ibgeCode?: number; isCariri: boolean }) => void;
   caririOnly?: boolean;
   required?: boolean;
   className?: string;
@@ -99,8 +99,10 @@ export const CitySelectorInput: React.FC<CitySelectorInputProps> = ({
     setSelectedCity(city);
     setIsOpen(false);
     onSelect({
-      cityId: city.id,
+      cityId: city.id || null,
       cityName: formatted,
+      state: city.state,
+      ibgeCode: city.ibge_code,
       isCariri: Boolean(city.is_cariri_region),
     });
   };
@@ -183,7 +185,7 @@ export const CitySelectorInput: React.FC<CitySelectorInputProps> = ({
               const isSelected = selectedCity?.id === city.id || selectedCityId === city.id;
               return (
                 <button
-                  key={city.id}
+                  key={city.ibge_code || city.id || city.slug}
                   type="button"
                   onClick={() => handleSelectCity(city)}
                   className={`w-full text-left px-3.5 py-2.5 text-xs transition flex items-center justify-between hover:bg-red-50/50 ${

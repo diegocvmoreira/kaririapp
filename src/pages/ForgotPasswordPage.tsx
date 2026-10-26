@@ -6,6 +6,7 @@ import { analytics } from '../services/analyticsService';
 import { KaririLogo } from '../components/common/KaririLogo';
 import { setPageMeta } from '../utils/seo';
 import { Mail, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { TurnstileWidget } from '../components/auth/TurnstileWidget';
 
 export const ForgotPasswordPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +17,7 @@ export const ForgotPasswordPage: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [mockTokenLink, setMockTokenLink] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   useEffect(() => {
     setPageMeta({
@@ -35,7 +37,7 @@ export const ForgotPasswordPage: React.FC = () => {
     setErrorMsg('');
 
     try {
-      await authApi.forgotPassword(email.trim());
+      await authApi.forgotPassword(email.trim(), turnstileToken);
 
       // Dispara analytics sem PII (apenas status)
       analytics.track('password_reset_request', {
@@ -173,9 +175,10 @@ export const ForgotPasswordPage: React.FC = () => {
               </div>
             </div>
 
+            <TurnstileWidget onToken={setTurnstileToken} />
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !turnstileToken}
               className="w-full py-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
             >
               <span>{isSubmitting ? 'Enviando...' : 'Enviar link de recuperação'}</span>

@@ -19,6 +19,7 @@ import {
   Compass,
   Check,
 } from 'lucide-react';
+import { TurnstileWidget } from '../components/auth/TurnstileWidget';
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
@@ -51,6 +52,8 @@ export const RegisterPage: React.FC = () => {
 
   const [currentCityId, setCurrentCityId] = useState<number | null>(null);
   const [currentCityName, setCurrentCityName] = useState<string>('');
+  const [currentCityIbgeCode, setCurrentCityIbgeCode] = useState<number | null>(null);
+  const [currentCityState, setCurrentCityState] = useState<string | null>(null);
 
   // Preferência de exploração no Cariri (somente municípios do catálogo)
   const [caririCities, setCaririCities] = useState<City[]>([]);
@@ -63,6 +66,7 @@ export const RegisterPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   useEffect(() => {
     setPageMeta({
@@ -139,8 +143,11 @@ export const RegisterPage: React.FC = () => {
         birth_city_name: birthCityName || null,
         current_city_id: currentCityId,
         current_city_name: currentCityName || null,
+        current_city_ibge_code: currentCityIbgeCode,
+        current_city_state: currentCityState,
         cariri_city_id: caririCityId ? Number(caririCityId) : null,
         marketing_consent: marketingConsent,
+        turnstile_token: turnstileToken,
       });
 
       analytics.track('sign_up', {
@@ -359,9 +366,11 @@ export const RegisterPage: React.FC = () => {
               helperText="Finalidade: Personalização regional e comunicação geográfica somente quando informada. Separada da cidade natal."
               selectedCityId={currentCityId}
               selectedCityName={currentCityName}
-              onSelect={({ cityId, cityName }) => {
+              onSelect={({ cityId, cityName, ibgeCode, state }) => {
                 setCurrentCityId(cityId);
                 setCurrentCityName(cityName);
+                setCurrentCityIbgeCode(ibgeCode ?? null);
+                setCurrentCityState(state ?? null);
               }}
             />
 
@@ -415,9 +424,11 @@ export const RegisterPage: React.FC = () => {
             </label>
           </div>
 
+          <TurnstileWidget onToken={setTurnstileToken} />
+
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !turnstileToken}
             className="w-full py-3.5 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50 mt-4"
           >
             <span>{isSubmitting ? 'Cadastrando perfil...' : 'Criar Conta no Kariri.app'}</span>

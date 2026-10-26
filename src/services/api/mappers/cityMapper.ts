@@ -2,7 +2,8 @@ import { City } from '../../../types';
 
 // Contrato bruto retornado pela API Laravel (MySQL)
 export interface ApiCityRaw {
-  id: number;
+  id: number | null;
+  ibge_code?: number | null;
   name: string;
   slug: string;
   state?: string;
@@ -81,7 +82,8 @@ export function mapApiCityToCity(raw: ApiCityRaw): City {
     : CARIRI_SLUGS.has(slug);
 
   return {
-    id: Number(raw.id),
+    id: raw.id ? Number(raw.id) : 0,
+    ibge_code: raw.ibge_code ? Number(raw.ibge_code) : undefined,
     name: String(raw.name || ''),
     slug,
     state: String(raw.state || 'CE').toUpperCase(),

@@ -42,6 +42,8 @@ export const ProfilePage: React.FC = () => {
   const [editBirthCityName, setEditBirthCityName] = useState<string>(user?.birth_city_name ?? '');
   const [editCurrentCityId, setEditCurrentCityId] = useState<number | null>(user?.current_city_id ?? null);
   const [editCurrentCityName, setEditCurrentCityName] = useState<string>(user?.current_city_name ?? '');
+  const [editCurrentCityIbgeCode, setEditCurrentCityIbgeCode] = useState<number | null>(user?.current_city_ibge_code ?? null);
+  const [editCurrentCityState, setEditCurrentCityState] = useState<string | null>(user?.current_city_state ?? null);
   const [editCaririCityId, setEditCaririCityId] = useState<string>(user?.cariri_city_id ? String(user.cariri_city_id) : '');
   const [editMarketingConsent, setEditMarketingConsent] = useState<boolean>(Boolean(user?.marketing_consent));
 
@@ -67,6 +69,8 @@ export const ProfilePage: React.FC = () => {
       setEditBirthCityName(user.birth_city_name ?? '');
       setEditCurrentCityId(user.current_city_id ?? null);
       setEditCurrentCityName(user.current_city_name ?? '');
+      setEditCurrentCityIbgeCode(user.current_city_ibge_code ?? null);
+      setEditCurrentCityState(user.current_city_state ?? null);
       setEditCaririCityId(user.cariri_city_id ? String(user.cariri_city_id) : '');
       setEditMarketingConsent(Boolean(user.marketing_consent));
     }
@@ -110,6 +114,8 @@ export const ProfilePage: React.FC = () => {
         birth_city_name: editBirthCityName || null,
         current_city_id: editCurrentCityId,
         current_city_name: editCurrentCityName || null,
+        current_city_ibge_code: editCurrentCityIbgeCode,
+        current_city_state: editCurrentCityState,
         cariri_city_id: editCaririCityId ? Number(editCaririCityId) : null,
         marketing_consent: editMarketingConsent,
       });
@@ -309,9 +315,11 @@ export const ProfilePage: React.FC = () => {
                 helperText="Separada da cidade natal. Usada para comunicação regional se autorizada."
                 selectedCityId={editCurrentCityId}
                 selectedCityName={editCurrentCityName}
-                onSelect={({ cityId, cityName }) => {
+                onSelect={({ cityId, cityName, ibgeCode, state }) => {
                   setEditCurrentCityId(cityId);
                   setEditCurrentCityName(cityName);
+                  setEditCurrentCityIbgeCode(ibgeCode ?? null);
+                  setEditCurrentCityState(state ?? null);
                 }}
               />
 
