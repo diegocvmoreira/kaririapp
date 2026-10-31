@@ -330,6 +330,38 @@ export const placesApi = {
     return mapApiPlaceToPlace(raw);
   },
 
+  /** Envia uma sugestão autenticada para moderação; não usa a rota admin. */
+  async submitSuggestion(data: Partial<Place>): Promise<Place> {
+    if (USE_MOCK_DATA) return this.create({ ...data, status: 'pending' });
+    const payload = {
+      name: data.name,
+      slug: data.slug,
+      city_id: data.city_id,
+      category_id: data.category_id,
+      short_description: data.short_description,
+      description: data.description,
+      address: data.address,
+      neighborhood: data.neighborhood,
+      zipcode: data.zipcode,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      phone: data.phone,
+      whatsapp: data.whatsapp,
+      website: data.website,
+      instagram: data.instagram,
+      opening_hours: data.opening_hours,
+      price_level: data.price_level,
+      cover_image: data.cover_image || undefined,
+      images: data.images?.filter((image) => /^https?:\/\//i.test(image)),
+    };
+    const response = await apiClient<unknown>('/contributions/places', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const raw = (response as { data?: ApiPlaceRaw })?.data || (response as ApiPlaceRaw);
+    return mapApiPlaceToPlace(raw);
+  },
+
   /**
    * 7. placesApi.getById (Admin CRUD)
    * Busca um local por ID via GET /admin/places/{id}

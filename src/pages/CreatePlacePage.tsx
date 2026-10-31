@@ -148,8 +148,13 @@ export const CreatePlacePage: React.FC = () => {
     const isPublicUser = user?.role !== 'admin';
     const finalImages = Array.from(new Set([coverImage, ...galleryImages].filter(Boolean)));
 
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent('/locais/novo')}`);
+      return;
+    }
+
     try {
-      const created = await placesApi.create({
+      const created = await (isPublicUser ? placesApi.submitSuggestion : placesApi.create)({
         name: name.trim(),
         slug: slug.trim() || name.toLowerCase().replace(/\s+/g, '-'),
         city_id: Number(cityId),

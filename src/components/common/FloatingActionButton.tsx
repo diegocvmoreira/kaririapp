@@ -121,8 +121,15 @@ export const FloatingActionButton: React.FC = () => {
   const isPublicUser = user?.role !== 'admin';
 
   const handleSavePlace = async (data: Partial<Place>) => {
+    if (!user) {
+      setIsPlaceModalOpen(false);
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname + '?intent=create_place')}`);
+      return;
+    }
     try {
-      const created = await placesApi.create(data);
+      const created = isPublicUser
+        ? await placesApi.submitSuggestion(data)
+        : await placesApi.create(data);
       setIsPlaceModalOpen(false);
 
       if (isPublicUser) {
@@ -148,8 +155,15 @@ export const FloatingActionButton: React.FC = () => {
   };
 
   const handleSaveEvent = async (data: Partial<EventItem>) => {
+    if (!user) {
+      setIsEventModalOpen(false);
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname + '?intent=create_event')}`);
+      return;
+    }
     try {
-      const created = await eventsApi.create(data);
+      const created = isPublicUser
+        ? await eventsApi.submitSuggestion(data)
+        : await eventsApi.create(data);
       setIsEventModalOpen(false);
 
       if (isPublicUser) {

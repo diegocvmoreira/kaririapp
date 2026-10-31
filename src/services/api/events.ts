@@ -242,6 +242,36 @@ export const eventsApi = {
     return adaptEvent(raw);
   },
 
+  /** Envia um evento autenticado para moderação; não usa a rota admin. */
+  async submitSuggestion(data: Partial<EventItem>): Promise<EventItem> {
+    if (USE_MOCK_DATA) return this.create({ ...data, status: 'pending' });
+    const response = await apiClient<unknown>('/contributions/events', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: data.title,
+        slug: data.slug,
+        description: data.description,
+        place_id: data.place_id,
+        city_id: data.city_id,
+        category_id: data.category_id,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        place_name: data.place_name,
+        address: data.address,
+        price: data.is_free ? 0 : data.price,
+        ticket_url: data.ticket_url,
+        organizer: data.organizer,
+        cover_image: data.cover_image || undefined,
+      }),
+    });
+    const raw =
+      (response as { data?: Record<string, unknown> })?.data ||
+      (response as Record<string, unknown>);
+    return adaptEvent(raw);
+  },
+
   /**
    * 5. eventsApi.getById (Admin CRUD)
    * Busca um evento por ID via GET /admin/events/{id}

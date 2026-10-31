@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { KaririLogo } from './KaririLogo';
 import { PWAInstallButton } from './PWAInstallButton';
+import { MobileOffCanvasMenu } from './MobileOffCanvasMenu';
 import { useCity } from '../../context/CityContext';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -13,6 +14,7 @@ import {
   Building2,
   Calendar,
   X,
+  Menu,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -20,6 +22,7 @@ export const Header: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -59,6 +62,7 @@ export const Header: React.FC = () => {
   useEffect(() => {
     setIsCityDropdownOpen(false);
     setIsContributeOpen(false);
+    setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
   const navLinks = [
@@ -209,6 +213,15 @@ export const Header: React.FC = () => {
 
         {/* Right: Actions (Desktop Contribuir CTA + PWA install + User Profile / Login) */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl text-gray-700 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+            aria-label="Abrir menu principal"
+            aria-expanded={isMobileMenuOpen}
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           {/* Desktop Contribuir CTA button */}
           <div className="relative hidden md:block" ref={contributeDropdownRef}>
             <button
@@ -281,6 +294,7 @@ export const Header: React.FC = () => {
           )}
         </div>
       </div>
+      <MobileOffCanvasMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
     </header>
   );
 };

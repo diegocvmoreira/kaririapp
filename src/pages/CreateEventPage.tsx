@@ -167,8 +167,13 @@ export const CreateEventPage: React.FC = () => {
 
     const isPublicUser = user?.role !== 'admin';
 
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent('/eventos/novo')}`);
+      return;
+    }
+
     try {
-      const created = await eventsApi.create({
+      const created = await (isPublicUser ? eventsApi.submitSuggestion : eventsApi.create)({
         title: title.trim(),
         slug: slug.trim() || title.toLowerCase().replace(/\s+/g, '-'),
         city_id: Number(cityId),
