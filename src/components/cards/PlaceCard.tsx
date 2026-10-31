@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Place } from '../../types';
 import { Rating } from '../common/Rating';
 import { FavoriteButton } from '../common/FavoriteButton';
 import { LocationBadge } from '../common/LocationBadge';
 import { PriceBadge } from '../common/PriceBadge';
+import { PlacePhotoPlaceholder } from '../common/PlacePhotoPlaceholder';
 import { Clock } from 'lucide-react';
 import { formatOpeningHours } from '../../services/api/mappers/placeMapper';
 
@@ -14,17 +15,13 @@ interface PlaceCardProps {
   className?: string;
 }
 
-const DEFAULT_PLACE_COVER =
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80';
-
 export const PlaceCard: React.FC<PlaceCardProps> = ({
   place,
   variant = 'grid',
   className = '',
 }) => {
-  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    e.currentTarget.src = DEFAULT_PLACE_COVER;
-  };
+  const [imgError, setImgError] = useState(false);
+  const hasValidPhoto = Boolean(place.cover_image) && !imgError;
 
   // 1. Featured card (Large hero card style, similar to travel agency mobile app)
   if (variant === 'featured') {
@@ -32,13 +29,25 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
       <div
         className={`relative flex flex-col justify-end w-72 sm:w-80 h-96 rounded-3xl overflow-hidden shadow-md group shrink-0 select-none bg-gray-900 ${className}`}
       >
-        <img
-          src={place.cover_image || DEFAULT_PLACE_COVER}
-          alt={place.name}
-          onError={handleImgError}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-          loading="lazy"
-        />
+        {hasValidPhoto ? (
+          <img
+            src={place.cover_image}
+            alt={place.name}
+            onError={() => setImgError(true)}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0">
+            <PlacePhotoPlaceholder
+              categoryName={place.category_name}
+              categorySlug={place.category_slug}
+              placeName={place.name}
+              size="banner"
+              showBadge={false}
+            />
+          </div>
+        )}
         {/* Gradients */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10" />
 
@@ -96,12 +105,23 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
         className={`relative flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-xs hover:shadow-md transition-all duration-200 group ${className}`}
       >
         <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 bg-gray-100">
-          <img
-            src={place.cover_image}
-            alt={place.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
+          {hasValidPhoto ? (
+            <img
+              src={place.cover_image}
+              alt={place.name}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <PlacePhotoPlaceholder
+              categoryName={place.category_name}
+              categorySlug={place.category_slug}
+              placeName={place.name}
+              size="thumb"
+              showBadge={false}
+            />
+          )}
           {place.is_open_now && (
             <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white font-bold text-[9px] rounded-md">
               Aberto
@@ -155,12 +175,23 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
   if (variant === 'compact') {
     return (
       <div className={`p-2 bg-white rounded-2xl max-w-xs ${className}`}>
-        <div className="relative w-full h-28 rounded-xl overflow-hidden mb-2">
-          <img
-            src={place.cover_image}
-            alt={place.name}
-            className="w-full h-full object-cover"
-          />
+        <div className="relative w-full h-28 rounded-xl overflow-hidden mb-2 bg-gray-100">
+          {hasValidPhoto ? (
+            <img
+              src={place.cover_image}
+              alt={place.name}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <PlacePhotoPlaceholder
+              categoryName={place.category_name}
+              categorySlug={place.category_slug}
+              placeName={place.name}
+              size="card"
+              showBadge={false}
+            />
+          )}
           <div className="absolute top-2 right-2">
             <FavoriteButton placeId={place.id} size="sm" />
           </div>
@@ -192,12 +223,22 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
     >
       {/* Image container */}
       <div className="relative w-full h-44 sm:h-48 overflow-hidden bg-gray-100">
-        <img
-          src={place.cover_image}
-          alt={place.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          loading="lazy"
-        />
+        {hasValidPhoto ? (
+          <img
+            src={place.cover_image}
+            alt={place.name}
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <PlacePhotoPlaceholder
+            categoryName={place.category_name}
+            categorySlug={place.category_slug}
+            placeName={place.name}
+            size="card"
+          />
+        )}
 
         {/* Category & Status overlay */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10 max-w-[70%]">

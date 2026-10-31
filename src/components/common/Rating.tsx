@@ -26,6 +26,15 @@ export const Rating: React.FC<RatingProps> = ({
     lg: 'text-base font-semibold',
   };
 
+  // Se a nota for 0 ou não houver avaliações registradas ainda, exibe 'Novo'
+  if (!value || value <= 0 || (count !== undefined && count === 0)) {
+    return (
+      <span className="inline-flex items-center text-[10px] sm:text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 tracking-tight">
+        Novo
+      </span>
+    );
+  }
+
   return (
     <div className="inline-flex items-center gap-1 font-medium">
       <Star className={`${iconSizes[size]} fill-amber-400 text-amber-400`} />

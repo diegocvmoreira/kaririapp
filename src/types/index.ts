@@ -111,6 +111,7 @@ export interface Place {
   price_level: 1 | 2 | 3 | 4; // 1 = $, 2 = $$, 3 = $$$, 4 = $$$$
   is_featured: boolean;
   verified?: boolean;
+  updated_at?: string;
   is_open_now: boolean;
   opening_hours: string;
   phone?: string;
@@ -121,6 +122,9 @@ export interface Place {
   status?: EntityStatus;
   tags: string[];
   distance_km?: number;
+  accessibility?: string[];
+  parking?: string[];
+  payment_methods?: string[];
   reviews?: Review[];
 }
 
@@ -144,11 +148,19 @@ export interface EventItem {
   address: string;
   price_text: string;
   price?: number;
+  price_min?: number;
+  price_max?: number;
+  is_price_on_request?: boolean;
   is_free: boolean;
   ticket_url?: string;
   organizer?: string;
   category: string;
   is_featured: boolean;
+  age_rating?: 'Livre' | '10+' | '12+' | '14+' | '16+' | '18+';
+  recurrence?: string;
+  event_status?: 'confirmed' | 'postponed' | 'cancelled' | 'ended';
+  accessibility_info?: string[];
+  safety_info?: string[];
   status?: EntityStatus;
 }
 

@@ -51,38 +51,42 @@ export const FavoritesPage: React.FC = () => {
       {/* Header */}
       <div className="border-b border-gray-100 pb-3">
         <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-          Meus Favoritos
+          Salvos
         </h1>
         <p className="text-xs text-gray-500 mt-0.5">
-          {totalCount} {totalCount === 1 ? 'item salvo' : 'itens salvos na sua lista pessoal'}
+          {totalCount} {totalCount === 1 ? 'experiência guardada' : 'experiências guardadas na sua lista pessoal'}
         </p>
 
         {/* Tab Switcher */}
-        <div className="flex gap-2 mt-3">
+        <div className="flex items-center gap-2 mt-3" role="tablist" aria-label="Categorias de salvos">
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'places'}
             onClick={() => setActiveTab('places')}
-            className={`px-4 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 ${
+            className={`min-h-[44px] px-4 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none ${
               activeTab === 'places'
-                ? 'bg-[#000000] text-white shadow-xs'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-[#1F2024] text-white shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Locais ({favoritePlaces.length})</span>
+            <Building2 className="w-4 h-4" />
+            <span>Locais Salvos ({favoritePlaces.length})</span>
           </button>
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'events'}
             onClick={() => setActiveTab('events')}
-            className={`px-4 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 ${
+            className={`min-h-[44px] px-4 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none ${
               activeTab === 'events'
                 ? 'bg-[#DE1F2A] text-white shadow-xs'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Eventos ({favoriteEvents.length})</span>
+            <Calendar className="w-4 h-4" />
+            <span>Eventos Salvos ({favoriteEvents.length})</span>
           </button>
         </div>
       </div>

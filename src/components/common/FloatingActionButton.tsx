@@ -12,11 +12,8 @@ import { Place, EventItem, City, Category } from '../../types';
 import { mockCities } from '../../mocks/mockCities';
 import { mockCategories } from '../../mocks/mockCategories';
 
-// Rotas onde o botão flutuante não deve sobrepor formulários de autenticação
-const AUTH_ROUTES = ['/login', '/cadastro', '/esqueci-senha', '/redefinir-senha'];
-
 export const FloatingActionButton: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -30,24 +27,57 @@ export const FloatingActionButton: React.FC = () => {
   const [places, setPlaces] = useState<Place[]>([]);
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const mainButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Não renderiza o botão em rotas de autenticação
-  const isAuthRoute = AUTH_ROUTES.includes(location.pathname);
+  const mainButtonRef = useRef<HTMLButtonElement>(null);
+  const firstMenuItemRef = useRef<HTMLButtonElement>(null);
+
+  // P0.2 — Exibir somente em Home, Explorar e Mapa
+  // Ocultar em detalhes (que possuem barra de ações persistente própria), cadastro, perfil e admin
+  const pathname = location.pathname;
+  const isAllowedRoute =
+    pathname === '/' ||
+    pathname === '/explorar' ||
+    pathname === '/mapa';
 
   // Carrega opções de apoio em segundo plano
   useEffect(() => {
+    if (!isAllowedRoute) return;
     citiesApi.getAll().then(setCities).catch(() => {});
     categoriesApi.getAll().then(setCategories).catch(() => {});
     placesApi.getAll().then(setPlaces).catch(() => {});
-  }, []);
+  }, [isAllowedRoute]);
 
   // Fecha o menu ao trocar de rota
   useEffect(() => {
     setIsOpen(false);
-  }, [location.pathname]);
+  }, [pathname]);
 
-  // Retomada automática de intenção de cadastro caso venha pela URL
+  // Gestão de foco acessível ao abrir e fechar o menu
+  useEffect(() => {
+    if (isOpen) {
+      // Move o foco para o primeiro item acessível do menu
+      const timer = setTimeout(() => {
+        firstMenuItemRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Fecha ao pressionar Escape e restaura o foco no botão de disparo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+        mainButtonRef.current?.focus();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen]);
+
+  // Retomada automática de intenção de cadastro via URL
   useEffect(() => {
     const intent = searchParams.get('intent');
     if (!intent) return;
@@ -67,19 +97,7 @@ export const FloatingActionButton: React.FC = () => {
     }
   }, [searchParams, navigate, location.pathname]);
 
-  // Fecha ao pressionar Escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-        mainButtonRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
-
-  if (isAuthRoute) {
+  if (!isAllowedRoute) {
     return null;
   }
 
@@ -90,7 +108,6 @@ export const FloatingActionButton: React.FC = () => {
     }, 5500);
   };
 
-  // Abre diretamente o modal de criação correspondente
   const handleOpenPlaceOption = () => {
     setIsOpen(false);
     setIsPlaceModalOpen(true);
@@ -181,108 +198,98 @@ export const FloatingActionButton: React.FC = () => {
         </div>
       )}
 
-      {/* Backdrop para fechar ao clicar fora */}
+      {/* Scrim discreto ao abrir (sem blur pesado em tela inteira) */}
       {isOpen && (
         <div
-          role="button"
-          tabIndex={0}
-          aria-label="Fechar menu de criação"
-          onClick={() => setIsOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') setIsOpen(false);
+          aria-hidden="true"
+          onClick={() => {
+            setIsOpen(false);
+            mainButtonRef.current?.focus();
           }}
-          className="fixed inset-0 z-40 bg-black/35 backdrop-blur-xs transition-opacity duration-200"
+          className="fixed inset-0 z-40 bg-black/20 transition-opacity duration-200"
         />
       )}
 
-      {/* FAB Container: posicionado no canto inferior direito, logo acima do menu inferior no mobile (bottom-[72px]) e no desktop (md:bottom-8 md:right-8) */}
+      {/* FAB Container: 
+          Posicionamento seguro considerando safe-area-inset-bottom e altura da BottomNavigation (4.5rem/72px + safe area + 12px) 
+          Desktop: md:bottom-8 md:right-8
+      */}
       <div
-        className="fixed right-4 bottom-[72px] md:bottom-8 md:right-8 z-50 flex flex-col items-end pointer-events-auto"
+        style={{
+          bottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px) + 12px)',
+        }}
+        className="fixed right-4 md:bottom-8 md:right-8 z-50 flex flex-col items-end pointer-events-auto"
       >
-        {/* Menu suspenso com as 2 opções: Novo local e Novo evento */}
+        {/* Menu Speed-Dial Semântico */}
         {isOpen && (
           <div
+            id="fab-speeddial-menu"
             role="menu"
-            aria-label="Opções de adição"
+            aria-labelledby="fab-main-trigger"
             className="mb-3 flex flex-col items-end gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-200"
           >
-            {/* Opção 1: Novo Evento */}
-            <div
+            {/* Opção 1: Novo Local */}
+            <button
+              ref={firstMenuItemRef}
               role="menuitem"
-              tabIndex={0}
-              className="flex items-center gap-2 group cursor-pointer"
-              onClick={handleOpenEventOption}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleOpenEventOption();
-                }
-              }}
-            >
-              <span className="px-3 py-1.5 rounded-xl bg-white text-gray-800 text-xs font-bold shadow-md border border-gray-100 select-none group-hover:bg-gray-50 transition">
-                Novo evento
-              </span>
-              <button
-                type="button"
-                tabIndex={-1}
-                className="w-10 h-10 rounded-full bg-white hover:bg-gray-50 text-[#DE1F2A] hover:text-[#C51620] border border-gray-200 shadow-md flex items-center justify-center transition-transform duration-200 group-hover:scale-105 active:scale-95"
-                aria-label="Novo evento"
-                title="Novo evento"
-              >
-                <Calendar className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Opção 2: Novo Local */}
-            <div
-              role="menuitem"
-              tabIndex={0}
-              className="flex items-center gap-2 group cursor-pointer"
+              type="button"
               onClick={handleOpenPlaceOption}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleOpenPlaceOption();
-                }
-              }}
+              className="group flex items-center gap-2.5 pl-3 pr-1.5 py-1.5 rounded-full bg-white hover:bg-gray-50 text-gray-800 text-xs font-bold shadow-lg border border-gray-200 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#DE1F2A]"
             >
-              <span className="px-3 py-1.5 rounded-xl bg-white text-gray-800 text-xs font-bold shadow-md border border-gray-100 select-none group-hover:bg-gray-50 transition">
+              <span className="select-none text-gray-800 group-hover:text-[#DE1F2A] transition">
                 Novo local
               </span>
-              <button
-                type="button"
-                tabIndex={-1}
-                className="w-10 h-10 rounded-full bg-white hover:bg-gray-50 text-[#DE1F2A] hover:text-[#C51620] border border-gray-200 shadow-md flex items-center justify-center transition-transform duration-200 group-hover:scale-105 active:scale-95"
-                aria-label="Novo local"
-                title="Novo local"
-              >
+              <div className="w-8 h-8 rounded-full bg-[#DE1F2A] text-white flex items-center justify-center shadow-xs">
                 <MapPin className="w-4 h-4" />
-              </button>
-            </div>
+              </div>
+            </button>
+
+            {/* Opção 2: Novo Evento */}
+            <button
+              role="menuitem"
+              type="button"
+              onClick={handleOpenEventOption}
+              className="group flex items-center gap-2.5 pl-3 pr-1.5 py-1.5 rounded-full bg-white hover:bg-gray-50 text-gray-800 text-xs font-bold shadow-lg border border-gray-200 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#DE1F2A]"
+            >
+              <span className="select-none text-gray-800 group-hover:text-[#DE1F2A] transition">
+                Novo evento
+              </span>
+              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                <Calendar className="w-4 h-4" />
+              </div>
+            </button>
           </div>
         )}
 
-        {/* Botão Flutuante Principal com símbolo + (do mesmo tamanho do botão de favoritar: w-10 h-10) */}
+        {/* Botão Flutuante Principal:
+            Alvo de toque acessível (48px - 52px: w-12 h-12 md:w-13 md:h-13)
+            com aria-expanded, aria-controls e rotação suave
+        */}
         <button
           ref={mainButtonRef}
+          id="fab-main-trigger"
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
           aria-haspopup="menu"
-          aria-label={isOpen ? 'Fechar opções de cadastro' : 'Adicionar novo local ou evento'}
-          title="Adicionar"
-          className={`w-10 h-10 rounded-full bg-[#DE1F2A] hover:bg-[#C51620] text-white shadow-[0_4px_16px_rgba(222,31,42,0.45)] hover:shadow-[0_6px_20px_rgba(222,31,42,0.6)] flex items-center justify-center transition-all duration-300 transform active:scale-90 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[#DE1F2A] ${
+          aria-controls="fab-speeddial-menu"
+          aria-label={isOpen ? 'Fechar opções de cadastro' : 'Contribuir: cadastrar novo local ou evento'}
+          title="Contribuir com o Kariri.app"
+          className={`w-12 h-12 md:w-13 md:h-13 rounded-full bg-[#DE1F2A] hover:bg-[#C51620] text-white shadow-[0_4px_16px_rgba(222,31,42,0.45)] hover:shadow-[0_6px_20px_rgba(222,31,42,0.6)] flex items-center justify-center transition-all duration-300 transform active:scale-90 focus:outline-none focus:ring-3 focus:ring-[#DE1F2A]/40 focus:ring-offset-2 ${
             isOpen ? 'rotate-45' : 'hover:scale-105'
           }`}
         >
-          <Plus className="w-5 h-5 stroke-[2.8px]" />
+          <Plus className="w-6 h-6 stroke-[2.6px]" />
         </button>
       </div>
 
       {/* Modal de Criação / Sugestão de Local */}
       <PlaceFormModal
         isOpen={isPlaceModalOpen}
-        onClose={() => setIsPlaceModalOpen(false)}
+        onClose={() => {
+          setIsPlaceModalOpen(false);
+          mainButtonRef.current?.focus();
+        }}
         onSave={handleSavePlace}
         cities={cities}
         categories={categories}
@@ -292,7 +299,10 @@ export const FloatingActionButton: React.FC = () => {
       {/* Modal de Criação / Sugestão de Evento */}
       <EventFormModal
         isOpen={isEventModalOpen}
-        onClose={() => setIsEventModalOpen(false)}
+        onClose={() => {
+          setIsEventModalOpen(false);
+          mainButtonRef.current?.focus();
+        }}
         onSave={handleSaveEvent}
         cities={cities}
         categories={categories}

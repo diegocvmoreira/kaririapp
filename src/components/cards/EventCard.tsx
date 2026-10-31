@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Ticket, Building, ExternalLink } from 'lucide-react';
 import { EventItem } from '../../types';
 import { FavoriteButton } from '../common/FavoriteButton';
+import { PlacePhotoPlaceholder } from '../common/PlacePhotoPlaceholder';
 
 interface EventCardProps {
   event: EventItem;
@@ -15,17 +16,32 @@ export const EventCard: React.FC<EventCardProps> = ({
   variant = 'standard',
   className = '',
 }) => {
+  const [imgError, setImgError] = useState(false);
+  const hasValidPhoto = Boolean(event.cover_image) && !imgError;
+
   if (variant === 'featured') {
     return (
       <div
         className={`relative w-72 sm:w-80 h-96 rounded-3xl overflow-hidden shadow-md group shrink-0 flex flex-col justify-end select-none bg-gray-900 ${className}`}
       >
-        <img
-          src={event.cover_image}
-          alt={event.title}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          loading="lazy"
-        />
+        {hasValidPhoto ? (
+          <img
+            src={event.cover_image}
+            alt={event.title}
+            onError={() => setImgError(true)}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0">
+            <PlacePhotoPlaceholder
+              categoryName={event.category}
+              placeName={event.title}
+              size="banner"
+              showBadge={false}
+            />
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
 
         {/* Date & Free Tag */}
@@ -102,12 +118,21 @@ export const EventCard: React.FC<EventCardProps> = ({
       className={`relative flex flex-col bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-xs hover:shadow-lg transition-all duration-300 group ${className}`}
     >
       <div className="relative w-full h-44 sm:h-48 overflow-hidden bg-gray-100">
-        <img
-          src={event.cover_image}
-          alt={event.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          loading="lazy"
-        />
+        {hasValidPhoto ? (
+          <img
+            src={event.cover_image}
+            alt={event.title}
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <PlacePhotoPlaceholder
+            categoryName={event.category}
+            placeName={event.title}
+            size="card"
+          />
+        )}
 
         <div className="absolute top-3 left-3 flex gap-1.5 z-10">
           <span className="px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-full text-[10px] font-bold text-gray-800 shadow-xs flex items-center gap-1">

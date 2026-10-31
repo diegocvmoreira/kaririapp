@@ -3,6 +3,8 @@ import { Place, City, Category, EntityStatus } from '../../types';
 import { X, Sparkles, MapPin, Phone, Globe, Instagram, Clock, DollarSign, Image as ImageIcon } from 'lucide-react';
 import { formatOpeningHours } from '../../services/api/mappers/placeMapper';
 import { OpeningHoursEditor } from './OpeningHoursEditor';
+import { CoordinateSelector } from '../common/CoordinateSelector';
+import { PhotoUploadSection } from '../common/PhotoUploadSection';
 
 interface PlaceFormModalProps {
   isOpen: boolean;
@@ -34,8 +36,9 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
   const [address, setAddress] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [zipcode, setZipcode] = useState('');
-  const [latitude, setLatitude] = useState<number>(-7.2341);
-  const [longitude, setLongitude] = useState<number>(-39.4124);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [coordSource, setCoordSource] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [website, setWebsite] = useState('');
@@ -45,6 +48,7 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
   const [status, setStatus] = useState<EntityStatus>('published');
   const [isFeatured, setIsFeatured] = useState(false);
   const [coverImage, setCoverImage] = useState('');
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -60,8 +64,9 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
       setAddress(place.address || '');
       setNeighborhood(place.neighborhood || '');
       setZipcode(place.zipcode || '');
-      setLatitude(place.latitude || -7.2341);
-      setLongitude(place.longitude || -39.4124);
+      setLatitude(place.latitude !== undefined && place.latitude !== null ? place.latitude : null);
+      setLongitude(place.longitude !== undefined && place.longitude !== null ? place.longitude : null);
+      setCoordSource(place.coordinate_source || null);
       setPhone(place.phone || '');
       setWhatsapp(place.whatsapp || '');
       setWebsite(place.website || '');
@@ -75,6 +80,7 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
       setStatus(place.status || 'published');
       setIsFeatured(!!place.is_featured);
       setCoverImage(place.cover_image || '');
+      setGalleryImages(place.images || []);
     } else {
       setName('');
       setSlug('');
@@ -85,8 +91,9 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
       setAddress('');
       setNeighborhood('');
       setZipcode('');
-      setLatitude(-7.2341);
-      setLongitude(-39.4124);
+      setLatitude(null);
+      setLongitude(null);
+      setCoordSource(null);
       setPhone('');
       setWhatsapp('');
       setWebsite('');
@@ -95,7 +102,8 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
       setPriceLevel(2);
       setStatus('published');
       setIsFeatured(false);
-      setCoverImage('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80');
+      setCoverImage('');
+      setGalleryImages([]);
     }
     setErrorMsg(null);
   }, [place, isOpen, cities, categories]);
@@ -113,6 +121,12 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
     }
   };
 
+  const handleCoordinateChange = (lat: number | null, lng: number | null, source?: string) => {
+    setLatitude(lat);
+    setLongitude(lng);
+    setCoordSource(source || (lat && lng ? 'manual' : null));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -122,6 +136,7 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
 
     const selectedCity = cities.find((c) => c.id === Number(cityId));
     const selectedCat = categories.find((c) => c.id === Number(categoryId));
+    const finalImages = Array.from(new Set([coverImage, ...galleryImages].filter(Boolean)));
 
     setIsSubmitting(true);
     setErrorMsg(null);
@@ -140,8 +155,11 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
         address: address.trim(),
         neighborhood: neighborhood.trim(),
         zipcode: zipcode.trim() || undefined,
-        latitude: Number(latitude),
-        longitude: Number(longitude),
+        latitude: latitude !== null && !isNaN(latitude) ? Number(latitude) : null,
+        longitude: longitude !== null && !isNaN(longitude) ? Number(longitude) : null,
+        coordinate_source: coordSource,
+        coordinate_confidence: coordSource === 'user_geolocation' ? 'high' : coordSource === 'city_center_approx' ? 'low' : undefined,
+        needs_review: latitude === null || coordSource === 'city_center_approx',
         phone: phone.trim() || undefined,
         whatsapp: whatsapp.trim() || undefined,
         website: website.trim() || undefined,
@@ -150,7 +168,8 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
         price_level: priceLevel,
         status: isPublicContribution ? 'pending' : status,
         is_featured: isPublicContribution ? false : isFeatured,
-        cover_image: coverImage.trim() || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80',
+        cover_image: coverImage.trim() || '',
+        images: finalImages,
       });
       onClose();
     } catch (err: unknown) {
@@ -322,37 +341,16 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
             </div>
           </div>
 
-          {/* Coordenadas GPS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
-            <div>
-              <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#DE1F2A]" />
-                <span>Latitude</span>
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={latitude}
-                onChange={(e) => setLatitude(parseFloat(e.target.value))}
-                placeholder="-7.2341"
-                className="w-full p-2 bg-white border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-[#DE1F2A]"
-              />
-            </div>
-            <div>
-              <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#DE1F2A]" />
-                <span>Longitude</span>
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={longitude}
-                onChange={(e) => setLongitude(parseFloat(e.target.value))}
-                placeholder="-39.4124"
-                className="w-full p-2 bg-white border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-[#DE1F2A]"
-              />
-            </div>
-          </div>
+          {/* Coordenadas GPS (P0.3) */}
+          <CoordinateSelector
+            latitude={latitude}
+            longitude={longitude}
+            onChange={handleCoordinateChange}
+            cityName={cities.find((c) => c.id === Number(cityId))?.name || 'Crato'}
+            cityLat={cities.find((c) => c.id === Number(cityId))?.latitude}
+            cityLng={cities.find((c) => c.id === Number(cityId))?.longitude}
+            address={`${address} ${neighborhood}`.trim()}
+          />
 
           {/* Contatos */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -437,31 +435,18 @@ export const PlaceFormModal: React.FC<PlaceFormModalProps> = ({
             />
           </div>
 
-          {/* Imagem de Capa */}
-          <div>
-            <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
-              <ImageIcon className="w-3.5 h-3.5 text-gray-500" />
-              <span>URL da Imagem de Capa</span>
-            </label>
-            <input
-              type="url"
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-              placeholder="https://..."
-              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
+          {/* Fotos do Local (P0.4) */}
+          <div className="pt-2 border-t border-gray-100">
+            <PhotoUploadSection
+              coverImage={coverImage}
+              onChangeCoverImage={setCoverImage}
+              galleryImages={galleryImages}
+              onChangeGalleryImages={setGalleryImages}
+              categoryName={categories.find((c) => c.id === Number(categoryId))?.name || 'Gastronomia'}
+              categorySlug={categories.find((c) => c.id === Number(categoryId))?.slug || 'gastronomia'}
+              placeName={name}
+              maxFiles={6}
             />
-            {coverImage && (
-              <div className="mt-2 h-28 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
-                <img
-                  src={coverImage}
-                  alt="Pré-visualização"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
           </div>
 
           {/* Status e Destaque - apenas para administradores/moderadores */}

@@ -381,6 +381,33 @@ export const authApi = {
     localStorage.removeItem('kariri_user_profile');
   },
 
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    if (USE_MOCK_DATA) {
+      await simulateNetworkDelay(null, 200);
+      return { message: 'Senha alterada com sucesso!' };
+    }
+
+    try {
+      return await apiClient<{ message: string }>('/me/password', {
+        method: 'PUT',
+        body: JSON.stringify({
+          current_password: currentPassword,
+          password: newPassword,
+          password_confirmation: newPassword,
+        }),
+      });
+    } catch {
+      return await apiClient<{ message: string }>('/user/password', {
+        method: 'PUT',
+        body: JSON.stringify({
+          current_password: currentPassword,
+          password: newPassword,
+          password_confirmation: newPassword,
+        }),
+      });
+    }
+  },
+
   mockLogin(credentials: LoginCredentials): AuthResponse {
     // Simula bloqueio de conta suspensa caso especificado no email
     if (credentials.email.toLowerCase().includes('suspenso')) {

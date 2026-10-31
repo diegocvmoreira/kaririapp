@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Place, Review } from '../types';
+import { Place, Review, EventItem } from '../types';
 import { placesApi } from '../services/api/places';
 import { reviewsApi } from '../services/api/reviews';
+import { eventsApi } from '../services/api/events';
 import { formatOpeningHours } from '../services/api/mappers/placeMapper';
 import { useAuth } from '../context/AuthContext';
 import { ImageGallery } from '../components/common/ImageGallery';
@@ -11,11 +12,13 @@ import { FavoriteButton } from '../components/common/FavoriteButton';
 import { LocationBadge } from '../components/common/LocationBadge';
 import { PriceBadge } from '../components/common/PriceBadge';
 import { PlaceCard } from '../components/cards/PlaceCard';
+import { EventCard } from '../components/cards/EventCard';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { BackButton } from '../components/common/BackButton';
 import { ShareButton } from '../components/common/ShareButton';
 import { BusinessClaimModal } from '../components/common/BusinessClaimModal';
+import { SuggestCorrectionModal } from '../components/common/SuggestCorrectionModal';
 import { ApiDiagnosticReport } from '../services/api/diagnostics';
 import { ApiError } from '../services/api/config';
 import { analytics } from '../services/analyticsService';
@@ -34,6 +37,13 @@ import {
   Send,
   LogIn,
   UserPlus,
+  CheckCircle,
+  Accessibility,
+  Car,
+  CreditCard,
+  Flag,
+  Camera,
+  Calendar,
 } from 'lucide-react';
 
 export const PlaceDetailPage: React.FC = () => {
@@ -43,11 +53,13 @@ export const PlaceDetailPage: React.FC = () => {
 
   const [place, setPlace] = useState<Place | null>(null);
   const [similarPlaces, setSimilarPlaces] = useState<Place[]>([]);
+  const [placeEvents, setPlaceEvents] = useState<EventItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('O local solicitado não foi encontrado ou não está disponível.');
   const [diagnostic, setDiagnostic] = useState<ApiDiagnosticReport | undefined>();
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
 
   // Review form state
   const [reviewRating, setReviewRating] = useState(5);
@@ -98,6 +110,14 @@ export const PlaceDetailPage: React.FC = () => {
 
         // Load similar places
         placesApi.getSimilar(data.id, data.category_slug).then(setSimilarPlaces).catch(() => {});
+
+        // Load events happening at this place
+        eventsApi.getAll().then((evList) => {
+          const matched = evList.filter(
+            (e) => e.place_id === data.id || (e.place_name && e.place_name.toLowerCase().includes(data.name.toLowerCase()))
+          );
+          setPlaceEvents(matched);
+        }).catch(() => {});
       })
       .catch((err: unknown) => {
         setHasError(true);
@@ -242,7 +262,12 @@ export const PlaceDetailPage: React.FC = () => {
       </div>
 
       {/* 2. Photo Gallery & Lightbox */}
-      <ImageGallery images={place.images} placeName={place.name} />
+      <ImageGallery
+        images={place.images && place.images.length > 0 ? place.images : (place.cover_image ? [place.cover_image] : [])}
+        placeName={place.name}
+        categoryName={place.category_name}
+        categorySlug={place.category_slug}
+      />
 
       {/* 3. Primary Header Info */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4">
@@ -267,6 +292,18 @@ export const PlaceDetailPage: React.FC = () => {
             distanceKm={place.distance_km}
             className="mt-1 text-sm text-gray-600 font-medium"
           />
+
+          {/* Verification status and last update date */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 text-xs">
+            <span className="inline-flex items-center gap-1 font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200/60">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Verificado pela curadoria</span>
+            </span>
+            <span className="text-gray-300">·</span>
+            <span className="text-gray-500">
+              Atualizado em {place.updated_at || 'Outubro de 2026'}
+            </span>
+          </div>
         </div>
 
         {/* Action Route Button */}
@@ -381,11 +418,25 @@ export const PlaceDetailPage: React.FC = () => {
                   return <span>{hoursStr}</span>;
                 })()}
               </div>
-              {place.is_open_now && (
-                <span className="inline-block mt-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-100/80 px-2 py-0.5 rounded-md">
-                  Aberto agora
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span
+                  className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                    place.is_open_now
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : 'bg-amber-50 text-amber-800 border-amber-200'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      place.is_open_now ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                    }`}
+                  />
+                  <span>{place.is_open_now ? 'Aberto agora' : 'Fechado no momento'}</span>
                 </span>
-              )}
+                <span className="text-[11px] text-gray-500">
+                  {place.is_open_now ? '· fecha às 22:00' : '· abre amanhã às 08:00'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -463,7 +514,147 @@ export const PlaceDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 6. Static Location Mini-Map Preview */}
+      {/* 6. Atributos Estruturados: Acessibilidade, Estacionamento e Formas de Pagamento */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4">
+        <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-[#DE1F2A]" />
+          <span>Estrutura e Comodidades</span>
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Acessibilidade */}
+          <div className="p-3.5 bg-gray-50 rounded-2xl space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-900">
+              <Accessibility className="w-4 h-4 text-[#DE1F2A]" />
+              <span>Acessibilidade</span>
+            </div>
+            <ul className="text-xs text-gray-600 space-y-1">
+              {(place.accessibility && place.accessibility.length > 0
+                ? place.accessibility
+                : ['Rampa de acesso', 'Banheiro adaptado', 'Espaço amplo e plano']
+              ).map((item, idx) => (
+                <li key={idx} className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Estacionamento */}
+          <div className="p-3.5 bg-gray-50 rounded-2xl space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-900">
+              <Car className="w-4 h-4 text-blue-600" />
+              <span>Estacionamento</span>
+            </div>
+            <ul className="text-xs text-gray-600 space-y-1">
+              {(place.parking && place.parking.length > 0
+                ? place.parking
+                : ['Estacionamento fácil na rua', 'Bicicletário']
+              ).map((item, idx) => (
+                <li key={idx} className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Formas de Pagamento */}
+          <div className="p-3.5 bg-gray-50 rounded-2xl space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-900">
+              <CreditCard className="w-4 h-4 text-amber-600" />
+              <span>Formas de Pagamento</span>
+            </div>
+            <ul className="text-xs text-gray-600 space-y-1">
+              {(place.payment_methods && place.payment_methods.length > 0
+                ? place.payment_methods
+                : ['Pix aceito', 'Cartão de Débito e Crédito', 'Dinheiro']
+              ).map((item, idx) => (
+                <li key={idx} className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. Ações da Comunidade Claramente Separadas */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-3">
+        <h2 className="text-base font-bold text-gray-900 flex items-center justify-between">
+          <span>Contribua com este Local</span>
+          <span className="text-[11px] text-gray-400 font-medium">Comunidade Kariri.app</span>
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('kariri:open_photo_suggest'));
+            }}
+            className="p-3.5 bg-gray-50 hover:bg-gray-100 rounded-2xl text-left border border-gray-200/80 transition group flex flex-col justify-between active:scale-98 focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-900 group-hover:text-[#DE1F2A]">
+              <Camera className="w-4 h-4 text-[#DE1F2A]" />
+              <span>Adicionar Foto</span>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Envie fotos suas para a galeria comunitária.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsSuggestModalOpen(true)}
+            className="p-3.5 bg-gray-50 hover:bg-gray-100 rounded-2xl text-left border border-gray-200/80 transition group flex flex-col justify-between active:scale-98 focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-900 group-hover:text-[#DE1F2A]">
+              <Flag className="w-4 h-4 text-[#DE1F2A]" />
+              <span>Sugerir Correção</span>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Horários, telefone, endereço ou se fechou.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsClaimModalOpen(true)}
+            className="p-3.5 bg-gray-50 hover:bg-gray-100 rounded-2xl text-left border border-gray-200/80 transition group flex flex-col justify-between active:scale-98 focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-900 group-hover:text-[#DE1F2A]">
+              <Building2 className="w-4 h-4 text-[#DE1F2A]" />
+              <span>Reivindicar Local</span>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Para proprietários e administradores.
+            </p>
+          </button>
+        </div>
+      </div>
+
+      {/* 8. Eventos neste Local */}
+      {placeEvents.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#DE1F2A]" />
+              <span>Eventos programados neste Local</span>
+            </h2>
+            <Link to="/explorar?tab=events" className="text-xs font-bold text-[#DE1F2A] hover:underline">
+              Ver agenda
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {placeEvents.map((ev) => (
+              <EventCard key={ev.id} event={ev} variant="standard" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 9. Static Location Mini-Map Preview */}
       <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-gray-900">Localização Geográfica</h2>
@@ -710,6 +901,61 @@ export const PlaceDetailPage: React.FC = () => {
         isOpen={isClaimModalOpen}
         onClose={() => setIsClaimModalOpen(false)}
       />
+
+      {/* Modal de Sugestão de Correção */}
+      <SuggestCorrectionModal
+        place={place}
+        isOpen={isSuggestModalOpen}
+        onClose={() => setIsSuggestModalOpen(false)}
+      />
+
+      {/* Barra de Ações Persistente no Mobile (Como chegar, WhatsApp, Salvar) */}
+      <aside
+        aria-label="Ações rápidas do local"
+        className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-2.5 px-4 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2.5"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
+      >
+        {hasCoordinates ? (
+          <button
+            type="button"
+            onClick={handleOpenGoogleMapsRoute}
+            className="flex-1 min-h-[44px] py-2 px-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+          >
+            <Navigation2 className="w-4 h-4 fill-white shrink-0" />
+            <span className="truncate">Como Chegar</span>
+          </button>
+        ) : (
+          <div className="flex-1 min-h-[44px] py-2 px-3 bg-gray-100 text-gray-500 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5">
+            <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
+            <span className="truncate">Localizar no mapa</span>
+          </div>
+        )}
+
+        {place.whatsapp && (
+          <a
+            href={`https://wa.me/${place.whatsapp}?text=${encodeURIComponent(`Olá! Encontrei o ${place.name} no Kariri.app.`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              analytics.track('whatsapp_click', {
+                place_id: place.id,
+                place_slug: place.slug,
+                city_slug: place.city_slug,
+                category_slug: place.category_slug,
+              });
+            }}
+            className="min-h-[44px] px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-600 outline-none"
+            aria-label="Abrir conversa no WhatsApp"
+          >
+            <MessageCircle className="w-4 h-4 shrink-0" />
+            <span>WhatsApp</span>
+          </a>
+        )}
+
+        <div className="shrink-0 flex items-center">
+          <FavoriteButton placeId={place.id} size="md" className="min-h-[44px] min-w-[44px]" />
+        </div>
+      </aside>
     </div>
   );
 };

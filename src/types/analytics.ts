@@ -186,6 +186,18 @@ export interface ApiErrorEventParams extends BaseEventParams {
   diagnostic_category?: string;
 }
 
+export interface AddToCalendarParams extends BaseEventParams {
+  event_id: number;
+  event_slug: string;
+  type: string;
+}
+
+export interface SuggestCorrectionParams extends BaseEventParams {
+  place_id: number;
+  place_slug: string;
+  issue_type: string;
+}
+
 export type KaririEventMap = {
   page_view: PageViewParams;
   search: SearchParams;
@@ -214,6 +226,8 @@ export type KaririEventMap = {
   share_event: ShareEventParams;
   install_pwa: InstallPwaParams;
   api_error: ApiErrorEventParams;
+  add_to_calendar: AddToCalendarParams;
+  suggest_correction_submit: SuggestCorrectionParams;
 };
 
 export type KaririEventName = keyof KaririEventMap;

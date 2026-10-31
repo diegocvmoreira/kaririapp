@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { EventItem, City, Category, Place, EntityStatus } from '../../types';
 import { X, Calendar, Clock, MapPin, Ticket, Building, Image as ImageIcon } from 'lucide-react';
+import { PhotoUploadSection } from '../common/PhotoUploadSection';
 
 interface EventFormModalProps {
   isOpen: boolean;
@@ -96,7 +97,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       setTicketUrl('');
       setOrganizer('Secretaria de Cultura / Produção Independente');
       setDescription('');
-      setCoverImage('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1000&q=80');
+      setCoverImage('');
       setStatus('published');
       setIsFeatured(false);
     }
@@ -178,7 +179,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
         ticket_url: ticketUrl.trim() || undefined,
         organizer: organizer.trim(),
         description: description.trim(),
-        cover_image: coverImage.trim() || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1000&q=80',
+        cover_image: coverImage.trim() || '',
         status: isPublicContribution ? 'pending' : status,
         is_featured: isPublicContribution ? false : isFeatured,
       });
@@ -480,31 +481,18 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
             />
           </div>
 
-          {/* Imagem de Capa */}
-          <div>
-            <label className="block font-bold text-gray-700 mb-1 flex items-center gap-1">
-              <ImageIcon className="w-3.5 h-3.5 text-gray-500" />
-              <span>URL da Imagem / Cartaz (cover_image)</span>
-            </label>
-            <input
-              type="url"
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-              placeholder="https://..."
-              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#DE1F2A]"
+          {/* Fotos do Evento (P0.4) */}
+          <div className="pt-2 border-t border-gray-100">
+            <PhotoUploadSection
+              coverImage={coverImage}
+              onChangeCoverImage={setCoverImage}
+              categoryName={categories.find((c) => c.id === Number(categoryId))?.name || 'Cultura & Arte'}
+              categorySlug={categories.find((c) => c.id === Number(categoryId))?.slug || 'cultura'}
+              placeName={title}
+              maxFiles={3}
+              label="Cartaz ou Imagem de Divulgação"
+              description="Envie o cartaz oficial, fotografia promocional ou banner do evento."
             />
-            {coverImage && (
-              <div className="mt-2 h-28 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
-                <img
-                  src={coverImage}
-                  alt="Pré-visualização"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
           </div>
 
           {/* Status e Destaque - apenas para administradores/moderadores */}

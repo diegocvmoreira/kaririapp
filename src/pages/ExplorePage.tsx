@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Place, EventItem, Category, SearchFilters } from '../types';
 import { placesApi } from '../services/api/places';
 import { eventsApi } from '../services/api/events';
@@ -24,6 +24,7 @@ import { useLocation } from '../context/LocationContext';
 import { GeolocationConsentModal } from '../components/common/GeolocationConsentModal';
 
 export const ExplorePage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { cities, selectedCitySlug } = useCity();
   const {
@@ -340,15 +341,31 @@ export const ExplorePage: React.FC = () => {
       ) : activeTab === 'all' ? (
         // Mixed Results View (Seção 13)
         totalResults === 0 ? (
-          <EmptyState
-            title="Nenhum resultado encontrado"
-            description="Tente ajustar sua busca ou limpar filtros para explorar outros locais e eventos."
-            actionText="Limpar Filtros"
-            onAction={() => {
-              setSearchQuery('');
-              setFilters({ sort_by: 'featured' });
-            }}
-          />
+          searchQuery.trim() ? (
+            <EmptyState
+              title={`Nenhum resultado para "${searchQuery}"`}
+              description="Verifique a ortografia ou tente palavras-chave mais abrangentes como trilha, café, artesanato ou sirigado."
+              actionText="Limpar Busca"
+              onAction={() => setSearchQuery('')}
+            />
+          ) : filters.city_slug && filters.city_slug !== 'all' ? (
+            <EmptyState
+              title={`Nenhum item cadastrado em ${activeCityName || 'neste município'}`}
+              description="Seja a primeira pessoa a cadastrar um local ou atração desta cidade no Kariri.app!"
+              actionText="Cadastrar Primeiro Local"
+              onAction={() => navigate('/locais/novo')}
+            />
+          ) : (
+            <EmptyState
+              title="Nenhum resultado encontrado"
+              description="Tente ajustar sua busca ou limpar filtros para explorar outros locais e eventos."
+              actionText="Limpar Filtros"
+              onAction={() => {
+                setSearchQuery('');
+                setFilters({ sort_by: 'featured' });
+              }}
+            />
+          )
         ) : (
           <div className="space-y-6">
             {/* Matched Categories section if searching */}
@@ -398,15 +415,31 @@ export const ExplorePage: React.FC = () => {
         )
       ) : activeTab === 'places' ? (
         places.length === 0 ? (
-          <EmptyState
-            title="Nenhum local encontrado"
-            description="Tente relaxar os filtros ou buscar por outro termo, município ou categoria."
-            actionText="Limpar Filtros"
-            onAction={() => {
-              setSearchQuery('');
-              setFilters({ sort_by: 'featured' });
-            }}
-          />
+          searchQuery.trim() ? (
+            <EmptyState
+              title={`Nenhum local para "${searchQuery}"`}
+              description="Não encontramos locais com esse termo. Tente buscar por categorias como Restaurantes, Pontos Turísticos ou Cafés."
+              actionText="Limpar Busca"
+              onAction={() => setSearchQuery('')}
+            />
+          ) : filters.city_slug && filters.city_slug !== 'all' ? (
+            <EmptyState
+              title={`Nenhum local cadastrado em ${activeCityName || 'neste município'}`}
+              description="Seja a primeira pessoa a cadastrar um local ou atração desta cidade no Kariri.app!"
+              actionText="Cadastrar Primeiro Local"
+              onAction={() => navigate('/locais/novo')}
+            />
+          ) : (
+            <EmptyState
+              title="Nenhum local encontrado"
+              description="Tente relaxar os filtros ou buscar por outro termo, município ou categoria."
+              actionText="Limpar Filtros"
+              onAction={() => {
+                setSearchQuery('');
+                setFilters({ sort_by: 'featured' });
+              }}
+            />
+          )
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
             {places.map((place) => (
@@ -415,15 +448,24 @@ export const ExplorePage: React.FC = () => {
           </div>
         )
       ) : events.length === 0 ? (
-        <EmptyState
-          title="Nenhum evento agendado"
-          description="Não encontramos eventos para a seleção atual. Experimente buscar em todas as cidades."
-          actionText="Ver todos os eventos"
-          onAction={() => {
-            setSearchQuery('');
-            setFilters({});
-          }}
-        />
+        searchQuery.trim() ? (
+          <EmptyState
+            title={`Nenhum evento para "${searchQuery}"`}
+            description="Não encontramos atrações na agenda com esse termo. Conhece um evento? Divulgue gratuitamente."
+            actionText="Cadastrar Evento"
+            onAction={() => navigate('/eventos/novo')}
+          />
+        ) : (
+          <EmptyState
+            title="Nenhum evento agendado"
+            description="Não encontramos eventos para a seleção atual. Experimente buscar em todas as cidades ou cadastre seu evento."
+            actionText="Ver todos os eventos"
+            onAction={() => {
+              setSearchQuery('');
+              setFilters({});
+            }}
+          />
+        )
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
           {events.map((event) => (
