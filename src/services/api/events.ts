@@ -242,34 +242,79 @@ export const eventsApi = {
     return adaptEvent(raw);
   },
 
-  /** Envia um evento autenticado para moderação; não usa a rota admin. */
-  async submitSuggestion(data: Partial<EventItem>): Promise<EventItem> {
+  /**
+   * Envia uma contribuição de evento autenticada para moderação via POST /contributions/events.
+   * Rejeita e sanitiza estritamente qualquer string em Base64, aceitando apenas URLs http/https.
+   */
+  async submitContribution(data: Partial<EventItem>): Promise<EventItem> {
     if (USE_MOCK_DATA) return this.create({ ...data, status: 'pending' });
+
+    const sanitizeUrl = (url?: string) =>
+      url && /^https?:\/\//i.test(url.trim()) ? url.trim() : undefined;
+    const validCover = sanitizeUrl(data.cover_image);
+
+    const payload = {
+      title: data.title,
+      slug: data.slug,
+      description: data.description,
+      place_id: data.place_id,
+      city_id: data.city_id,
+      category_id: data.category_id,
+      start_date: data.start_date,
+      end_date: data.end_date,
+      start_time: data.start_time,
+      end_time: data.end_time,
+      place_name: data.place_name,
+      location_name: data.place_name,
+      address: data.address,
+      price: data.is_free ? 0 : data.price,
+      is_free: data.is_free ? 1 : 0,
+      ticket_url: data.ticket_url,
+      organizer: data.organizer,
+      cover_image: validCover,
+    };
+
     const response = await apiClient<unknown>('/contributions/events', {
       method: 'POST',
-      body: JSON.stringify({
-        title: data.title,
-        slug: data.slug,
-        description: data.description,
-        place_id: data.place_id,
-        city_id: data.city_id,
-        category_id: data.category_id,
-        start_date: data.start_date,
-        end_date: data.end_date,
-        start_time: data.start_time,
-        end_time: data.end_time,
-        place_name: data.place_name,
-        address: data.address,
-        price: data.is_free ? 0 : data.price,
-        ticket_url: data.ticket_url,
-        organizer: data.organizer,
-        cover_image: data.cover_image || undefined,
-      }),
+      body: JSON.stringify(payload),
     });
+
     const raw =
       (response as { data?: Record<string, unknown> })?.data ||
       (response as Record<string, unknown>);
     return adaptEvent(raw);
+  },
+
+  /** Alias para submitContribution para compatibilidade retroativa */
+  async submitSuggestion(data: Partial<EventItem>): Promise<EventItem> {
+    return this.submitContribution(data);
+  },
+
+  /**
+   * Busca exclusivamente as contribuições de eventos cadastradas pelo usuário logado via GET /contributions/mine/events.
+   * Não realiza fallback para catálogo geral nem cria mocks em produção.
+   */
+  async getMyContributions(): Promise<EventItem[]> {
+    if (USE_MOCK_DATA) {
+      const pendingEvents = mockEvents.filter((e) => e.status === 'pending');
+      return simulateNetworkDelay(pendingEvents, 120);
+    }
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      throw new ApiError(
+        0,
+        'Sem conexão com a internet. Verifique sua rede e tente novamente.',
+        { offline: true },
+        '/contributions/mine/events'
+      );
+    }
+
+    const response = await apiClient<unknown>('/contributions/mine/events');
+    const list = Array.isArray(response)
+      ? response
+      : (response as { data?: unknown[] })?.data || [];
+
+    return list.map((item) => adaptEvent(item as Record<string, unknown>));
   },
 
   /**

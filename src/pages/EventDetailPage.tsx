@@ -547,7 +547,7 @@ export const EventDetailPage: React.FC = () => {
       {/* Barra de Ações Persistente no Mobile */}
       <aside
         aria-label="Ações rápidas do evento"
-        className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-2.5 px-4 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2.5"
+        className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-2.5 px-3 sm:px-4 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
       >
         {event.ticket_url ? (
@@ -555,7 +555,7 @@ export const EventDetailPage: React.FC = () => {
             href={event.ticket_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 min-h-[44px] py-2 px-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+            className="flex-1 min-h-[44px] py-2 px-2.5 sm:px-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
           >
             <Ticket className="w-4 h-4 shrink-0" />
             <span className="truncate">Garantir Ingresso</span>
@@ -567,7 +567,7 @@ export const EventDetailPage: React.FC = () => {
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 min-h-[44px] py-2 px-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+            className="flex-1 min-h-[44px] py-2 px-2.5 sm:px-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
           >
             <Navigation className="w-4 h-4 shrink-0" />
             <span className="truncate">Ver no Mapa</span>
@@ -577,8 +577,9 @@ export const EventDetailPage: React.FC = () => {
         <button
           type="button"
           onClick={() => handleAddToCalendar('google')}
-          className="min-h-[44px] px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shrink-0"
+          className="min-h-[44px] px-3 sm:px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shrink-0"
           title="Adicionar à agenda"
+          aria-label="Adicionar à agenda"
         >
           <CalendarPlus className="w-4 h-4 text-[#DE1F2A] shrink-0" />
           <span className="hidden xs:inline">Agenda</span>

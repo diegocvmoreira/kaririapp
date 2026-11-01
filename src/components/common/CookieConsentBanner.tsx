@@ -80,12 +80,17 @@ export const CookieConsentBanner: React.FC = () => {
   return (
     <div
       role="dialog"
+      aria-modal="true"
       aria-labelledby="cookie-banner-title"
       aria-describedby="cookie-banner-desc"
-      className="fixed bottom-0 inset-x-0 z-50 p-3 sm:p-4 md:p-6 bg-black/40 backdrop-blur-sm flex justify-center animate-fade-in"
+      className="fixed inset-0 z-50 p-2 sm:p-4 md:p-6 bg-black/50 backdrop-blur-xs flex justify-center items-end sm:items-center animate-fade-in"
+      style={{
+        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
+      }}
     >
-      <div className="w-full max-w-4xl bg-white border border-gray-200/90 rounded-3xl shadow-2xl overflow-hidden text-gray-800">
-        <div className="p-4 sm:p-6 space-y-4">
+      <div className="w-full max-w-4xl max-h-[90dvh] sm:max-h-[85dvh] bg-white border border-gray-200/90 rounded-3xl shadow-2xl overflow-hidden text-gray-800 flex flex-col">
+        {/* Conteúdo com rolagem interna suave caso exceda a altura da tela */}
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain flex-1">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="w-10 h-10 rounded-2xl bg-red-50 text-[#DE1F2A] flex items-center justify-center shrink-0 border border-red-100 mt-0.5">
               <Shield className="w-5 h-5" />
@@ -192,13 +197,15 @@ export const CookieConsentBanner: React.FC = () => {
               </label>
             </div>
           )}
+        </div>
 
-          {/* Botões de Ação Equivalentes e Claros */}
-          <div className="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+        {/* Botões de Ação Equivalentes e Claros, sempre visíveis no rodapé do modal */}
+        <div className="p-3 sm:px-6 py-3.5 bg-gray-50/95 border-t border-gray-200/90 shrink-0">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
             <button
               type="button"
               onClick={() => setShowConfig(!showConfig)}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-100 text-xs font-bold text-gray-700 flex items-center justify-center gap-1.5 transition"
+              className="min-h-[44px] px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-100 text-xs font-bold text-gray-700 flex items-center justify-center gap-1.5 transition active:scale-98"
             >
               <Settings2 className="w-3.5 h-3.5" />
               <span>{showConfig ? 'Ocultar opções' : 'Configurar preferências'}</span>
@@ -210,7 +217,7 @@ export const CookieConsentBanner: React.FC = () => {
               <button
                 type="button"
                 onClick={handleRejectOptional}
-                className="px-5 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 active:scale-98 text-xs font-bold text-gray-800 transition text-center shadow-sm"
+                className="min-h-[44px] px-5 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 active:scale-98 text-xs font-bold text-gray-800 transition text-center shadow-xs"
               >
                 Recusar Opcionais
               </button>
@@ -219,7 +226,7 @@ export const CookieConsentBanner: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSaveCustom}
-                  className="px-5 py-2.5 rounded-xl bg-gray-900 hover:bg-black active:scale-98 text-xs font-bold text-white transition text-center shadow-sm"
+                  className="min-h-[44px] px-5 py-2.5 rounded-xl bg-gray-900 hover:bg-black active:scale-98 text-xs font-bold text-white transition text-center shadow-xs"
                 >
                   Salvar Minhas Escolhas
                 </button>
@@ -227,7 +234,7 @@ export const CookieConsentBanner: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleAcceptAll}
-                  className="px-6 py-2.5 rounded-xl bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-xs font-bold text-white transition text-center shadow-md shadow-red-500/20"
+                  className="min-h-[44px] px-6 py-2.5 rounded-xl bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-xs font-bold text-white transition text-center shadow-md shadow-red-500/20"
                 >
                   Aceitar Todos
                 </button>

@@ -330,9 +330,22 @@ export const placesApi = {
     return mapApiPlaceToPlace(raw);
   },
 
-  /** Envia uma sugestão autenticada para moderação; não usa a rota admin. */
-  async submitSuggestion(data: Partial<Place>): Promise<Place> {
+  /**
+   * Envia uma contribuição de local autenticada para moderação via POST /contributions/places.
+   * Rejeita e sanitiza estritamente qualquer string em Base64, aceitando apenas URLs http/https.
+   */
+  async submitContribution(data: Partial<Place>): Promise<Place> {
     if (USE_MOCK_DATA) return this.create({ ...data, status: 'pending' });
+
+    // Aceita somente URLs válidas http/https (bloqueia data: e base64)
+    const sanitizeUrl = (url?: string) =>
+      url && /^https?:\/\//i.test(url.trim()) ? url.trim() : undefined;
+
+    const validCover = sanitizeUrl(data.cover_image);
+    const validImages = (data.images || [])
+      .map((img) => (typeof img === 'string' ? img.trim() : ''))
+      .filter((img) => /^https?:\/\//i.test(img));
+
     const payload = {
       name: data.name,
       slug: data.slug,
@@ -351,15 +364,48 @@ export const placesApi = {
       instagram: data.instagram,
       opening_hours: data.opening_hours,
       price_level: data.price_level,
-      cover_image: data.cover_image || undefined,
-      images: data.images?.filter((image) => /^https?:\/\//i.test(image)),
+      cover_image: validCover,
+      images: validImages.length > 0 ? validImages : (validCover ? [validCover] : []),
     };
+
     const response = await apiClient<unknown>('/contributions/places', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
     const raw = (response as { data?: ApiPlaceRaw })?.data || (response as ApiPlaceRaw);
     return mapApiPlaceToPlace(raw);
+  },
+
+  /** Alias para submitContribution para compatibilidade retroativa */
+  async submitSuggestion(data: Partial<Place>): Promise<Place> {
+    return this.submitContribution(data);
+  },
+
+  /**
+   * Busca exclusivamente as contribuições de locais cadastradas pelo usuário logado via GET /contributions/mine/places.
+   * Não realiza fallback para catálogo geral nem cria mocks em produção.
+   */
+  async getMyContributions(): Promise<Place[]> {
+    if (USE_MOCK_DATA) {
+      const pendingPlaces = mockPlaces.filter((p) => p.status === 'pending');
+      return simulateNetworkDelay(pendingPlaces, 120);
+    }
+
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && !navigator.onLine) {
+      throw new ApiError(
+        0,
+        'Sem conexão com a internet. Verifique sua rede e tente novamente.',
+        { offline: true },
+        '/contributions/mine/places'
+      );
+    }
+
+    const response = await apiClient<unknown>('/contributions/mine/places');
+    const list = Array.isArray(response)
+      ? response
+      : (response as { data?: unknown[] })?.data || [];
+
+    return list.map((item) => mapApiPlaceToPlace(item as ApiPlaceRaw));
   },
 
   /**

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export const MyContributionsPage: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'all' | 'places' | 'events'>('all');
@@ -28,32 +28,45 @@ export const MyContributionsPage: React.FC = () => {
   const [places, setPlaces] = useState<Place[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setPageMeta({
       title: 'Minhas Contribuições – Kariri.app',
       description: 'Acompanhe o estado de aprovação, revisões e publicações das suas sugestões.',
     });
-
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [placesList, eventsList] = await Promise.all([
-          placesApi.getAll(),
-          eventsApi.getAll(),
-        ]);
-        // Em ambiente real/mock, filtra contribuições do usuário ou recentes
-        setPlaces(placesList);
-        setEvents(eventsList);
-      } catch {
-        // silencioso
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
   }, []);
+
+  // Redireciona usuários não autenticados para /login com retorno seguro
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate('/login?returnTo=' + encodeURIComponent('/minhas-contribuicoes'), { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+
+  const loadData = async () => {
+    if (authLoading || !isAuthenticated) return;
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      // Busca exclusivamente as contribuições do usuário logado via rotas autenticadas da API Laravel
+      const [placesList, eventsList] = await Promise.all([
+        placesApi.getMyContributions(),
+        eventsApi.getMyContributions(),
+      ]);
+      setPlaces(placesList);
+      setEvents(eventsList);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Falha ao carregar suas contribuições.';
+      setErrorMessage(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [authLoading, isAuthenticated]);
 
   const getStatusBadge = (status?: EntityStatus) => {
     switch (status) {
@@ -207,20 +220,58 @@ export const MyContributionsPage: React.FC = () => {
         </div>
       </div>
 
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 flex items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={loadData}
+            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
       {/* Lista de Contribuições */}
       <div className="space-y-3">
-        {(activeTab === 'all' || activeTab === 'places') &&
+        {isLoading && (
+          <div className="space-y-3 animate-pulse">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 flex items-center gap-3.5">
+                <div className="w-14 h-14 rounded-xl bg-gray-200 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded-md w-1/4" />
+                  <div className="h-4 bg-gray-200 rounded-md w-1/2" />
+                  <div className="h-3 bg-gray-100 rounded-md w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && (activeTab === 'all' || activeTab === 'places') &&
           filteredPlaces.map((place) => (
             <div
               key={`place-${place.id}`}
               className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-xs flex items-center justify-between gap-4 hover:border-gray-200 transition"
             >
               <div className="flex items-center gap-3.5 min-w-0">
-                <img
-                  src={place.cover_image}
-                  alt={place.name}
-                  className="w-14 h-14 rounded-xl object-cover shrink-0"
-                />
+                {place.cover_image && /^https?:\/\//i.test(place.cover_image) ? (
+                  <img
+                    src={place.cover_image}
+                    alt={place.name}
+                    className="w-14 h-14 rounded-xl object-cover shrink-0 bg-gray-100"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 text-gray-400">
+                    <MapPin className="w-6 h-6 text-[#DE1F2A]" />
+                  </div>
+                )}
                 <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">
@@ -249,18 +300,25 @@ export const MyContributionsPage: React.FC = () => {
             </div>
           ))}
 
-        {(activeTab === 'all' || activeTab === 'events') &&
+        {!isLoading && (activeTab === 'all' || activeTab === 'events') &&
           filteredEvents.map((evt) => (
             <div
               key={`event-${evt.id}`}
               className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-xs flex items-center justify-between gap-4 hover:border-gray-200 transition"
             >
               <div className="flex items-center gap-3.5 min-w-0">
-                <img
-                  src={evt.cover_image}
-                  alt={evt.title}
-                  className="w-14 h-14 rounded-xl object-cover shrink-0"
-                />
+                {evt.cover_image && /^https?:\/\//i.test(evt.cover_image) ? (
+                  <img
+                    src={evt.cover_image}
+                    alt={evt.title}
+                    className="w-14 h-14 rounded-xl object-cover shrink-0 bg-gray-100"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 text-gray-400">
+                    <Calendar className="w-6 h-6 text-amber-600" />
+                  </div>
+                )}
                 <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">

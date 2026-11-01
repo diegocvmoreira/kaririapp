@@ -2,16 +2,11 @@ import React, { useRef, useState } from 'react';
 import {
   UploadCloud,
   Camera,
-  Image as ImageIcon,
   X,
   Star,
   Link as LinkIcon,
   Plus,
   AlertCircle,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-  Check,
 } from 'lucide-react';
 import { PlacePhotoPlaceholder } from './PlacePhotoPlaceholder';
 
@@ -28,48 +23,6 @@ interface PhotoUploadSectionProps {
   description?: string;
 }
 
-// Compressão no cliente via Canvas: redimensiona e remove metadados sensíveis (EXIF)
-const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.85): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = reject;
-      img.onload = () => {
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth || height > maxHeight) {
-          if (width / height > maxWidth / maxHeight) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          } else {
-            width = Math.round((width * maxHeight) / height);
-            maxHeight = height;
-          }
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(e.target?.result as string);
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-        // Converte para JPEG com compressão controlada
-        const dataUrl = canvas.toDataURL('image/jpeg', quality);
-        resolve(dataUrl);
-      };
-      img.src = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
-};
-
 export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
   coverImage,
   onChangeCoverImage,
@@ -82,84 +35,72 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
   label = 'Fotos do Local',
   description = 'Envie fotos reais do estabelecimento ou espaço para enriquecer o catálogo do Kariri.app.',
 }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showUrlOption, setShowUrlOption] = useState(false);
+  const [showUrlOption, setShowUrlOption] = useState(true);
   const [urlInput, setUrlInput] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Consolida lista de todas as fotos sem duplicatas vazias
-  const allPhotos = Array.from(new Set([coverImage, ...galleryImages].filter(Boolean)));
+  // Consolida lista de todas as fotos garantindo somente URLs válidas http/https (rejeita Base64 data: URLs)
+  const allPhotos = Array.from(
+    new Set(
+      [coverImage, ...galleryImages].filter(
+        (url): url is string => Boolean(url) && /^https?:\/\//i.test(url.trim())
+      )
+    )
+  );
 
-  const processFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setErrorMsg(null);
-
-    const remainingSlots = maxFiles - allPhotos.length;
-    if (remainingSlots <= 0) {
-      setErrorMsg(`Limite máximo de ${maxFiles} imagens atingido (1 capa + 8 adicionais).`);
-      return;
+  const notifyLocalFileNotSupported = (e?: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+    if (e && 'preventDefault' in e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-
-    const filesToProcess = Array.from(files).slice(0, remainingSlots);
-    setIsProcessing(true);
-
-    try {
-      const compressedList: string[] = [];
-
-      for (const file of filesToProcess) {
-        if (!file.type.startsWith('image/')) {
-          setErrorMsg('Selecione apenas arquivos de imagem válidos (JPEG, PNG, WEBP).');
-          continue;
-        }
-        if (file.size > 15 * 1024 * 1024) {
-          setErrorMsg(`O arquivo "${file.name}" excede o limite máximo de 15MB.`);
-          continue;
-        }
-
-        const compressed = await compressImage(file);
-        compressedList.push(compressed);
-      }
-
-      if (compressedList.length > 0) {
-        if (!coverImage) {
-          onChangeCoverImage(compressedList[0]);
-          const remainingNew = compressedList.slice(1);
-          if (onChangeGalleryImages) {
-            onChangeGalleryImages(Array.from(new Set([...(galleryImages || []), ...remainingNew])));
-          }
-        } else {
-          if (onChangeGalleryImages) {
-            onChangeGalleryImages(Array.from(new Set([...(galleryImages || []), ...compressedList])));
-          }
-        }
-      }
-    } catch {
-      setErrorMsg('Ocorreu um erro ao processar uma ou mais imagens. Tente novamente.');
-    } finally {
-      setIsProcessing(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      if (cameraInputRef.current) cameraInputRef.current.value = '';
-    }
+    setErrorMsg(
+      'O upload direto de arquivos locais não é suportado pelo backend da API. Por favor, adicione as fotos através da opção "Adicionar foto por link (URL)" utilizando um link público acessível com https:// (ex: Imgur, Cloudinary, Instagram ou site oficial).'
+    );
+    setShowUrlOption(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   const handleAddUrl = () => {
     if (!urlInput.trim()) return;
     const url = urlInput.trim();
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+
+    // Rejeição explícita de imagens Base64
+    if (url.startsWith('data:')) {
+      setErrorMsg('Imagens codificadas em Base64 não são aceitas pela API. Forneça uma URL pública iniciando com https://');
+      return;
+    }
+
+    if (!/^https?:\/\//i.test(url)) {
       setErrorMsg('Informe uma URL de imagem válida iniciando com https://');
       return;
     }
 
-    if (!coverImage) {
+    if (allPhotos.includes(url)) {
+      setErrorMsg('Esta URL de imagem já foi adicionada.');
+      return;
+    }
+
+    if (allPhotos.length >= maxFiles) {
+      setErrorMsg(`Limite máximo de ${maxFiles} imagens atingido.`);
+      return;
+    }
+
+    if (!coverImage || !/^https?:\/\//i.test(coverImage)) {
       onChangeCoverImage(url);
       if (onChangeGalleryImages) {
         onChangeGalleryImages([url]);
       }
     } else {
-      const nextGallery = Array.from(new Set([...(galleryImages || []), url]));
+      const nextGallery = Array.from(
+        new Set([
+          ...(galleryImages || []).filter((p) => /^https?:\/\//i.test(p)),
+          url,
+        ])
+      );
       if (onChangeGalleryImages) {
         onChangeGalleryImages(nextGallery);
       }
@@ -170,6 +111,7 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
   };
 
   const handleSetAsCover = (photoUrl: string) => {
+    if (!/^https?:\/\//i.test(photoUrl)) return;
     onChangeCoverImage(photoUrl);
     if (onChangeGalleryImages) {
       const nextGallery = [photoUrl, ...allPhotos.filter((p) => p !== photoUrl)];
@@ -189,13 +131,13 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Inputs ocultos para Galeria e Câmera */}
+      {/* Inputs ocultos para Galeria e Câmera com feedback claro */}
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/*"
         multiple
-        onChange={(e) => processFiles(e.target.files)}
+        onChange={notifyLocalFileNotSupported}
         className="hidden"
         id="photo-upload-input"
       />
@@ -204,7 +146,7 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
         type="file"
         accept="image/*"
         capture="environment"
-        onChange={(e) => processFiles(e.target.files)}
+        onChange={notifyLocalFileNotSupported}
         className="hidden"
         id="photo-camera-input"
       />
@@ -238,11 +180,56 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
         </div>
       )}
 
-      {/* Botões de Ação de Upload: Câmera, Galeria / Arquivos e Drag-and-drop */}
+      {/* Opção Principal e Obrigatória: Adicionar por Link/URL */}
+      <div className="space-y-2 bg-gray-50/80 p-4 rounded-2xl border border-gray-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <LinkIcon className="w-4 h-4 text-[#DE1F2A]" />
+            <span className="text-xs font-bold text-gray-900">
+              Adicionar foto por link (URL pública com https://)
+            </span>
+          </div>
+          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Formato aceito pela API
+          </span>
+        </div>
+
+        <div className="flex gap-2 pt-1">
+          <div className="relative flex-1">
+            <LinkIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="url"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddUrl();
+                }
+              }}
+              placeholder="https://exemplo.com/foto-do-local.jpg"
+              className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleAddUrl}
+            className="px-4 py-2 bg-[#DE1F2A] hover:bg-[#C51620] text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 shadow-xs"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Adicionar</span>
+          </button>
+        </div>
+        <p className="text-[11px] text-gray-500">
+          Aceita links diretos de fotos hospedadas no Imgur, Cloudinary, Instagram, Facebook ou site oficial.
+        </p>
+      </div>
+
+      {/* Botões informativos para Câmera e Galeria local com aviso */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Opção 1: Escolher fotos da galeria ou arrastar */}
         <div
-          onClick={() => !isProcessing && fileInputRef.current?.click()}
+          onClick={() => notifyLocalFileNotSupported()}
           onDragOver={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -250,34 +237,28 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
           onDrop={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (!isProcessing && e.dataTransfer.files) {
-              processFiles(e.dataTransfer.files);
-            }
+            notifyLocalFileNotSupported(e);
           }}
-          className="border-2 border-dashed border-gray-200 hover:border-[#DE1F2A] bg-gray-50/70 hover:bg-[#FDE8E9]/15 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition active:scale-[0.99] group min-h-[120px]"
+          className="border-2 border-dashed border-gray-200 hover:border-gray-300 bg-white rounded-2xl p-4 flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer transition active:scale-[0.99] group min-h-[90px]"
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              fileInputRef.current?.click();
+              notifyLocalFileNotSupported();
             }
           }}
           aria-label="Escolher fotos da galeria ou arrastar arquivos"
         >
-          <div className="w-10 h-10 rounded-xl bg-white shadow-2xs border border-gray-200 flex items-center justify-center text-gray-600 group-hover:text-[#DE1F2A] transition">
-            {isProcessing ? (
-              <RefreshCw className="w-5 h-5 animate-spin text-[#DE1F2A]" />
-            ) : (
-              <UploadCloud className="w-5 h-5" />
-            )}
+          <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-500 group-hover:text-gray-700 transition">
+            <UploadCloud className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-xs sm:text-sm font-bold text-gray-800 group-hover:text-[#DE1F2A] transition">
-              {isProcessing ? 'Otimizando fotos...' : 'Escolher da Galeria / Arquivos'}
+            <p className="text-xs font-bold text-gray-700 group-hover:text-gray-900 transition">
+              Escolher da Galeria / Arquivo Local
             </p>
-            <p className="text-[11px] text-gray-400 mt-0.5">
-              Clique ou arraste até {maxFiles - allPhotos.length} foto(s)
+            <p className="text-[10px] text-gray-400">
+              Requer URL pública (clique para ver orientações)
             </p>
           </div>
         </div>
@@ -285,60 +266,24 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
         {/* Opção 2: Tirar foto diretamente (Câmera no mobile) */}
         <button
           type="button"
-          onClick={() => !isProcessing && cameraInputRef.current?.click()}
-          disabled={isProcessing || allPhotos.length >= maxFiles}
-          className="border-2 border-dashed border-gray-200 hover:border-[#DE1F2A] bg-gray-50/70 hover:bg-[#FDE8E9]/15 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 text-center transition active:scale-[0.99] group disabled:opacity-50 min-h-[120px]"
+          onClick={() => notifyLocalFileNotSupported()}
+          className="border-2 border-dashed border-gray-200 hover:border-gray-300 bg-white rounded-2xl p-4 flex flex-col items-center justify-center gap-1.5 text-center transition active:scale-[0.99] group min-h-[90px]"
           aria-label="Tirar foto com a câmera"
         >
-          <div className="w-10 h-10 rounded-xl bg-white shadow-2xs border border-gray-200 flex items-center justify-center text-gray-600 group-hover:text-[#DE1F2A] transition">
-            <Camera className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-500 group-hover:text-gray-700 transition">
+            <Camera className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-xs sm:text-sm font-bold text-gray-800 group-hover:text-[#DE1F2A] transition">
-              Tirar Foto Agora
+            <p className="text-xs font-bold text-gray-700 group-hover:text-gray-900 transition">
+              Tirar Foto com a Câmera
             </p>
-            <p className="text-[11px] text-gray-400 mt-0.5">
-              Use a câmera do seu celular ou tablet
+            <p className="text-[10px] text-gray-400">
+              Requer URL pública (clique para ver orientações)
             </p>
           </div>
         </button>
       </div>
 
-      {/* Opção Avançada: Adicionar por Link/URL */}
-      <div className="pt-1">
-        <button
-          type="button"
-          onClick={() => setShowUrlOption(!showUrlOption)}
-          className="text-xs text-gray-500 hover:text-gray-900 font-semibold flex items-center gap-1.5 transition"
-        >
-          <LinkIcon className="w-3.5 h-3.5" />
-          <span>{showUrlOption ? 'Ocultar opção de adicionar foto por link (URL)' : 'Opção avançada: adicionar foto por link externo (URL)'}</span>
-          {showUrlOption ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        </button>
-
-        {showUrlOption && (
-          <div className="flex gap-2 mt-2 pt-2 border-t border-gray-100 animate-in fade-in duration-150">
-            <div className="relative flex-1">
-              <LinkIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="url"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="https://exemplo.com/foto-do-local.jpg"
-                className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleAddUrl}
-              className="px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Adicionar</span>
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* Grade de Fotos Carregadas & Seleção da Imagem Destacada (Capa) */}
       {allPhotos.length > 0 ? (

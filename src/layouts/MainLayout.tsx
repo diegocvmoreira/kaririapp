@@ -1,5 +1,4 @@
-import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Header } from '../components/common/Header';
 import { BottomNavigation } from '../components/common/BottomNavigation';
 import { FloatingActionButton } from '../components/common/FloatingActionButton';
@@ -12,13 +11,25 @@ import { WifiOff, Shield, RefreshCw } from 'lucide-react';
 export const MainLayout: React.FC = () => {
   const isOnline = useOnlineStatus();
   const { hasUpdate, updateApp, hasCachedData } = useServiceWorkerUpdate();
+  const location = useLocation();
+  const pathname = location.pathname;
+
+  // Rotas com barras de ação contextuais fixas no rodapé mobile
+  const hasContextualBottomBar =
+    /^\/(locais|eventos)\/.+/.test(pathname) ||
+    pathname === '/novo-local' ||
+    pathname === '/novo-evento';
 
   const handleOpenCookiePreferences = () => {
     window.dispatchEvent(new CustomEvent('kariri:open_cookie_preferences'));
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#000000] selection:bg-[#DE1F2A] selection:text-white pb-20 md:pb-0">
+    <div
+      className={`min-h-screen flex flex-col bg-[#F8F9FA] text-[#000000] selection:bg-[#DE1F2A] selection:text-white ${
+        hasContextualBottomBar ? 'pb-0' : 'pb-20 md:pb-0'
+      }`}
+    >
       {/* Aviso de Nova Versão Disponível */}
       {hasUpdate && (
         <div className="bg-gray-900 text-white text-xs font-semibold py-2 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50 animate-fade-in shadow-md">
@@ -96,8 +107,8 @@ export const MainLayout: React.FC = () => {
         </div>
       </footer>
 
-      {/* Mobile Bottom Fixed Navigation */}
-      <BottomNavigation />
+      {/* Mobile Bottom Fixed Navigation — ocultada em rotas com barra de ação contextual própria */}
+      {!hasContextualBottomBar && <BottomNavigation />}
 
       {/* Floating Action Button (+ Novo Local / Novo Evento) */}
       <FloatingActionButton />

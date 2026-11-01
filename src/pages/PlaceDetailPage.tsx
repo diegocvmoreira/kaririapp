@@ -246,7 +246,7 @@ export const PlaceDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-12 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24 sm:pb-28 md:pb-12 animate-in fade-in duration-300">
       {/* 1. Top Action Bar */}
       <div className="flex items-center justify-between">
         <BackButton fallbackTo="/explorar" />
@@ -912,20 +912,20 @@ export const PlaceDetailPage: React.FC = () => {
       {/* Barra de Ações Persistente no Mobile (Como chegar, WhatsApp, Salvar) */}
       <aside
         aria-label="Ações rápidas do local"
-        className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-2.5 px-4 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2.5"
+        className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-2.5 px-3 sm:px-4 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
       >
         {hasCoordinates ? (
           <button
             type="button"
             onClick={handleOpenGoogleMapsRoute}
-            className="flex-1 min-h-[44px] py-2 px-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+            className="flex-1 min-h-[44px] py-2 px-2.5 sm:px-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
           >
             <Navigation2 className="w-4 h-4 fill-white shrink-0" />
             <span className="truncate">Como Chegar</span>
           </button>
         ) : (
-          <div className="flex-1 min-h-[44px] py-2 px-3 bg-gray-100 text-gray-500 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5">
+          <div className="flex-1 min-h-[44px] py-2 px-2.5 sm:px-3 bg-gray-100 text-gray-500 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5">
             <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
             <span className="truncate">Localizar no mapa</span>
           </div>
@@ -944,7 +944,7 @@ export const PlaceDetailPage: React.FC = () => {
                 category_slug: place.category_slug,
               });
             }}
-            className="min-h-[44px] px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-600 outline-none"
+            className="min-h-[44px] px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-600 outline-none"
             aria-label="Abrir conversa no WhatsApp"
           >
             <MessageCircle className="w-4 h-4 shrink-0" />

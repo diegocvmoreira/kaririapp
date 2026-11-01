@@ -134,6 +134,15 @@ export const CreatePlacePage: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Rolagem suave automática até o campo ativo no mobile (compatibilidade com teclado virtual Android/iOS)
+  const handleInputFocus = (e: React.FocusEvent<HTMLElement>) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+      setTimeout(() => {
+        (e.target as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 280);
+    }
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!name.trim()) {
@@ -154,7 +163,7 @@ export const CreatePlacePage: React.FC = () => {
     }
 
     try {
-      const created = await (isPublicUser ? placesApi.submitSuggestion : placesApi.create)({
+      const created = await (isPublicUser ? placesApi.submitContribution : placesApi.create)({
         name: name.trim(),
         slug: slug.trim() || name.toLowerCase().replace(/\s+/g, '-'),
         city_id: Number(cityId),
@@ -330,7 +339,10 @@ export const CreatePlacePage: React.FC = () => {
       )}
 
       {/* Conteúdo da Etapa Atual */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-xs space-y-6">
+      <div
+        className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-xs space-y-6"
+        onFocusCapture={handleInputFocus}
+      >
         {/* ETAPA 1: ESSENCIAL */}
         {currentStep === 1 && (
           <div className="space-y-5 animate-in fade-in duration-200">
@@ -751,7 +763,7 @@ export const CreatePlacePage: React.FC = () => {
           <button
             type="button"
             onClick={handlePrevStep}
-            className="px-4 py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-xs hover:bg-gray-50 transition active:scale-95"
+            className="min-h-[44px] px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-bold text-xs hover:bg-gray-50 transition active:scale-95"
           >
             Voltar
           </button>
@@ -761,7 +773,7 @@ export const CreatePlacePage: React.FC = () => {
           <button
             type="button"
             onClick={handleNextStep}
-            className="flex-1 py-3 px-4 rounded-xl bg-[#DE1F2A] active:bg-[#C51620] text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm active:scale-98"
+            className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#DE1F2A] active:bg-[#C51620] text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm active:scale-98"
           >
             <span>Continuar ({currentStep}/5)</span>
             <ArrowRight className="w-4 h-4" />
@@ -771,7 +783,7 @@ export const CreatePlacePage: React.FC = () => {
             type="button"
             onClick={() => handleSubmit()}
             disabled={isSubmitting}
-            className="flex-1 py-3 px-4 rounded-xl bg-[#DE1F2A] active:bg-[#C51620] text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm active:scale-98 disabled:opacity-50"
+            className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#DE1F2A] active:bg-[#C51620] text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm active:scale-98 disabled:opacity-50"
           >
             {isSubmitting ? 'Enviando...' : 'Enviar para Revisão'}
           </button>
