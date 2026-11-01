@@ -193,13 +193,13 @@ export const MapView: React.FC<MapViewProps> = ({
         }}
       />
 
-      {/* Floating Controls */}
-      <div className="absolute right-3.5 top-3.5 z-20 flex flex-col gap-2">
+      {/* Floating Controls — posicionados abaixo do trilho superior de categorias */}
+      <div className="absolute right-2.5 sm:right-3.5 top-16 sm:top-20 z-20 flex flex-col gap-2">
         <button
           type="button"
           onClick={handleLocateMeClick}
           disabled={isLocating}
-          className="w-10 h-10 rounded-2xl bg-white shadow-md flex items-center justify-center text-gray-700 hover:text-[#DE1F2A] hover:bg-gray-50 active:scale-95 transition"
+          className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-2xl bg-white shadow-md flex items-center justify-center text-gray-700 hover:text-[#DE1F2A] hover:bg-gray-50 active:scale-95 transition cursor-pointer"
           aria-label="Minha localização aproximada"
           title="Minha localização aproximada (com explicação de finalidade)"
         >
@@ -210,7 +210,7 @@ export const MapView: React.FC<MapViewProps> = ({
           <button
             type="button"
             onClick={handleZoomIn}
-            className="w-10 h-10 flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition cursor-pointer"
             aria-label="Aproximar zoom"
           >
             <ZoomIn className="w-4 h-4" />
@@ -218,7 +218,7 @@ export const MapView: React.FC<MapViewProps> = ({
           <button
             type="button"
             onClick={handleZoomOut}
-            className="w-10 h-10 flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition cursor-pointer"
             aria-label="Afastar zoom"
           >
             <ZoomOut className="w-4 h-4" />
@@ -226,19 +226,19 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
       </div>
 
-      {/* Selected Place Overlay Card on Mobile & Desktop */}
+      {/* Selected Place Overlay Card on Mobile & Desktop — não sobrepõe o FAB à direita */}
       {activePlace && (
-        <div className="absolute bottom-4 inset-x-4 sm:inset-x-auto sm:left-4 sm:w-84 z-20 animate-in slide-in-from-bottom duration-200">
+        <div className="absolute bottom-2.5 left-2.5 right-18 sm:right-auto sm:left-4 sm:bottom-4 max-w-[calc(100%-4.5rem)] sm:max-w-sm sm:w-80 z-20 animate-in slide-in-from-bottom duration-200">
           <div className="relative">
             <button
               onClick={() => {
                 setActivePlace(null);
                 if (onPlaceSelect) onPlaceSelect(null);
               }}
-              className="absolute -top-2.5 -right-2.5 z-30 w-7 h-7 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-black border border-gray-100"
+              className="absolute -top-2.5 -right-2.5 z-30 min-w-[32px] min-h-[32px] w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-black border border-gray-100 cursor-pointer active:scale-95"
               aria-label="Fechar prévia"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
             <PlaceCard place={activePlace} variant="horizontal" className="shadow-2xl border-white" />
           </div>

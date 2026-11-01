@@ -216,7 +216,7 @@ export const Header: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(true)}
-            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl text-gray-700 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+            className="md:hidden inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl text-gray-700 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none cursor-pointer active:scale-95 transition"
             aria-label="Abrir menu principal"
             aria-expanded={isMobileMenuOpen}
           >
@@ -286,7 +286,7 @@ export const Header: React.FC = () => {
           ) : (
             <Link
               to="/login"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 active:scale-95 transition focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[44px] min-w-[44px] rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 active:scale-95 transition focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none"
             >
               <UserIcon className="w-3.5 h-3.5 text-gray-600" />
               <span className="hidden sm:inline">Entrar</span>

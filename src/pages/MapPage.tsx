@@ -98,11 +98,11 @@ export const MapPage: React.FC = () => {
   }, [places]);
 
   return (
-    <div className="relative h-[calc(100vh-120px)] md:h-[calc(100vh-80px)] flex flex-col p-2 sm:p-4">
+    <div className="relative h-[calc(100vh-120px)] h-[calc(100dvh-120px)] md:h-[calc(100vh-80px)] md:h-[calc(100dvh-80px)] min-h-[460px] flex flex-col p-2 sm:p-4">
       {/* Category Pills floating over map */}
       {categories.length > 0 && (
-        <div className="absolute top-4 sm:top-6 inset-x-4 sm:inset-x-8 z-30 pointer-events-none">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar py-1 pointer-events-auto bg-white/90 backdrop-blur-md p-2 rounded-2xl shadow-lg border border-gray-100 max-w-xl mx-auto">
+        <div className="absolute top-2.5 sm:top-5 inset-x-2 sm:inset-x-8 z-30 pointer-events-none">
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-1 pointer-events-auto bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-2xl shadow-md border border-gray-100 max-w-xl mx-auto">
             <FilterChip
               label="Todos os Pontos"
               isSelected={!selectedCategorySlug}
@@ -143,9 +143,9 @@ export const MapPage: React.FC = () => {
           />
         )}
 
-        {/* Fallback para locais sem coordenadas (Audit Item 7) */}
-        {!isLoading && !errorMessage && placesWithoutCoords.length > 0 && (
-          <div className="absolute left-4 bottom-4 z-20 max-w-sm">
+        {/* Fallback para locais sem coordenadas (oculto temporariamente quando um card específico de local estiver ativo) */}
+        {!isLoading && !errorMessage && placesWithoutCoords.length > 0 && !selectedPlace && (
+          <div className="absolute left-2.5 sm:left-4 bottom-2.5 sm:bottom-4 z-20 max-w-[calc(100%-4.5rem)] sm:max-w-sm">
             <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 overflow-hidden text-xs">
               <button
                 type="button"

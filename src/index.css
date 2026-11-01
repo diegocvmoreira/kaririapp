@@ -68,3 +68,17 @@
   margin: 0 !important;
   line-height: normal !important;
 }
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(4px);
+  padding: 2px 8px !important;
+  font-size: 10px !important;
+  color: #6B7280 !important;
+  border-top-left-radius: 8px;
+  max-width: 55%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

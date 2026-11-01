@@ -232,7 +232,7 @@ export const FloatingActionButton: React.FC = () => {
         style={{
           bottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px) + 12px)',
         }}
-        className="fixed right-4 md:bottom-8 md:right-8 z-50 flex flex-col items-end pointer-events-auto"
+        className="fixed right-3 sm:right-4 md:bottom-8 md:right-8 z-50 flex flex-col items-end pointer-events-auto"
       >
         {/* Menu Speed-Dial Semântico */}
         {isOpen && (
@@ -248,12 +248,12 @@ export const FloatingActionButton: React.FC = () => {
               role="menuitem"
               type="button"
               onClick={handleOpenPlaceOption}
-              className="group flex items-center gap-2.5 pl-3 pr-1.5 py-1.5 rounded-full bg-white hover:bg-gray-50 text-gray-800 text-xs font-bold shadow-lg border border-gray-200 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#DE1F2A]"
+              className="group flex items-center gap-2.5 pl-3.5 pr-2 py-2 rounded-full bg-white hover:bg-gray-50 text-gray-800 text-xs font-bold shadow-lg border border-gray-200 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#DE1F2A] min-h-[44px] cursor-pointer"
             >
               <span className="select-none text-gray-800 group-hover:text-[#DE1F2A] transition">
                 Novo local
               </span>
-              <div className="w-8 h-8 rounded-full bg-[#DE1F2A] text-white flex items-center justify-center shadow-xs">
+              <div className="w-8 h-8 rounded-full bg-[#DE1F2A] text-white flex items-center justify-center shadow-xs shrink-0">
                 <MapPin className="w-4 h-4" />
               </div>
             </button>
@@ -263,12 +263,12 @@ export const FloatingActionButton: React.FC = () => {
               role="menuitem"
               type="button"
               onClick={handleOpenEventOption}
-              className="group flex items-center gap-2.5 pl-3 pr-1.5 py-1.5 rounded-full bg-white hover:bg-gray-50 text-gray-800 text-xs font-bold shadow-lg border border-gray-200 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#DE1F2A]"
+              className="group flex items-center gap-2.5 pl-3.5 pr-2 py-2 rounded-full bg-white hover:bg-gray-50 text-gray-800 text-xs font-bold shadow-lg border border-gray-200 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#DE1F2A] min-h-[44px] cursor-pointer"
             >
               <span className="select-none text-gray-800 group-hover:text-[#DE1F2A] transition">
                 Novo evento
               </span>
-              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
                 <Calendar className="w-4 h-4" />
               </div>
             </button>
@@ -289,7 +289,7 @@ export const FloatingActionButton: React.FC = () => {
           aria-controls="fab-speeddial-menu"
           aria-label={isOpen ? 'Fechar opções de cadastro' : 'Contribuir: cadastrar novo local ou evento'}
           title="Contribuir com o Kariri.app"
-          className={`w-12 h-12 md:w-13 md:h-13 rounded-full bg-[#DE1F2A] hover:bg-[#C51620] text-white shadow-[0_4px_16px_rgba(222,31,42,0.45)] hover:shadow-[0_6px_20px_rgba(222,31,42,0.6)] flex items-center justify-center transition-all duration-300 transform active:scale-90 focus:outline-none focus:ring-3 focus:ring-[#DE1F2A]/40 focus:ring-offset-2 ${
+          className={`w-12 h-12 md:w-13 md:h-13 rounded-full bg-[#DE1F2A] hover:bg-[#C51620] text-white shadow-[0_4px_16px_rgba(222,31,42,0.45)] hover:shadow-[0_6px_20px_rgba(222,31,42,0.6)] flex items-center justify-center transition-all duration-300 transform active:scale-90 focus:outline-none focus:ring-3 focus:ring-[#DE1F2A]/40 focus:ring-offset-2 cursor-pointer ${
             isOpen ? 'rotate-45' : 'hover:scale-105'
           }`}
         >

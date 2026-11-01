@@ -19,7 +19,7 @@ export const FilterChip: React.FC<FilterChipProps> = ({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all duration-200 select-none ${
+      className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[38px] sm:min-h-[40px] rounded-2xl text-xs font-semibold whitespace-nowrap transition-all duration-200 select-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none ${
         isSelected
           ? 'bg-[#1F2024] text-white shadow-xs scale-102 ring-2 ring-gray-900/10'
           : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'

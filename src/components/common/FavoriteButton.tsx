@@ -21,10 +21,10 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   const isEvent = eventId !== undefined;
   const active = isEvent ? isEventFavorite(eventId!) : placeId !== undefined ? isFavorite(placeId) : false;
 
-  const sizeClasses = {
-    sm: 'w-8 h-8 p-1.5',
-    md: 'w-10 h-10 p-2',
-    lg: 'w-12 h-12 p-2.5',
+  const visualSizes = {
+    sm: 'w-8 h-8',
+    md: 'w-10 h-10',
+    lg: 'w-12 h-12',
   };
 
   const iconSizes = {
@@ -45,22 +45,34 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     }
   };
 
+  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
+    if (stopPropagation) {
+      e.stopPropagation();
+    }
+  };
+
   return (
     <button
       type="button"
       onClick={handleClick}
+      onMouseDown={handlePointerDown}
+      onTouchStart={handlePointerDown}
       aria-label={active ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
-      className={`rounded-full flex items-center justify-center transition-all duration-200 active:scale-90 ${sizeClasses[size]} ${
-        active
-          ? 'bg-white/95 text-[#DE1F2A] shadow-md hover:bg-white'
-          : 'bg-white/80 text-gray-700 hover:text-[#DE1F2A] hover:bg-white shadow-sm backdrop-blur-md'
-      } ${className}`}
+      className={`relative inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full transition-transform active:scale-90 focus-visible:ring-2 focus-visible:ring-[#DE1F2A] outline-none z-20 cursor-pointer ${className}`}
     >
-      <Heart
-        className={`${iconSizes[size]} transition-transform duration-200 ${
-          active ? 'fill-[#DE1F2A] text-[#DE1F2A] scale-110' : ''
+      <span
+        className={`rounded-full flex items-center justify-center transition-all duration-200 pointer-events-none ${visualSizes[size]} ${
+          active
+            ? 'bg-white/95 text-[#DE1F2A] shadow-md hover:bg-white'
+            : 'bg-white/80 text-gray-700 hover:text-[#DE1F2A] hover:bg-white shadow-sm backdrop-blur-md'
         }`}
-      />
+      >
+        <Heart
+          className={`${iconSizes[size]} transition-transform duration-200 ${
+            active ? 'fill-[#DE1F2A] text-[#DE1F2A] scale-110' : ''
+          }`}
+        />
+      </span>
     </button>
   );
 };
