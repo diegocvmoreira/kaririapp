@@ -11,9 +11,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+          cache: npm
+      - run: npm ci
       - run: npm run lint
+      - run: npm test
       - run: npm run build
         env:
-          VITE_API_BASE_URL: https://kariri.app.br/kariri-api/public/index.php/api
+          VITE_API_BASE_URL: https://api.kariri.app.br/api
           VITE_USE_MOCK_DATA: 'false'
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}

@@ -14,7 +14,7 @@ interface TurnstileWidgetProps {
   onToken: (token: string) => void;
 }
 
-const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAACZx5Hy-3G9euZrr';
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({ onToken }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -22,6 +22,12 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({ onToken }) => 
   useEffect(() => {
     if (USE_MOCK_DATA || !containerRef.current) {
       onToken('mock-token');
+      return;
+    }
+
+    if (!SITE_KEY) {
+      console.error('VITE_TURNSTILE_SITE_KEY não configurada para o ambiente real.');
+      onToken('');
       return;
     }
 

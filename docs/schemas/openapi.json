@@ -11,7 +11,7 @@
   },
   "servers": [
     {
-      "url": "https://kariri.app.br/kariri-api/public/index.php/api",
+      "url": "https://api.kariri.app.br/api",
       "description": "Servidor de Produção Laravel"
     }
   ],

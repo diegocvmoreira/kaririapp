@@ -8,6 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
+    "test": "npm run test:contract && npm run test:places",
+    "test:contract": "tsx tests/contractValidation.ts",
+    "test:places": "tsx tests/placesValidation.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {

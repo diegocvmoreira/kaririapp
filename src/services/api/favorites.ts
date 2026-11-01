@@ -346,7 +346,7 @@ export const favoritesApi = {
         const allPlaces = await placesApi.getAll();
         return allPlaces.filter((p) => ids.includes(p.id));
       } catch {
-        return mockPlaces.filter((p) => ids.includes(p.id));
+        throw new ApiError(0, 'Não foi possível carregar seus favoritos.', { source: 'places' }, '/favorites');
       }
     }
 
@@ -367,13 +367,10 @@ export const favoritesApi = {
       // Se a API não tiver registros, verifica os IDs salvos localmente
       const ids = getStoredFavoriteIds();
       if (ids.length === 0) return [];
-      const allPlaces = await placesApi.getAll().catch(() => mockPlaces);
+      const allPlaces = await placesApi.getAll();
       return allPlaces.filter((p) => ids.includes(p.id));
     } catch {
-      const ids = getStoredFavoriteIds();
-      if (ids.length === 0) return [];
-      const allPlaces = await placesApi.getAll().catch(() => mockPlaces);
-      return allPlaces.filter((p) => ids.includes(p.id));
+      throw new ApiError(0, 'Não foi possível carregar seus favoritos.', { source: 'places' }, '/favorites');
     }
   },
 
@@ -485,7 +482,7 @@ export const favoritesApi = {
         const allEvents = await eventsApi.getAll();
         return allEvents.filter((e) => ids.includes(e.id));
       } catch {
-        return mockEvents.filter((e) => ids.includes(e.id));
+        throw new ApiError(0, 'Não foi possível carregar seus eventos favoritos.', { source: 'events' }, '/favorites');
       }
     }
 
@@ -505,13 +502,10 @@ export const favoritesApi = {
 
       const ids = getStoredFavoriteEventIds();
       if (ids.length === 0) return [];
-      const allEvents = await eventsApi.getAll().catch(() => mockEvents);
+      const allEvents = await eventsApi.getAll();
       return allEvents.filter((e) => ids.includes(e.id));
     } catch {
-      const ids = getStoredFavoriteEventIds();
-      if (ids.length === 0) return [];
-      const allEvents = await eventsApi.getAll().catch(() => mockEvents);
-      return allEvents.filter((e) => ids.includes(e.id));
+      throw new ApiError(0, 'Não foi possível carregar seus eventos favoritos.', { source: 'events' }, '/favorites');
     }
   },
 

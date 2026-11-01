@@ -71,22 +71,12 @@ export const businessClaimsApi = {
       return simulateNetworkDelay(newClaim, 150);
     }
 
-    try {
-      const response = await apiClient<unknown>('/business-claims', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      const raw = (response as { data?: BusinessClaim })?.data || (response as BusinessClaim);
-      return raw;
-    } catch (err: unknown) {
-      // Fallback para rota legada /claims caso o backend esteja com prefixo antigo
-      const response = await apiClient<unknown>('/claims', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      const raw = (response as { data?: BusinessClaim })?.data || (response as BusinessClaim);
-      return raw;
-    }
+    const response = await apiClient<unknown>('/business-claims', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    const raw = (response as { data?: BusinessClaim })?.data || (response as BusinessClaim);
+    return raw;
   },
 
   async updateStatus(id: number, status: BusinessClaim['status'], rejectReason?: string): Promise<boolean> {

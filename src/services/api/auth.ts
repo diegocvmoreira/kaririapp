@@ -387,25 +387,14 @@ export const authApi = {
       return { message: 'Senha alterada com sucesso!' };
     }
 
-    try {
-      return await apiClient<{ message: string }>('/me/password', {
-        method: 'PUT',
-        body: JSON.stringify({
-          current_password: currentPassword,
-          password: newPassword,
-          password_confirmation: newPassword,
-        }),
-      });
-    } catch {
-      return await apiClient<{ message: string }>('/user/password', {
-        method: 'PUT',
-        body: JSON.stringify({
-          current_password: currentPassword,
-          password: newPassword,
-          password_confirmation: newPassword,
-        }),
-      });
-    }
+    return apiClient<{ message: string }>('/me/password', {
+      method: 'PUT',
+      body: JSON.stringify({
+        current_password: currentPassword,
+        password: newPassword,
+        password_confirmation: newPassword,
+      }),
+    });
   },
 
   mockLogin(credentials: LoginCredentials): AuthResponse {

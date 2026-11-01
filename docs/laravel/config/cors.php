@@ -12,7 +12,7 @@ return [
     |
     */
 
-    // Cobre rotas diretas de API e caminhos com subpastas (ex: /kariri-api/public/index.php/api/*)
+    // Cobre rotas diretas de API e caminhos com subpastas (ex: https://api.kariri.app.br/api/*)
     'paths' => [
         'api/*',
         'sanctum/csrf-cookie',

@@ -41,31 +41,14 @@ export const reviewsApi = {
     }
 
     try {
-      // O backend oficial Laravel utiliza POST /reviews com payload { place_id, rating, comment }
-      let response: unknown;
-      try {
-        response = await apiClient<unknown>('/reviews', {
-          method: 'POST',
-          body: JSON.stringify({
-            place_id: placeId,
-            rating: input.rating,
-            comment: input.comment.trim(),
-          }),
-        });
-      } catch (postErr: unknown) {
-        if (postErr instanceof ApiError && (postErr.status === 404 || postErr.status === 405)) {
-          // Fallback para rota aninhada antiga /places/{id}/reviews caso legado
-          response = await apiClient<unknown>(`/places/${placeId}/reviews`, {
-            method: 'POST',
-            body: JSON.stringify({
-              rating: input.rating,
-              comment: input.comment.trim(),
-            }),
-          });
-        } else {
-          throw postErr;
-        }
-      }
+      // O backend Laravel usa a rota aninhada autenticada /places/{id}/reviews.
+      const response = await apiClient<unknown>(`/places/${placeId}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify({
+          rating: input.rating,
+          comment: input.comment.trim(),
+        }),
+      });
 
       const raw = (response as { data?: Record<string, unknown> })?.data || (response as Record<string, unknown>);
       if (raw && (raw.id || raw.comment)) {
