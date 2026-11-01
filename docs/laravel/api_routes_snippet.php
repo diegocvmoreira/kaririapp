@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 
 /**
- * Snippets de rotas para routes/api.php do backend Laravel (kariri-api):
+ * Snippets de rotas para routes/api.php do backend Laravel (kariri-api-core):
  */
 
 // 1. Recuperação de Senha com Rate Limiting estrito (6 req/min por IP)

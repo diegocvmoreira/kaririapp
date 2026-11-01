@@ -1,6 +1,6 @@
 # Fase 0 — Contenção Imediata (Procedimento Operacional)
 
-Este documento define o roteiro imediato de segurança para o ambiente de produção do Laravel (`https://kariri.app.br/kariri-api`).
+Este documento define o roteiro imediato de segurança para o ambiente de produção do Laravel (`https://kariri.app.br/kariri-api-core`).
 
 ---
 

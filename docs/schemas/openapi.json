@@ -11,8 +11,12 @@
   },
   "servers": [
     {
+      "url": "https://kariri.app.br/kariri-api-core/public/index.php/api",
+      "description": "Servidor de Produção Laravel (kariri-api-core Hostinger)"
+    },
+    {
       "url": "https://api.kariri.app.br/api",
-      "description": "Servidor de Produção Laravel"
+      "description": "Servidor de Produção Laravel (Subdomínio api.kariri.app.br)"
     }
   ],
   "components": {

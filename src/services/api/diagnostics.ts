@@ -116,7 +116,7 @@ export function diagnoseApiIssue(
       userMessage: 'O serviço de proteção do servidor está temporariamente indisponível.',
       technicalDetails: `Status HTTP ${status} originado pela camada de proxy do Cloudflare${endpointInfo}. O servidor Hostinger (origem) pode estar inacessível ou o WAF bloqueou a requisição da API.`,
       suggestedAction:
-        'Verificar se o servidor web na Hostinger está ativo e adicionar regra de bypass no WAF/Firewall do Cloudflare para o caminho da API Laravel (https://api.kariri.app.br/api/*).',
+        'Verificar se o servidor web na Hostinger está ativo e adicionar regra de bypass no WAF/Firewall do Cloudflare para o caminho da API Laravel (https://kariri.app.br/kariri-api-core/public/index.php/api/* ou https://api.kariri.app.br/api/*).',
       status,
       endpoint,
       timestamp,

@@ -1,10 +1,10 @@
 // Kariri.app Production Service Worker
 // Estratégias estruturadas por tipo de recurso com isolamento anti-HTML em assets
 
-const SW_VERSION = '2026.1.6';
+const SW_VERSION = '2026.1.7';
 const CACHE_SHELL = `kariri-shell-${SW_VERSION}`;
 const CACHE_ASSETS = `kariri-assets-${SW_VERSION}`;
-const CACHE_API = `kariri-api-${SW_VERSION}`;
+const CACHE_API = `kariri-api-core-${SW_VERSION}`;
 
 const CURRENT_CACHES = [CACHE_SHELL, CACHE_ASSETS, CACHE_API];
 
