@@ -87,14 +87,14 @@ export const RegisterPage: React.FC = () => {
   const getPasswordStrength = (pwd: string) => {
     if (!pwd) return { score: 0, label: '', color: '' };
     let score = 0;
-    if (pwd.length >= 8) score += 1;
+    if (pwd.length >= 12) score += 1;
     if (/[A-Z]/.test(pwd)) score += 1;
     if (/[0-9]/.test(pwd)) score += 1;
     if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
 
     switch (score) {
       case 1:
-        return { score: 1, label: 'Fraca (mín. 8 caracteres)', color: 'bg-red-400' };
+        return { score: 1, label: 'Fraca (mín. 12 caracteres)', color: 'bg-red-400' };
       case 2:
         return { score: 2, label: 'Razoável', color: 'bg-amber-400' };
       case 3:
@@ -122,8 +122,8 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    if (password.length < 8) {
-      setErrorMsg('A senha deve conter no mínimo 8 caracteres para sua segurança.');
+    if (password.length < 12) {
+      setErrorMsg('A senha deve conter no mínimo 12 caracteres para sua segurança.');
       return;
     }
 
@@ -187,19 +187,19 @@ export const RegisterPage: React.FC = () => {
           <div className="bg-emerald-50/70 border border-emerald-200/60 rounded-2xl p-4 text-xs text-left text-emerald-900 space-y-2">
             <p className="font-bold flex items-center gap-1.5 text-emerald-950">
               <Check className="w-4 h-4 text-emerald-600" />
-              Sua conta já está ativa no modo visitante autenticado
+              Sua conta aguarda confirmação por e-mail
             </p>
             <p className="text-[11px] text-emerald-800 leading-relaxed">
-              Você já pode favoritar locais, avaliar experiências e personalizar sua descoberta do Cariri Cearense.
+              Confirme o endereço recebido para entrar e usar os recursos da sua conta.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
-              onClick={() => navigate(safeReturnTo)}
+              onClick={() => navigate(`/verificar-email?email=${encodeURIComponent(email.trim().toLowerCase())}`)}
               className="flex-1 py-3 bg-[#DE1F2A] hover:bg-[#C51620] text-white rounded-xl font-bold text-xs sm:text-sm shadow-sm transition"
             >
-              {safeReturnTo !== '/perfil' ? 'Continuar navegação' : 'Ver meu perfil'}
+              Confirmar e-mail
             </button>
             <button
               onClick={() => navigate('/explorar')}
@@ -294,8 +294,8 @@ export const RegisterPage: React.FC = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Mínimo 8 caracteres"
-                    minLength={8}
+                    placeholder="Mínimo 12 caracteres"
+                    minLength={12}
                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#DE1F2A] focus:bg-white transition"
                   />
                 </div>
@@ -324,7 +324,7 @@ export const RegisterPage: React.FC = () => {
                     value={passwordConfirmation}
                     onChange={(e) => setPasswordConfirmation(e.target.value)}
                     placeholder="Repita a senha"
-                    minLength={8}
+                    minLength={12}
                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#DE1F2A] focus:bg-white transition"
                   />
                 </div>

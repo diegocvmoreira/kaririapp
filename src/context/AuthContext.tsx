@@ -39,7 +39,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       if (typeof window !== 'undefined') {
         const path = window.location.pathname;
-        const isAuthPage = path === '/login' || path === '/cadastro' || path === '/esqueci-senha' || path === '/redefinir-senha';
+        const isAuthPage =
+          path === '/login' ||
+          path === '/cadastro' ||
+          path === '/esqueci-senha' ||
+          path === '/redefinir-senha' ||
+          path === '/verificar-email';
         if (!isAuthPage) {
           const redirect = encodeURIComponent(path + window.location.search);
           window.location.assign(`/login?expired=1&returnTo=${redirect}`);
@@ -57,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await authApi.login(credentials);
-      setUser(response.user);
+      setUser(response.token ? response.user : null);
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await authApi.register(data);
-      setUser(response.user);
+      setUser(response.token ? response.user : null);
     } finally {
       setIsLoading(false);
     }

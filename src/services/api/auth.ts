@@ -27,8 +27,9 @@ export interface RegisterData {
 
 export interface AuthResponse {
   user: User;
-  token: string;
+  token?: string;
   requires_verification?: boolean;
+  message?: string;
 }
 
 export interface ResetPasswordData {
@@ -86,7 +87,9 @@ export const authApi = {
         );
       }
 
-      localStorage.setItem('kariri_auth_token', data.token);
+      if (data.token) {
+        localStorage.setItem('kariri_auth_token', data.token);
+      }
       localStorage.setItem('kariri_user_profile', JSON.stringify(data.user));
       return data;
     } catch (err: unknown) {
@@ -117,8 +120,10 @@ export const authApi = {
         method: 'POST',
         body: JSON.stringify(data),
       });
-      localStorage.setItem('kariri_auth_token', res.token);
-      localStorage.setItem('kariri_user_profile', JSON.stringify(res.user));
+      if (res.token) {
+        localStorage.setItem('kariri_auth_token', res.token);
+        localStorage.setItem('kariri_user_profile', JSON.stringify(res.user));
+      }
       return res;
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 422) {
@@ -135,6 +140,32 @@ export const authApi = {
       }
       throw err;
     }
+  },
+
+  async resendVerification(email: string, turnstile_token?: string): Promise<PasswordActionResponse> {
+    if (!checkClientRateLimit()) {
+      throw new ApiError(
+        429,
+        'Muitas tentativas em curto período. Por favor, aguarde alguns instantes antes de reenviar.',
+        { rate_limit: true },
+        '/email/verification-notification'
+      );
+    }
+
+    if (USE_MOCK_DATA) {
+      await simulateNetworkDelay(null, 200);
+      return {
+        message: 'Link de verificação reenviado com sucesso para o seu e-mail.',
+      };
+    }
+
+    return apiClient<PasswordActionResponse>('/email/verification-notification', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        turnstile_token,
+      }),
+    });
   },
 
   async forgotPassword(email: string, turnstile_token?: string): Promise<PasswordActionResponse> {
@@ -475,11 +506,11 @@ export const authApi = {
       );
     }
 
-    if (data.password.length < 8) {
+    if (data.password.length < 12) {
       throw new ApiError(
         422,
-        'A senha deve conter no mínimo 8 caracteres para sua segurança.',
-        { password: ['Mínimo 8 caracteres'] },
+        'A senha deve conter no mínimo 12 caracteres para sua segurança.',
+        { password: ['Mínimo 12 caracteres'] },
         '/reset-password'
       );
     }

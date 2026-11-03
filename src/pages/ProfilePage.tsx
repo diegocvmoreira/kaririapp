@@ -213,8 +213,8 @@ export const ProfilePage: React.FC = () => {
       setPasswordError('Informe sua senha atual.');
       return;
     }
-    if (newPassword.length < 8) {
-      setPasswordError('A nova senha deve possuir no mínimo 8 caracteres.');
+    if (newPassword.length < 12) {
+      setPasswordError('A nova senha deve possuir no mínimo 12 caracteres.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -1228,7 +1228,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Nova Senha (mínimo 8 caracteres)</label>
+                  <label className="block font-bold text-gray-700 mb-1">Nova Senha (mínimo 12 caracteres)</label>
                   <input
                     type="password"
                     required

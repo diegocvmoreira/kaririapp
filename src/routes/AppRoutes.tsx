@@ -7,6 +7,7 @@ import { FavoritesPage } from '../pages/FavoritesPage';
 import { ProfilePage } from '../pages/ProfilePage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
+import { VerifyEmailPage } from '../pages/VerifyEmailPage';
 import { RequireAdmin } from '../components/auth/RequireAdmin';
 import { LoadingState } from '../components/common/LoadingState';
 import { NotFoundPage } from '../pages/NotFoundPage';
@@ -131,6 +132,7 @@ export const AppRoutes: React.FC = () => {
         {/* Auth routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cadastro" element={<RegisterPage />} />
+        <Route path="/verificar-email" element={<VerifyEmailPage />} />
         <Route
           path="/esqueci-senha"
           element={
