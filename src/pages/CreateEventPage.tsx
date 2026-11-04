@@ -7,8 +7,10 @@ import { placesApi } from '../services/api/places';
 import { categoriesApi } from '../services/api/categories';
 import { Category, Place, EventItem } from '../types';
 import { setPageMeta } from '../utils/seo';
+import { ApiError } from '../services/api/config';
 import { PhotoUploadSection } from '../components/common/PhotoUploadSection';
 import { PlacePhotoPlaceholder } from '../components/common/PlacePhotoPlaceholder';
+import { EmailVerificationBanner } from '../components/common/EmailVerificationBanner';
 import {
   Calendar,
   Clock,
@@ -33,7 +35,7 @@ const EVENT_STEPS = [
 ];
 
 export const CreateEventPage: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isEmailVerified } = useAuth();
   const { cities } = useCity();
   const navigate = useNavigate();
 
@@ -181,6 +183,12 @@ export const CreateEventPage: React.FC = () => {
       return;
     }
 
+    if (!isEmailVerified && isPublicUser) {
+      setErrorMessage(`É necessário confirmar seu endereço de e-mail (${user?.email || ''}) antes de submeter novos eventos. Verifique sua caixa de entrada.`);
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const created = await (isPublicUser ? eventsApi.submitContribution : eventsApi.create)({
         title: title.trim(),
@@ -231,8 +239,12 @@ export const CreateEventPage: React.FC = () => {
         window.dispatchEvent(new CustomEvent('kariri:events_updated', { detail: created }));
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Falha ao cadastrar evento.';
-      setErrorMessage(msg);
+      if (err instanceof ApiError && err.status === 403) {
+        setErrorMessage('Acesso restrito: É necessário confirmar seu endereço de e-mail para cadastrar eventos.');
+      } else {
+        const msg = err instanceof Error ? err.message : 'Falha ao cadastrar evento.';
+        setErrorMessage(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -346,6 +358,11 @@ export const CreateEventPage: React.FC = () => {
           })}
         </div>
       </div>
+
+      <EmailVerificationBanner
+        actionLabel="divulgar novos eventos no Kariri.app"
+        variant="card"
+      />
 
       {stepError && (
         <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-in fade-in">

@@ -3,13 +3,13 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Mail, AlertCircle } from 'lucide-react';
 import { authApi } from '../services/api/auth';
 import { ApiError } from '../services/api/config';
-import { TurnstileWidget } from '../components/auth/TurnstileWidget';
+// import { TurnstileWidget } from '../components/auth/TurnstileWidget'; // Turnstile desativado temporariamente
 
 export const VerifyEmailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const verified = searchParams.get('verified') === '1';
   const [email, setEmail] = useState(searchParams.get('email') || '');
-  const [turnstileToken, setTurnstileToken] = useState('');
+  // const [turnstileToken, setTurnstileToken] = useState(''); // Turnstile desativado temporariamente
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
@@ -20,7 +20,7 @@ export const VerifyEmailPage: React.FC = () => {
     setError('');
     setSending(true);
     try {
-      const response = await authApi.resendVerification(email, turnstileToken);
+      const response = await authApi.resendVerification(email /*, turnstileToken */);
       setMessage(response.message);
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -66,7 +66,9 @@ export const VerifyEmailPage: React.FC = () => {
               className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#DE1F2A]"
               placeholder="seu.email@exemplo.com"
             />
+            {/* Turnstile desativado temporariamente:
             <TurnstileWidget onToken={setTurnstileToken} />
+            */}
             {error && <p className="text-sm text-red-600 flex gap-2"><AlertCircle className="h-4 w-4" />{error}</p>}
             {message && <p className="text-sm text-emerald-700">{message}</p>}
             <button

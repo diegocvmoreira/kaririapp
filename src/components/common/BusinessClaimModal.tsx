@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Place } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { businessClaimsApi } from '../../services/api/businessClaims';
 import { analytics } from '../../services/analyticsService';
-import { X, Building2, CheckCircle2 } from 'lucide-react';
+import { ApiError } from '../../services/api/config';
+import { X, Building2, CheckCircle2, Mail, AlertTriangle } from 'lucide-react';
 
 interface BusinessClaimModalProps {
   place: Place;
@@ -16,7 +18,7 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isEmailVerified } = useAuth();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -45,6 +47,11 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
       return;
     }
 
+    if (isAuthenticated && !isEmailVerified) {
+      setErrorMsg('É necessário confirmar seu endereço de e-mail antes de reivindicar este estabelecimento.');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg('');
     try {
@@ -67,8 +74,12 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
       });
 
       setIsSuccess(true);
-    } catch {
-      setErrorMsg('Falha ao enviar reivindicação. Tente novamente mais tarde.');
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 403) {
+        setErrorMsg('Acesso restrito: Por favor, confirme seu endereço de e-mail para reivindicar estabelecimentos.');
+      } else {
+        setErrorMsg('Falha ao enviar reivindicação. Tente novamente mais tarde.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -131,6 +142,25 @@ export const BusinessClaimModal: React.FC<BusinessClaimModalProps> = ({
                 Você é o proprietário ou gestor oficial do <strong>{place.name}</strong>?
                 Envie suas informações para gerenciar horários, contatos e fotos oficiais no Kariri.app.
               </p>
+
+              {isAuthenticated && !isEmailVerified && (
+                <div className="p-3.5 bg-amber-50 border border-amber-200/90 rounded-2xl space-y-2 text-amber-900">
+                  <div className="flex items-center gap-2 font-bold text-xs">
+                    <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+                    <span>Confirmação de e-mail necessária</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-amber-800">
+                    Para reivindicar este estabelecimento e vinculá-lo à sua conta ({user?.email}), confirme seu e-mail antes de enviar a solicitação.
+                  </p>
+                  <Link
+                    to={`/verificar-email?email=${encodeURIComponent(user?.email || '')}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#DE1F2A] hover:bg-[#C51620] text-white text-[11px] font-bold rounded-xl transition shadow-xs"
+                  >
+                    <Mail className="w-3 h-3" />
+                    <span>Confirmar e-mail agora</span>
+                  </Link>
+                </div>
+              )}
 
               {errorMsg && (
                 <div className="p-3 bg-red-50 text-[#DE1F2A] text-xs font-semibold rounded-xl">

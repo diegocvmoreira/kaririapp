@@ -6,10 +6,12 @@ import { placesApi } from '../services/api/places';
 import { categoriesApi } from '../services/api/categories';
 import { Category, Place } from '../types';
 import { setPageMeta } from '../utils/seo';
+import { ApiError } from '../services/api/config';
 import { OpeningHoursEditor } from '../components/admin/OpeningHoursEditor';
 import { CoordinateSelector } from '../components/common/CoordinateSelector';
 import { PhotoUploadSection } from '../components/common/PhotoUploadSection';
 import { PlacePhotoPlaceholder } from '../components/common/PlacePhotoPlaceholder';
+import { EmailVerificationBanner } from '../components/common/EmailVerificationBanner';
 import {
   Sparkles,
   CheckCircle2,
@@ -36,7 +38,7 @@ const STEPS = [
 ];
 
 export const CreatePlacePage: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isEmailVerified } = useAuth();
   const { cities } = useCity();
   const navigate = useNavigate();
 
@@ -162,6 +164,12 @@ export const CreatePlacePage: React.FC = () => {
       return;
     }
 
+    if (!isEmailVerified && isPublicUser) {
+      setErrorMessage(`É necessário confirmar seu endereço de e-mail (${user?.email || ''}) antes de sugerir novos locais. Verifique sua caixa de entrada.`);
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const created = await (isPublicUser ? placesApi.submitContribution : placesApi.create)({
         name: name.trim(),
@@ -201,8 +209,12 @@ export const CreatePlacePage: React.FC = () => {
         window.dispatchEvent(new CustomEvent('kariri:places_updated', { detail: created }));
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Falha ao enviar sugestão.';
-      setErrorMessage(msg);
+      if (err instanceof ApiError && err.status === 403) {
+        setErrorMessage('Acesso restrito: É necessário confirmar seu endereço de e-mail para sugerir novos locais.');
+      } else {
+        const msg = err instanceof Error ? err.message : 'Falha ao enviar sugestão.';
+        setErrorMessage(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -324,6 +336,11 @@ export const CreatePlacePage: React.FC = () => {
           })}
         </div>
       </div>
+
+      <EmailVerificationBanner
+        actionLabel="sugerir novos locais para o Kariri.app"
+        variant="card"
+      />
 
       {stepError && (
         <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-in fade-in">

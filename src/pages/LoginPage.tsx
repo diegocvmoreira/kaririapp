@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { authApi } from '../services/api/auth';
 import { KaririLogo } from '../components/common/KaririLogo';
 import { setPageMeta } from '../utils/seo';
 import { analytics } from '../services/analyticsService';
@@ -12,8 +13,8 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Validação estrita para evitar vulnerabilidade de open redirect
-  const returnToRaw = searchParams.get('returnTo');
+  // Validação estrita para evitar vulnerabilidade de open redirect (suporta returnTo e redirect)
+  const returnToRaw = searchParams.get('returnTo') || searchParams.get('redirect');
   const intentRaw = searchParams.get('intent');
 
   const baseReturnTo =
@@ -31,6 +32,11 @@ export const LoginPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [showVerificationPanel, setShowVerificationPanel] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
+  const [resendError, setResendError] = useState('');
+  const [isResending, setIsResending] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
 
   React.useEffect(() => {
@@ -48,6 +54,39 @@ export const LoginPage: React.FC = () => {
     }
   }, [searchParams, intentRaw]);
 
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+
+    setIsResending(true);
+    setResendMessage('');
+    setResendError('');
+
+    try {
+      const response = await authApi.resendVerification(
+        unverifiedEmail,
+        turnstileToken
+      );
+
+      setResendMessage(
+        response.message ||
+          'Se a conta puder receber confirmação, um novo link será enviado.'
+      );
+    } catch (err: any) {
+      if (err?.status === 429) {
+        setResendError(
+          'Muitas solicitações. Aguarde alguns minutos antes de tentar novamente.'
+        );
+      } else {
+        setResendError(
+          err?.message ||
+            'Não foi possível reenviar o link. Tente novamente mais tarde.'
+        );
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
@@ -59,7 +98,11 @@ export const LoginPage: React.FC = () => {
     setErrorMsg('');
     setInfoMsg('');
     try {
-      await login({ email: email.trim(), password, turnstile_token: turnstileToken });
+      await login({
+        email: email.trim(),
+        password,
+        turnstile_token: turnstileToken,
+      });
 
       // Dispara evento de login sem PII
       analytics.track('login', {
@@ -70,9 +113,16 @@ export const LoginPage: React.FC = () => {
       // Retorna para a página original que exigiu autenticação ou para o perfil
       navigate(safeReturnTo);
     } catch (err: any) {
+      if (err?.status === 403 && (err?.data?.requires_verification || err?.data?.email_verified === false)) {
+        setUnverifiedEmail(email.trim().toLowerCase());
+        setShowVerificationPanel(true);
+        setErrorMsg('');
+        return;
+      }
+
       setErrorMsg(
         err?.message ||
-          'Não foi possível realizar o login. Verifique os dados digitados e tente novamente.'
+          'Não foi possível entrar. Verifique seus dados e tente novamente.'
       );
     } finally {
       setIsSubmitting(false);
@@ -104,6 +154,73 @@ export const LoginPage: React.FC = () => {
           <div className="p-3 bg-red-50 border border-red-200 text-[#DE1F2A] text-xs font-medium rounded-xl flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {showVerificationPanel && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 space-y-4 animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <Mail className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+
+              <div className="space-y-1">
+                <h2 className="text-sm font-bold text-amber-950">
+                  E-mail ainda não confirmado
+                </h2>
+
+                <p className="text-xs leading-relaxed text-amber-900">
+                  Confirme o endereço associado à sua conta antes de entrar.
+                  Verifique também a caixa de spam.
+                </p>
+
+                <p className="break-all text-xs font-semibold text-amber-950">
+                  {unverifiedEmail}
+                </p>
+              </div>
+            </div>
+
+            <TurnstileWidget onToken={setTurnstileToken} />
+
+            {resendMessage && (
+              <p className="text-xs font-medium text-emerald-700">
+                {resendMessage}
+              </p>
+            )}
+
+            {resendError && (
+              <p className="text-xs font-medium text-red-700">
+                {resendError}
+              </p>
+            )}
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={isResending}
+                className="flex-1 rounded-xl bg-[#DE1F2A] hover:bg-[#C51620] px-4 py-3 text-xs font-bold text-white disabled:opacity-50 transition active:scale-98 shadow-xs"
+              >
+                {isResending ? 'Reenviando...' : 'Reenviar link de confirmação'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowVerificationPanel(false);
+                  setResendMessage('');
+                  setResendError('');
+                }}
+                className="flex-1 rounded-xl bg-gray-100 hover:bg-gray-200 px-4 py-3 text-xs font-bold text-gray-800 transition"
+              >
+                Usar outro e-mail
+              </button>
+            </div>
+
+            <Link
+              to="/verificar-email"
+              className="block text-center text-xs font-bold text-[#DE1F2A] hover:underline"
+            >
+              Já confirmei meu e-mail
+            </Link>
           </div>
         )}
 
@@ -154,11 +271,13 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Turnstile desativado temporariamente:
           <TurnstileWidget onToken={setTurnstileToken} />
+          */}
 
           <button
             type="submit"
-            disabled={isSubmitting || !turnstileToken}
+            disabled={isSubmitting /* || !turnstileToken */}
             className="w-full py-3 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
           >
             <span>{isSubmitting ? 'Entrando...' : 'Entrar'}</span>

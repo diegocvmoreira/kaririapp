@@ -78,6 +78,18 @@ export const authApi = {
         body: JSON.stringify(credentials),
       });
 
+      if (data.requires_verification === true) {
+        throw new ApiError(
+          403,
+          'Seu e-mail ainda não foi confirmado.',
+          {
+            ...data,
+            requires_verification: true,
+          },
+          '/login'
+        );
+      }
+
       if (data.user?.status === 'suspended') {
         throw new ApiError(
           403,
@@ -93,6 +105,25 @@ export const authApi = {
       localStorage.setItem('kariri_user_profile', JSON.stringify(data.user));
       return data;
     } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 403) {
+        const data = err.data as {
+          requires_verification?: boolean;
+          message?: string;
+        };
+
+        if (data?.requires_verification === true) {
+          throw new ApiError(
+            403,
+            'Seu e-mail ainda não foi confirmado.',
+            {
+              ...data,
+              requires_verification: true,
+            },
+            '/login'
+          );
+        }
+      }
+
       if (err instanceof ApiError && err.status === 422) {
         // Mensagem genérica para evitar enumeração de contas
         throw new ApiError(401, 'Credenciais inválidas. Verifique os dados informados.', {}, '/login');
@@ -120,7 +151,7 @@ export const authApi = {
         method: 'POST',
         body: JSON.stringify(data),
       });
-      if (res.token) {
+      if (res.token && res.user?.email_verified_at) {
         localStorage.setItem('kariri_auth_token', res.token);
         localStorage.setItem('kariri_user_profile', JSON.stringify(res.user));
       }
@@ -155,16 +186,20 @@ export const authApi = {
     if (USE_MOCK_DATA) {
       await simulateNetworkDelay(null, 200);
       return {
-        message: 'Link de verificação reenviado com sucesso para o seu e-mail.',
+        message: 'Se a conta puder receber confirmação, um novo link será enviado.',
       };
+    }
+
+    const payload: Record<string, unknown> = {
+      email: email.trim().toLowerCase(),
+    };
+    if (turnstile_token) {
+      payload.turnstile_token = turnstile_token;
     }
 
     return apiClient<PasswordActionResponse>('/email/verification-notification', {
       method: 'POST',
-      body: JSON.stringify({
-        email: email.trim().toLowerCase(),
-        turnstile_token,
-      }),
+      body: JSON.stringify(payload),
     });
   },
 
@@ -185,7 +220,10 @@ export const authApi = {
     try {
       await apiClient<PasswordActionResponse>('/forgot-password', {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim().toLowerCase(), turnstile_token }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          // turnstile_token, // Turnstile desativado temporariamente
+        }),
       });
 
       // Mensagem genérica padronizada para evitar enumeração de contas (quando a API responde adequadamente)
@@ -300,7 +338,15 @@ export const authApi = {
     if (USE_MOCK_DATA) {
       try {
         const stored = localStorage.getItem('kariri_user_profile');
-        if (stored) return JSON.parse(stored);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && !parsed.email_verified_at) {
+            localStorage.removeItem('kariri_auth_token');
+            localStorage.removeItem('kariri_user_profile');
+            return null;
+          }
+          return parsed;
+        }
       } catch {
         // ignore
       }
@@ -439,6 +485,19 @@ export const authApi = {
       );
     }
 
+    // Não autentica conta simulada não verificada
+    if (
+      credentials.email.toLowerCase().includes('naoverificado') ||
+      credentials.email.toLowerCase().includes('unverified')
+    ) {
+      throw new ApiError(
+        403,
+        'Seu endereço de e-mail ainda não foi confirmado. Verifique sua caixa de entrada para ativar sua conta.',
+        { email_verified: false, requires_verification: true },
+        '/login'
+      );
+    }
+
     const user: User = {
       ...mockUser,
       email: credentials.email || mockUser.email,
@@ -468,10 +527,13 @@ export const authApi = {
       email_verified_at: null, // Conta recém-criada, pendente de confirmação por email
       created_at: nowIso,
     };
-    const token = 'mock_jwt_token_' + Date.now();
-    localStorage.setItem('kariri_auth_token', token);
-    localStorage.setItem('kariri_user_profile', JSON.stringify(newUser));
-    return { user: newUser, token, requires_verification: true };
+
+    // Não gera token nem persiste autenticação para conta com e-mail não verificado
+    return {
+      user: newUser,
+      requires_verification: true,
+      message: 'Cadastro realizado com sucesso! Verifique seu e-mail para ativar sua conta.',
+    };
   },
 
   async mockForgotPassword(email: string): Promise<PasswordActionResponse> {

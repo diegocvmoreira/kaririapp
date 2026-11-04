@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { USE_MOCK_DATA } from '../../services/api/config';
+// import { USE_MOCK_DATA } from '../../services/api/config';
 
+/*
 declare global {
   interface Window {
     turnstile?: {
@@ -9,14 +10,18 @@ declare global {
     };
   }
 }
+*/
 
 interface TurnstileWidgetProps {
   onToken: (token: string) => void;
 }
 
-const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+// const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({ onToken }) => {
+  /*
+  // Turnstile desativado temporariamente a pedido do usuário.
+  // Código original mantido como comentário para reativação futura:
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,4 +69,12 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({ onToken }) => 
 
   if (USE_MOCK_DATA) return null;
   return <div ref={containerRef} className="min-h-[65px]" aria-label="Verificação de segurança" />;
+  */
+
+  // Turnstile desativado temporariamente
+  useEffect(() => {
+    onToken('');
+  }, [onToken]);
+
+  return null;
 };

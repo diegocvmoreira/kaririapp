@@ -147,17 +147,34 @@ export function diagnoseApiIssue(
   // 5. Diagnóstico de Autenticação / Autorização (401 / 403)
   if (status === 401 || status === 403) {
     const is401 = status === 401;
+    const isUnverifiedEmail =
+      status === 403 &&
+      (msgLower.includes('verified') ||
+        msgLower.includes('verificação') ||
+        msgLower.includes('verifique') ||
+        msgLower.includes('confirm'));
+
     return {
       category: 'AUTENTICACAO',
-      title: is401 ? 'Não Autenticado (401)' : 'Acesso Não Permitido (403)',
+      title: is401
+        ? 'Não Autenticado (401)'
+        : isUnverifiedEmail
+        ? 'E-mail Não Confirmado (403)'
+        : 'Acesso Não Permitido (403)',
       userMessage: is401
         ? 'É necessário entrar na sua conta para acessar esta informação.'
+        : isUnverifiedEmail
+        ? 'Confirmação necessária: É preciso confirmar seu endereço de e-mail antes de realizar esta ação.'
         : 'Você não tem permissão para realizar esta operação.',
       technicalDetails: is401
         ? `Status HTTP 401${endpointInfo}. Token Bearer ausente, inválido ou expirado no middleware Sanctum do Laravel.`
+        : isUnverifiedEmail
+        ? `Status HTTP 403${endpointInfo}. O middleware 'verified' do Laravel bloqueou a requisição porque o campo email_verified_at do usuário é nulo.`
         : `Status HTTP 403${endpointInfo}. Acesso proibido por Policy/Gate do Laravel ou bloqueio de permissão de usuário.`,
       suggestedAction: is401
         ? 'Verificar se o header "Authorization: Bearer <token>" está sendo enviado e se o Sanctum valida o token corretamente.'
+        : isUnverifiedEmail
+        ? 'Acesse a rota /verificar-email para reenviar o e-mail de ativação e confirmar sua conta.'
         : 'Verificar as Policies e permissões de perfil de usuário configuradas no backend Laravel.',
       status,
       endpoint,

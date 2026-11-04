@@ -44,12 +44,13 @@ import {
   Flag,
   Camera,
   Calendar,
+  Mail,
 } from 'lucide-react';
 
 export const PlaceDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isEmailVerified } = useAuth();
 
   const [place, setPlace] = useState<Place | null>(null);
   const [similarPlaces, setSimilarPlaces] = useState<Place[]>([]);
@@ -168,6 +169,11 @@ export const PlaceDetailPage: React.FC = () => {
       return;
     }
 
+    if (!isEmailVerified) {
+      setReviewError('É necessário confirmar seu endereço de e-mail antes de enviar uma avaliação.');
+      return;
+    }
+
     if (reviewComment.trim().length < 10) {
       setReviewError('Por favor, escreva pelo menos 10 caracteres para que sua avaliação ajude outros visitantes.');
       return;
@@ -209,11 +215,15 @@ export const PlaceDetailPage: React.FC = () => {
       setReviewSuccess(true);
       setTimeout(() => setReviewSuccess(false), 3000);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : 'Não foi possível publicar a avaliação no momento. Tente novamente mais tarde.';
-      setReviewError(msg);
+      if (err instanceof ApiError && err.status === 403) {
+        setReviewError('Acesso restrito: Confirme seu endereço de e-mail para publicar avaliações.');
+      } else {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Não foi possível publicar a avaliação no momento. Tente novamente mais tarde.';
+        setReviewError(msg);
+      }
     } finally {
       setIsSubmittingReview(false);
     }
@@ -707,7 +717,7 @@ export const PlaceDetailPage: React.FC = () => {
           </span>
         </div>
 
-        {/* Submit Review Form or Invite to Login */}
+        {/* Submit Review Form or Invite to Login / Verify Email */}
         {!isAuthenticated ? (
           <div className="bg-gray-50/80 p-5 sm:p-6 rounded-2xl border border-gray-200/80 text-center space-y-3">
             <div className="w-10 h-10 rounded-full bg-red-50 text-[#DE1F2A] flex items-center justify-center mx-auto">
@@ -733,6 +743,27 @@ export const PlaceDetailPage: React.FC = () => {
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>Criar conta</span>
+              </Link>
+            </div>
+          </div>
+        ) : !isEmailVerified ? (
+          <div className="bg-amber-50/80 p-5 sm:p-6 rounded-2xl border border-amber-200/80 text-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+              <Mail className="w-5 h-5 text-amber-700" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-amber-950">Confirme seu e-mail para avaliar</h3>
+              <p className="text-xs text-amber-800 max-w-sm mx-auto">
+                Para manter a comunidade segura e evitar spam, sua conta ({user?.email}) precisa ter o e-mail confirmado antes de enviar avaliações.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2.5 pt-1">
+              <Link
+                to={`/verificar-email?email=${encodeURIComponent(user?.email || '')}`}
+                className="px-4 py-2 bg-[#DE1F2A] hover:bg-[#C51620] text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Confirmar e-mail agora</span>
               </Link>
             </div>
           </div>

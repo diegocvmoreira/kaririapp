@@ -19,15 +19,15 @@ import {
   Compass,
   Check,
 } from 'lucide-react';
-import { TurnstileWidget } from '../components/auth/TurnstileWidget';
+// import { TurnstileWidget } from '../components/auth/TurnstileWidget'; // Turnstile desativado temporariamente
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Validação estrita para evitar vulnerabilidade de open redirect
-  const returnToRaw = searchParams.get('returnTo');
+  // Validação estrita para evitar vulnerabilidade de open redirect (suporta returnTo e redirect)
+  const returnToRaw = searchParams.get('returnTo') || searchParams.get('redirect');
   const intentRaw = searchParams.get('intent');
 
   const baseReturnTo =
@@ -66,7 +66,7 @@ export const RegisterPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
+  // const [turnstileToken, setTurnstileToken] = useState(''); // Turnstile desativado temporariamente
 
   useEffect(() => {
     setPageMeta({
@@ -147,7 +147,7 @@ export const RegisterPage: React.FC = () => {
         current_city_state: currentCityState,
         cariri_city_id: caririCityId ? Number(caririCityId) : null,
         marketing_consent: marketingConsent,
-        turnstile_token: turnstileToken,
+        // turnstile_token: turnstileToken, // Turnstile desativado temporariamente
       });
 
       analytics.track('sign_up', {
@@ -424,11 +424,13 @@ export const RegisterPage: React.FC = () => {
             </label>
           </div>
 
+          {/* Turnstile desativado temporariamente:
           <TurnstileWidget onToken={setTurnstileToken} />
+          */}
 
           <button
             type="submit"
-            disabled={isSubmitting || !turnstileToken}
+            disabled={isSubmitting /* || !turnstileToken */}
             className="w-full py-3.5 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50 mt-4"
           >
             <span>{isSubmitting ? 'Cadastrando perfil...' : 'Criar Conta no Kariri.app'}</span>

@@ -5,6 +5,7 @@ import { authApi, LoginCredentials, RegisterData } from '../services/api/auth';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isEmailVerified: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
@@ -72,7 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await authApi.register(data);
-      setUser(response.token ? response.user : null);
+      const isVerified = Boolean(response.user?.email_verified_at);
+      setUser(response.token && isVerified ? response.user : null);
     } finally {
       setIsLoading(false);
     }
@@ -108,11 +110,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return authApi.changePassword(currentPassword, newPassword);
   };
 
+  const isEmailVerified = Boolean(user && user.email_verified_at);
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isAuthenticated: !!user,
+        isEmailVerified,
         isLoading,
         login,
         register,

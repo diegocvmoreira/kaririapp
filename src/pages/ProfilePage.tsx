@@ -9,6 +9,7 @@ import { DeleteAccountModal } from '../components/profile/DeleteAccountModal';
 import { citiesApi } from '../services/api/cities';
 import { City } from '../types';
 import { setPageMeta } from '../utils/seo';
+import { EmailVerificationBanner } from '../components/common/EmailVerificationBanner';
 import {
   User,
   Heart,
@@ -42,7 +43,7 @@ import {
 type ProfileTab = 'account' | 'preferences' | 'favorites' | 'contributions' | 'privacy';
 
 export const ProfilePage: React.FC = () => {
-  const { user, isAuthenticated, logout, deleteAccount, updateProfile, changePassword } = useAuth();
+  const { user, isAuthenticated, isEmailVerified, logout, deleteAccount, updateProfile, changePassword } = useAuth();
   const { favoriteIds } = useFavorites();
   const { cities, selectedCitySlug, setSelectedCitySlug } = useCity();
   const navigate = useNavigate();
@@ -419,7 +420,25 @@ export const ProfilePage: React.FC = () => {
               )}
             </div>
 
-            <p className="text-xs text-gray-500 font-medium">{user?.email || 'Navegando no modo visitante'}</p>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <p className="text-xs text-gray-500 font-medium">{user?.email || 'Navegando no modo visitante'}</p>
+              {isAuthenticated && (
+                isEmailVerified ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>Verificado</span>
+                  </span>
+                ) : (
+                  <Link
+                    to={`/verificar-email?email=${encodeURIComponent(user?.email || '')}`}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition"
+                  >
+                    <Mail className="w-3 h-3 text-amber-700" />
+                    <span>Não verificado • Confirmar</span>
+                  </Link>
+                )
+              )}
+            </div>
 
             <div className="flex items-center justify-center sm:justify-start gap-2 pt-1 text-[11px] text-gray-400">
               <MapPin className="w-3.5 h-3.5 text-[#DE1F2A]" />
@@ -524,6 +543,11 @@ export const ProfilePage: React.FC = () => {
       {/* ABA 1: MINHA CONTA */}
       {activeTab === 'account' && (
         <div className="space-y-6 animate-in fade-in duration-150">
+          <EmailVerificationBanner
+            actionLabel="liberar avaliações, novas contribuições e reivindicação de estabelecimentos"
+            variant="card"
+          />
+
           {/* Dados Pessoais */}
           <div className="bg-white rounded-3xl p-6 sm:p-7 border border-gray-100 shadow-xs space-y-5">
             <h2 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
@@ -618,9 +642,27 @@ export const ProfilePage: React.FC = () => {
                       </button>
                     </div>
                   ) : (
-                    <span className="text-sm font-bold text-gray-800">
-                      {user?.email || 'Nenhum e-mail vinculado'}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-bold text-gray-800">
+                        {user?.email || 'Nenhum e-mail vinculado'}
+                      </span>
+                      {isAuthenticated && (
+                        isEmailVerified ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span>Confirmado</span>
+                          </span>
+                        ) : (
+                          <Link
+                            to={`/verificar-email?email=${encodeURIComponent(user?.email || '')}`}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition"
+                          >
+                            <Mail className="w-3 h-3 text-amber-700" />
+                            <span>Confirmar agora</span>
+                          </Link>
+                        )
+                      )}
+                    </div>
                   )}
                 </div>
 

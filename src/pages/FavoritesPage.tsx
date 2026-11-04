@@ -10,6 +10,8 @@ import { LoadingState } from '../components/common/LoadingState';
 import { setPageMeta } from '../utils/seo';
 import { Heart, Calendar, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { EmailVerificationBanner } from '../components/common/EmailVerificationBanner';
 
 export const FavoritesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -56,6 +58,13 @@ export const FavoritesPage: React.FC = () => {
         <p className="text-xs text-gray-500 mt-0.5">
           {totalCount} {totalCount === 1 ? 'experiência guardada' : 'experiências guardadas na sua lista pessoal'}
         </p>
+
+        <EmailVerificationBanner
+          actionLabel="sincronizar seus salvos na nuvem"
+          variant="inline"
+          className="mt-3"
+          dismissible
+        />
 
         {/* Tab Switcher */}
         <div className="flex items-center gap-2 mt-3" role="tablist" aria-label="Categorias de salvos">

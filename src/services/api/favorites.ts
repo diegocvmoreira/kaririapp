@@ -398,7 +398,7 @@ export const favoritesApi = {
       });
       return true;
     } catch (err: unknown) {
-      if (err instanceof ApiError && err.status === 401) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         return true;
       }
       console.warn('Erro ao sincronizar adição de favorito na API:', err);
@@ -432,7 +432,7 @@ export const favoritesApi = {
       });
       return true;
     } catch (err: unknown) {
-      if (err instanceof ApiError && err.status === 401) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         return true;
       }
       console.warn('Erro ao sincronizar remoção de favorito na API:', err);
@@ -533,7 +533,7 @@ export const favoritesApi = {
       });
       return true;
     } catch (err: unknown) {
-      if (err instanceof ApiError && err.status === 401) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         return true;
       }
       console.warn('Erro ao sincronizar adição de evento favorito na API:', err);
@@ -567,7 +567,7 @@ export const favoritesApi = {
       });
       return true;
     } catch (err: unknown) {
-      if (err instanceof ApiError && err.status === 401) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         return true;
       }
       console.warn('Erro ao sincronizar remoção de evento favorito na API:', err);

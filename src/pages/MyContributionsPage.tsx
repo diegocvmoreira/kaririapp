@@ -5,6 +5,8 @@ import { placesApi } from '../services/api/places';
 import { eventsApi } from '../services/api/events';
 import { Place, EventItem, EntityStatus } from '../types';
 import { setPageMeta } from '../utils/seo';
+import { ApiError } from '../services/api/config';
+import { EmailVerificationBanner } from '../components/common/EmailVerificationBanner';
 import {
   Sparkles,
   MapPin,
@@ -20,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export const MyContributionsPage: React.FC = () => {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isEmailVerified, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'all' | 'places' | 'events'>('all');
@@ -57,8 +59,12 @@ export const MyContributionsPage: React.FC = () => {
       setPlaces(placesList);
       setEvents(eventsList);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Falha ao carregar suas contribuições.';
-      setErrorMessage(msg);
+      if (err instanceof ApiError && err.status === 403) {
+        setErrorMessage('Acesso restrito: Confirme seu endereço de e-mail para acompanhar suas contribuições.');
+      } else {
+        const msg = err instanceof Error ? err.message : 'Falha ao carregar suas contribuições.';
+        setErrorMessage(msg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -153,6 +159,11 @@ export const MyContributionsPage: React.FC = () => {
           </Link>
         </div>
       </div>
+
+      <EmailVerificationBanner
+        actionLabel="enviar e acompanhar suas contribuições"
+        variant="card"
+      />
 
       {/* Header */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-xs space-y-3">
