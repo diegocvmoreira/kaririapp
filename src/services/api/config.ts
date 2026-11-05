@@ -72,11 +72,19 @@ export async function apiClient<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = localStorage.getItem('kariri_auth_token');
-  const headers = new Headers({
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
-  });
+  const headers = new Headers();
+  headers.set('Accept', 'application/json');
+
+  if (!(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  if (options.headers) {
+    const passedHeaders = new Headers(options.headers);
+    passedHeaders.forEach((value, key) => {
+      headers.set(key, value);
+    });
+  }
 
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);

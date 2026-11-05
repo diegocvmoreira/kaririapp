@@ -4,6 +4,7 @@ import { authApi } from '../services/api/auth';
 import { KaririLogo } from '../components/common/KaririLogo';
 import { setPageMeta } from '../utils/seo';
 import { Lock, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { PasswordRequirements } from '../components/auth/PasswordRequirements';
 
 export const ResetPasswordPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -257,6 +258,9 @@ export const ResetPasswordPage: React.FC = () => {
                 <span className="text-[10px] text-red-500 block mt-1">As senhas não coincidem</span>
               )}
             </div>
+
+            {/* Requisitos da Senha do Sistema */}
+            <PasswordRequirements password={password} className="mt-2" />
 
             <button
               type="submit"

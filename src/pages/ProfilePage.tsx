@@ -39,6 +39,7 @@ import {
   Sparkles,
   ChevronRight,
 } from 'lucide-react';
+import { PasswordRequirements } from '../components/auth/PasswordRequirements';
 
 type ProfileTab = 'account' | 'preferences' | 'favorites' | 'contributions' | 'privacy';
 
@@ -1290,6 +1291,8 @@ export const ProfilePage: React.FC = () => {
                     className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-[#DE1F2A]"
                   />
                 </div>
+
+                <PasswordRequirements password={newPassword} className="mt-2" />
 
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
                   <button

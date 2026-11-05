@@ -19,6 +19,7 @@ import {
   Compass,
   Check,
 } from 'lucide-react';
+import { PasswordRequirements } from '../components/auth/PasswordRequirements';
 // import { TurnstileWidget } from '../components/auth/TurnstileWidget'; // Turnstile desativado temporariamente
 
 export const RegisterPage: React.FC = () => {
@@ -333,6 +334,9 @@ export const RegisterPage: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Requisitos da Senha do Sistema */}
+            <PasswordRequirements password={password} className="mt-2" />
           </div>
 
           {/* SEÇÃO 2: PERFIL GEOGRÁFICO E DISTINÇÃO DE CIDADES */}
