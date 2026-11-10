@@ -40,6 +40,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { PasswordRequirements } from '../components/auth/PasswordRequirements';
+import { prepareImageForUpload } from '../utils/prepareImageForUpload';
+import { uploadImage } from '../services/api/uploads';
 
 type ProfileTab = 'account' | 'preferences' | 'favorites' | 'contributions' | 'privacy';
 
@@ -149,32 +151,33 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      setActionErrorMessage('A foto de perfil deve ter no máximo 3MB.');
-      return;
-    }
+    setIsSaving(true);
+    setActionErrorMessage(null);
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const dataUrl = event.target?.result as string;
-      if (!dataUrl) return;
+    try {
+      // Otimização no frontend (compressão para WebP, redimensionamento, máx 15MB de entrada)
+      const optimized = await prepareImageForUpload(file);
+      // Envio via FormData para POST /api/uploads/images
+      const uploaded = await uploadImage(optimized);
 
-      setIsSaving(true);
-      try {
-        await updateProfile({ avatar: dataUrl });
-        setAvatarInput(dataUrl);
-        showSuccessFeedback('Foto de perfil atualizada!');
-      } catch (err: unknown) {
-        setActionErrorMessage(err instanceof Error ? err.message : 'Falha ao salvar foto.');
-      } finally {
-        setIsSaving(false);
+      if (uploaded?.url) {
+        await updateProfile({ avatar: uploaded.url });
+        setAvatarInput(uploaded.url);
+        showSuccessFeedback('Foto de perfil atualizada com sucesso!');
+      } else {
+        throw new Error('Servidor não retornou a URL da imagem.');
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err: unknown) {
+      console.error('Falha no upload do avatar:', err);
+      setActionErrorMessage(err instanceof Error ? err.message : 'Falha ao processar e enviar foto de perfil.');
+    } finally {
+      setIsSaving(false);
+      if (avatarFileInputRef.current) avatarFileInputRef.current.value = '';
+    }
   };
 
   const handleRemoveAvatar = async () => {

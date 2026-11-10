@@ -8,7 +8,7 @@ function resolveApiBaseUrl(): string {
   let url = import.meta.env.VITE_API_BASE_URL;
 
   if (!url || typeof url !== 'string' || url.trim() === '') {
-    url = 'https://kariri.app.br/kariri-api-core/public/index.php/api';
+    url = 'https://api.kariri.app.br/api';
   }
 
   // Se o ambiente ainda estiver injetando o caminho legado 'kariri-api', redireciona automaticamente para 'kariri-api-core'

@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { PlacePhotoPlaceholder } from './PlacePhotoPlaceholder';
 import { useAuth } from '../../context/AuthContext';
+import { prepareImageForUpload } from '../../utils/prepareImageForUpload';
+import { uploadImage } from '../../services/api/uploads';
 
 export interface GalleryPhotoItem {
   url: string;
@@ -133,6 +135,10 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
     }
   };
 
+  // Guarda o arquivo selecionado para envio real via FormData
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [uploadErrorMsg, setUploadErrorMsg] = useState<string | null>(null);
+
   const handleImageError = (index: number) => {
     setFailedIndices((prev) => new Set([...prev, index]));
   };
@@ -141,28 +147,44 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setNewPhotoPreview(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (!file.type.startsWith('image/')) {
+      setUploadErrorMsg('Selecione um arquivo de imagem válido (JPG, PNG ou WebP).');
+      return;
+    }
+
+    setUploadErrorMsg(null);
+    setSelectedImageFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setNewPhotoPreview(objectUrl);
   };
 
   const handleSendCommunityPhoto = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPhotoPreview) return;
+    if (!selectedImageFile) return;
 
     setIsUploading(true);
-    const newPhoto: GalleryPhotoItem = {
-      url: newPhotoPreview,
-      caption: newPhotoCaption.trim() || `Foto enviada por ${user?.name || 'Visitante'}`,
-      credit: user?.name ? `Foto por ${user.name}` : 'Colaborador do Kariri',
-      isCover: false,
-      type: 'community',
-      date: new Date().toLocaleDateString('pt-BR'),
-    };
+    setUploadErrorMsg(null);
 
     try {
+      // 1. Otimiza a imagem no frontend (Web Worker, WebP, max 1.5MB)
+      const optimizedFile = await prepareImageForUpload(selectedImageFile);
+
+      // 2. Envia para a API via FormData para POST /api/uploads/images
+      const uploaded = await uploadImage(optimizedFile);
+
+      if (!uploaded?.url) {
+        throw new Error('Servidor não retornou a URL da imagem enviada.');
+      }
+
+      const newPhoto: GalleryPhotoItem = {
+        url: uploaded.url,
+        caption: newPhotoCaption.trim() || `Foto enviada por ${user?.name || 'Visitante'}`,
+        credit: user?.name ? `Foto por ${user.name}` : 'Colaborador do Kariri',
+        isCover: false,
+        type: 'community',
+        date: new Date().toLocaleDateString('pt-BR'),
+      };
+
       if (onAddCommunityPhoto) {
         await onAddCommunityPhoto(newPhoto);
       }
@@ -172,16 +194,12 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
         setUploadSuccess(false);
         setIsUploadModalOpen(false);
         setNewPhotoPreview(null);
+        setSelectedImageFile(null);
         setNewPhotoCaption('');
       }, 2500);
-    } catch {
-      // Feedback amigável mesmo em caso de mock
-      setUploadSuccess(true);
-      setTimeout(() => {
-        setUploadSuccess(false);
-        setIsUploadModalOpen(false);
-        setNewPhotoPreview(null);
-      }, 2000);
+    } catch (err: unknown) {
+      console.error('Falha no upload comunitário:', err);
+      setUploadErrorMsg(err instanceof Error ? err.message : 'Falha ao enviar foto para a moderação.');
     } finally {
       setIsUploading(false);
     }
@@ -262,6 +280,13 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
               <p className="text-xs text-gray-500">
                 Você esteve aqui recentemente? Compartilhe um registro do prato, ambiente ou fachada.
               </p>
+
+              {uploadErrorMsg && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>{uploadErrorMsg}</span>
+                </div>
+              )}
 
               {newPhotoPreview ? (
                 <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-gray-200">

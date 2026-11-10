@@ -44,6 +44,26 @@ export const citiesApi = {
   },
 
   async getCaririCities(): Promise<City[]> {
+    if (USE_MOCK_DATA) {
+      const cariri = inMemoryCities.filter((c) => c.is_cariri_region === true && c.is_active);
+      return simulateNetworkDelay(cariri, 80);
+    }
+
+    try {
+      const response = await apiClient<unknown>('/cities?region=cariri');
+      const list = Array.isArray(response)
+        ? response
+        : (response as { data?: unknown[] })?.data || [];
+
+      if (list.length > 0) {
+        const adapted = list.map((item) => mapApiCityToCity(item as ApiCityRaw));
+        const active = adapted.filter((c) => c.is_active !== false);
+        return active.length > 0 ? active : adapted;
+      }
+    } catch {
+      // Fallback para filtro no catálogo geral
+    }
+
     const all = await this.getAll();
     return all.filter((c) => c.is_cariri_region === true && c.is_active);
   },

@@ -38,23 +38,32 @@ function saveClaims(claims: BusinessClaim[]): void {
 }
 
 export const businessClaimsApi = {
+  /**
+   * Listagem administrativa de reivindicações (GET /admin/business-claims)
+   */
   async getAll(): Promise<BusinessClaim[]> {
     if (USE_MOCK_DATA) {
       return simulateNetworkDelay(getStoredClaims(), 100);
     }
-    try {
-      const response = await apiClient<unknown>('/admin/business-claims');
-      const list = Array.isArray(response)
-        ? response
-        : (response as { data?: BusinessClaim[] })?.data || [];
-      return list as BusinessClaim[];
-    } catch {
-      const response = await apiClient<unknown>('/business-claims');
-      const list = Array.isArray(response)
-        ? response
-        : (response as { data?: BusinessClaim[] })?.data || [];
-      return list as BusinessClaim[];
+    const response = await apiClient<unknown>('/admin/business-claims');
+    const list = Array.isArray(response)
+      ? response
+      : (response as { data?: BusinessClaim[] })?.data || [];
+    return list as BusinessClaim[];
+  },
+
+  /**
+   * Reivindicações enviadas pelo usuário logado (GET /business-claims/mine)
+   */
+  async getMine(): Promise<BusinessClaim[]> {
+    if (USE_MOCK_DATA) {
+      return simulateNetworkDelay(getStoredClaims(), 100);
     }
+    const response = await apiClient<unknown>('/business-claims/mine');
+    const list = Array.isArray(response)
+      ? response
+      : (response as { data?: BusinessClaim[] })?.data || [];
+    return list as BusinessClaim[];
   },
 
   async createClaim(data: Omit<BusinessClaim, 'id' | 'status' | 'created_at'>): Promise<BusinessClaim> {
@@ -94,26 +103,10 @@ export const businessClaimsApi = {
       return simulateNetworkDelay(true, 100);
     }
 
-    try {
-      await apiClient(`/admin/business-claims/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status, reject_reason: rejectReason }),
-      });
-      return true;
-    } catch {
-      try {
-        await apiClient(`/admin/business-claims/${id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status, reject_reason: rejectReason }),
-        });
-        return true;
-      } catch {
-        await apiClient(`/business-claims/${id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status, reject_reason: rejectReason }),
-        });
-        return true;
-      }
-    }
+    await apiClient(`/admin/business-claims/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, reject_reason: rejectReason }),
+    });
+    return true;
   },
 };
