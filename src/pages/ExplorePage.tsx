@@ -91,7 +91,12 @@ export const ExplorePage: React.FC = () => {
 
   // Load Categories once
   useEffect(() => {
-    categoriesApi.getAll().then(setCategories).catch(console.error);
+    categoriesApi
+      .getAll()
+      .then(setCategories)
+      .catch((err) => {
+        console.warn('Aviso: Não foi possível carregar categorias no Explore:', err);
+      });
   }, []);
 
   // Fetch places and events based on active filters

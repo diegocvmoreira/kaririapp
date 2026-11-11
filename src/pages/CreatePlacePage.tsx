@@ -75,6 +75,7 @@ export const CreatePlacePage: React.FC = () => {
 
   // Estado de envio e feedback
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -147,6 +148,10 @@ export const CreatePlacePage: React.FC = () => {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isUploadingImages) {
+      setErrorMessage('Aguarde a conclusão do envio das imagens antes de submeter.');
+      return;
+    }
     if (!name.trim()) {
       setErrorMessage('O nome do local é obrigatório.');
       setCurrentStep(1);
@@ -627,6 +632,7 @@ export const CreatePlacePage: React.FC = () => {
               categorySlug={selectedCat?.slug || 'gastronomia'}
               placeName={name}
               maxFiles={9}
+              onUploadingChange={setIsUploadingImages}
             />
           </div>
         )}

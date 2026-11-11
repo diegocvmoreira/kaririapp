@@ -99,9 +99,16 @@ export const authApi = {
         );
       }
 
-      if (data.token) {
-        localStorage.setItem('kariri_auth_token', data.token);
+      if (!data.token || typeof data.token !== 'string' || data.token.trim() === '') {
+        throw new ApiError(
+          500,
+          'A autenticação não retornou um token de acesso válido. Tente novamente mais tarde.',
+          data,
+          '/login'
+        );
       }
+
+      localStorage.setItem('kariri_auth_token', data.token);
       localStorage.setItem('kariri_user_profile', JSON.stringify(data.user));
       return data;
     } catch (err: unknown) {

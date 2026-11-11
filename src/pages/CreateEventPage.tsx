@@ -78,6 +78,7 @@ export const CreateEventPage: React.FC = () => {
 
   // Submissão e validação
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -167,6 +168,10 @@ export const CreateEventPage: React.FC = () => {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isUploadingImages) {
+      setErrorMessage('Aguarde a conclusão do envio das imagens antes de submeter.');
+      return;
+    }
     if (!title.trim()) {
       setErrorMessage('O título do evento é obrigatório.');
       setCurrentStep(1);
@@ -752,6 +757,7 @@ export const CreateEventPage: React.FC = () => {
               maxFiles={4}
               label="Cartaz do Evento"
               description="Envie o cartaz oficial ou foto promocional."
+              onUploadingChange={setIsUploadingImages}
             />
           </div>
         )}

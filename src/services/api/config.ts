@@ -1,24 +1,15 @@
 // Central API Configuration for Kariri.app
-// Configurado para Laravel REST API em https://kariri.app.br/kariri-api-core/public/index.php/api
+// Configurado para Laravel REST API em https://api.kariri.app.br/api
 
-import { diagnoseApiIssue, ApiDiagnosticReport } from './diagnostics';
+import { diagnoseApiIssue, ApiDiagnosticReport, logFetchDiagnostics } from './diagnostics';
 import { analytics } from '../analyticsService';
 
 function resolveApiBaseUrl(): string {
-  let url = import.meta.env.VITE_API_BASE_URL;
-
-  if (!url || typeof url !== 'string' || url.trim() === '') {
-    url = 'https://api.kariri.app.br/api';
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (typeof envUrl === 'string' && envUrl.trim() !== '') {
+    return envUrl.trim().replace(/\/+$/, '');
   }
-
-  // Se o ambiente ainda estiver injetando o caminho legado 'kariri-api', redireciona automaticamente para 'kariri-api-core'
-  if (url.includes('/kariri-api/')) {
-    url = url.replace('/kariri-api/', '/kariri-api-core/');
-  } else if (url.endsWith('/kariri-api')) {
-    url = url.replace(/\/kariri-api$/, '/kariri-api-core');
-  }
-
-  return url.replace(/\/+$/, '');
+  return 'https://api.kariri.app.br/api';
 }
 
 export const API_BASE_URL = resolveApiBaseUrl();
@@ -72,36 +63,45 @@ export async function apiClient<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = localStorage.getItem('kariri_auth_token');
-  const headers = new Headers();
-  headers.set('Accept', 'application/json');
+  const headers = new Headers({
+    Accept: 'application/json',
+    ...(options.headers as Record<string, string>),
+  });
 
-  if (!(options.body instanceof FormData)) {
+  if (options.body && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 
-  if (options.headers) {
-    const passedHeaders = new Headers(options.headers);
-    passedHeaders.forEach((value, key) => {
-      headers.set(key, value);
-    });
-  }
-
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
+  if (token && token.trim() !== '' && token !== 'undefined' && token !== 'null') {
+    headers.set('Authorization', `Bearer ${token.trim()}`);
   }
 
   let response: Response;
+  const fullUrl = `${API_BASE_URL}${endpoint}`;
   try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    response = await fetch(fullUrl, {
       ...options,
       headers,
     });
   } catch (networkError: unknown) {
+    logFetchDiagnostics({
+      url: fullUrl,
+      options,
+      requestHeaders: headers,
+      response: null,
+      error: networkError,
+    });
     const errorMsg = networkError instanceof Error ? networkError.message : 'Falha de conexão com a API';
     throw new ApiError(0, errorMsg, networkError, endpoint);
   }
 
   if (!response.ok) {
+    logFetchDiagnostics({
+      url: fullUrl,
+      options,
+      requestHeaders: headers,
+      response,
+    });
     const contentType = response.headers.get('content-type') || '';
     let errorBody: unknown = null;
 

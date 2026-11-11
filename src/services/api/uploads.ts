@@ -1,11 +1,13 @@
 import { apiClient } from './config';
 
-export interface UploadedImage {
+export interface UploadImageResponse {
   url: string;
   path: string;
   mime: string;
   size: number;
 }
+
+export type UploadedImage = UploadImageResponse;
 
 export async function uploadImage(file: File): Promise<UploadedImage> {
   const formData = new FormData();

@@ -64,13 +64,22 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Register service worker if supported
+      // Register service worker if supported (avoid running in preview iframes to prevent cache issues)
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.log('SW registration note:', err);
+        if (window.self !== window.top) {
+          // Inside preview iframe: unregister any stale SW to prevent fetch hijacking
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (var i = 0; i < registrations.length; i++) {
+              registrations[i].unregister();
+            }
           });
-        });
+        } else {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').catch(function(err) {
+              console.log('SW registration note:', err);
+            });
+          });
+        }
       }
     </script>
   </body>

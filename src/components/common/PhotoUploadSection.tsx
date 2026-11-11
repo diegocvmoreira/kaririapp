@@ -25,6 +25,7 @@ interface PhotoUploadSectionProps {
   maxFiles?: number;
   label?: string;
   description?: string;
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
 export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
@@ -38,6 +39,7 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
   maxFiles = 9, // 1 capa + até 8 fotos adicionais
   label = 'Fotos do Local',
   description = 'Envie fotos reais do estabelecimento ou espaço para enriquecer o catálogo do Kariri.app.',
+  onUploadingChange,
 }) => {
   const [urlInput, setUrlInput] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -98,6 +100,7 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
     }
 
     setIsUploading(true);
+    onUploadingChange?.(true);
     let successCount = 0;
 
     try {
@@ -126,6 +129,7 @@ export const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({
       );
     } finally {
       setIsUploading(false);
+      onUploadingChange?.(false);
       setUploadStatus('');
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (cameraInputRef.current) cameraInputRef.current.value = '';

@@ -116,7 +116,7 @@ export function diagnoseApiIssue(
       userMessage: 'O serviço de proteção do servidor está temporariamente indisponível.',
       technicalDetails: `Status HTTP ${status} originado pela camada de proxy do Cloudflare${endpointInfo}. O servidor Hostinger (origem) pode estar inacessível ou o WAF bloqueou a requisição da API.`,
       suggestedAction:
-        'Verificar se o servidor web na Hostinger está ativo e adicionar regra de bypass no WAF/Firewall do Cloudflare para o caminho da API Laravel (https://kariri.app.br/kariri-api-core/public/index.php/api/* ou https://api.kariri.app.br/api/*).',
+        'Verificar se o servidor web na Hostinger está ativo e adicionar regra de bypass no WAF/Firewall do Cloudflare para o caminho da API Laravel (https://api.kariri.app.br/api/*).',
       status,
       endpoint,
       timestamp,
@@ -403,4 +403,77 @@ export async function runPlacesDiagnostics(): Promise<EndpointDiagnosticResult[]
   }
 
   return results;
+}
+
+/**
+ * Utilitário de diagnóstico detalhado para inspecionar no console do navegador
+ * os cabeçalhos de requisição e resposta quando uma chamada à API falha.
+ * Ajuda a isolar imediatamente causas de bloqueio de CORS, Preflight OPTIONS e credenciais.
+ */
+export function logFetchDiagnostics(params: {
+  url: string;
+  options?: RequestInit;
+  requestHeaders: Headers;
+  response?: Response | null;
+  error?: unknown;
+}): void {
+  if (typeof console === 'undefined') return;
+
+  const { url, options, requestHeaders, response, error } = params;
+  const method = (options?.method || 'GET').toUpperCase();
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'unknown';
+
+  // Extrai headers da requisição sanitizando dados confidenciais
+  const reqHeadersObj: Record<string, string> = {};
+  requestHeaders.forEach((value, key) => {
+    reqHeadersObj[key] = sanitizeLogDetails(value);
+  });
+
+  // Extrai headers da resposta se disponível
+  const resHeadersObj: Record<string, string> = {};
+  if (response?.headers) {
+    response.headers.forEach((value, key) => {
+      resHeadersObj[key] = value;
+    });
+  }
+
+  const isCorsSuspect = !response && error instanceof TypeError;
+
+  console.groupCollapsed(
+    `%c[API Diagnostics] ${method} ${url} ${response ? `(${response.status} ${response.statusText})` : '(Falha de Rede / CORS)'}`,
+    `color: ${isCorsSuspect ? '#DE1F2A' : '#f59e0b'}; font-weight: bold;`
+  );
+
+  console.log('%cOrigem Atual do Frontend:', 'font-weight: bold; color: #4b5563;', origin);
+  console.log('%cURL Destino da API:', 'font-weight: bold; color: #4b5563;', url);
+  console.log('%cMétodo HTTP:', 'font-weight: bold; color: #4b5563;', method);
+
+  console.groupCollapsed('%cCabeçalhos da Requisição (Request Headers):', 'color: #2563eb;');
+  console.table(reqHeadersObj);
+  console.groupEnd();
+
+  if (response) {
+    console.log('%cStatus HTTP da Resposta:', 'font-weight: bold;', `${response.status} ${response.statusText}`);
+    console.groupCollapsed('%cCabeçalhos da Resposta (Response Headers):', 'color: #059669;');
+    console.table(resHeadersObj);
+    console.groupEnd();
+
+    console.log('%cAccess-Control-Allow-Origin:', 'font-weight: bold;', resHeadersObj['access-control-allow-origin'] || '(Nenhum header CORS retornado)');
+    console.log('%cAccess-Control-Allow-Credentials:', 'font-weight: bold;', resHeadersObj['access-control-allow-credentials'] || '(não informado)');
+    console.log('%cAccess-Control-Allow-Methods:', 'font-weight: bold;', resHeadersObj['access-control-allow-methods'] || '(não informado)');
+    console.log('%cAccess-Control-Allow-Headers:', 'font-weight: bold;', resHeadersObj['access-control-allow-headers'] || '(não informado)');
+  } else {
+    console.warn(
+      '%cPossível Bloqueio de CORS:',
+      'font-weight: bold; color: #DE1F2A;',
+      'Nenhuma resposta HTTP foi recebida pelo navegador. ' +
+      'Geralmente causado por: preflight OPTIONS rejeitado, falta do cabeçalho "Access-Control-Allow-Origin" ' +
+      'correspondente a esta origem (' + origin + '), ou cabeçalho solicitado não listado em "allowed_headers".'
+    );
+    if (error) {
+      console.warn('%cDetalhes do Erro do Navegador:', 'font-weight: bold; color: #DE1F2A;', error);
+    }
+  }
+
+  console.groupEnd();
 }

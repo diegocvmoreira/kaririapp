@@ -3,6 +3,8 @@ import { City } from '../types';
 import { citiesApi } from '../services/api/cities';
 import { analytics } from '../services/analyticsService';
 
+import { mockCities } from '../mocks/mockCities';
+
 interface CityContextType {
   cities: City[];
   selectedCitySlug: string; // 'all' or city slug
@@ -46,7 +48,8 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Falha ao carregar municípios da API';
       setError(msg);
-      console.warn('Erro ao carregar municípios:', msg);
+      console.warn('Erro ao carregar municípios da API, mantendo catálogo local:', msg);
+      setCities((prev) => (prev.length > 0 ? prev : mockCities.filter((c) => c.is_active)));
     } finally {
       setIsLoading(false);
     }

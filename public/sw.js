@@ -147,38 +147,9 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2. REQUISIÇÕES DE API DO BACKEND
-  // NUNCA cachear se houver Authorization header ou padrão sensível
-  const hasAuthHeader = request.headers.has('Authorization');
-  const isBypassedUrl = BYPASS_API_PATTERNS.some((pattern) => pattern.test(url.pathname));
-
+  // Não interceptar requisições cross-origin ou de API no Service Worker para evitar
+  // quebras de preflight CORS e garantir integridade total do cliente HTTP
   if (url.pathname.includes('/api') || url.hostname.includes('kariri.app.br')) {
-    if (hasAuthHeader || isBypassedUrl) {
-      // Pass-through direto pela rede
-      return;
-    }
-
-    // Rotas de leitura de catálogo público (places, events, categories, cities)
-    // Estratégia: Stale-While-Revalidate com isolamento em CACHE_API
-    event.respondWith(
-      caches.open(CACHE_API).then(async (cache) => {
-        const cachedResponse = await cache.match(request);
-
-        const fetchPromise = fetch(request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              // Limita o armazenamento a respostas JSON válidas
-              const contentType = networkResponse.headers.get('content-type') || '';
-              if (contentType.includes('application/json')) {
-                cache.put(request, networkResponse.clone());
-              }
-            }
-            return networkResponse;
-          })
-          .catch(() => cachedResponse);
-
-        return cachedResponse || fetchPromise;
-      })
-    );
     return;
   }
 
