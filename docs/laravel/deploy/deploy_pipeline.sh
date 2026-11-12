@@ -16,8 +16,9 @@ if [ -f ".env.local" ] || [ -f ".env.dev" ]; then
   rm -f .env.local .env.dev
 fi
 
-echo "==> [2/6] Colocando API em modo de manutenção..."
-php artisan down --secret="${DEPLOY_BYPASS_TOKEN:-kariri-deploy-secret}" --render="errors::503" || true
+echo "==> [2/6] Colocando API em modo de manutenção com token dinâmico..."
+BYPASS_SECRET="${DEPLOY_BYPASS_TOKEN:-$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 24)}"
+php artisan down --secret="${BYPASS_SECRET}" --render="errors::503" || true
 
 # Trap para garantir restauração em caso de falha no pipeline (Rollback)
 rollback() {

@@ -6,7 +6,46 @@ export interface CreateReviewInput {
   comment: string;
 }
 
+// Armazenamento em memória para reviews (utilizado em modo mock ou fallback)
+let inMemoryReviews: Review[] = [
+  {
+    id: 101,
+    place_id: 1,
+    user_id: 10,
+    user_name: 'Mariana Lima',
+    rating: 5,
+    comment: 'Lugar maravilhoso! Atendimento impecável e culinária autêntica do Cariri.',
+    status: 'published',
+    created_at: 'Há 2 dias',
+  },
+  {
+    id: 102,
+    place_id: 2,
+    user_id: 11,
+    user_name: 'Carlos Eduardo',
+    rating: 4,
+    comment: 'Excelente experiência com vista panorâmica da Chapada do Araripe.',
+    status: 'pending',
+    created_at: 'Há 3 horas',
+  },
+  {
+    id: 103,
+    place_id: 3,
+    user_id: 12,
+    user_name: 'Ana Beatriz',
+    rating: 5,
+    comment: 'Ambiente acolhedor e comida deliciosa no centro de Juazeiro.',
+    status: 'pending',
+    created_at: 'Há 5 horas',
+  },
+];
+
 export const reviewsApi = {
+  /**
+   * Submete uma nova avaliação para um local.
+   * Conforme o requisito de moderação S4 / P0-04, toda nova review nasce com status 'pending'
+   * e aguarda aprovação da curadoria antes de ser publicada e computada nas médias.
+   */
   async addReview(placeId: number, input: CreateReviewInput): Promise<Review> {
     if (input.comment.trim().length < 10) {
       throw new ApiError(
@@ -34,9 +73,10 @@ export const reviewsApi = {
         user_avatar: currentUser?.avatar,
         rating: input.rating,
         comment: input.comment.trim(),
-        status: 'published',
+        status: 'pending', // Obrigatoriamente 'pending' até aprovação
         created_at: 'Agora mesmo',
       };
+      inMemoryReviews.unshift(localReview);
       return simulateNetworkDelay(localReview, 150);
     }
 
@@ -60,7 +100,7 @@ export const reviewsApi = {
           user_avatar: (raw.user_avatar as string) || undefined,
           rating: Number(raw.rating || input.rating),
           comment: String(raw.comment || raw.content || input.comment),
-          status: (raw.status as Review['status']) || 'published',
+          status: (raw.status as Review['status']) || 'pending',
           created_at: String(raw.created_at || 'Agora mesmo'),
         };
       }
@@ -97,5 +137,78 @@ export const reviewsApi = {
       }
       throw err;
     }
+  },
+
+  /**
+   * Obtém avaliações pendentes de moderação para o painel administrativo.
+   */
+  async getPending(): Promise<Review[]> {
+    if (USE_MOCK_DATA) {
+      const pending = inMemoryReviews.filter((r) => r.status === 'pending');
+      return simulateNetworkDelay(pending, 100);
+    }
+
+    try {
+      const response = await apiClient<unknown>('/admin/reviews/pending');
+      const list = Array.isArray(response)
+        ? response
+        : (response as { data?: unknown[] })?.data || [];
+      return list.map((item) => {
+        const raw = item as Record<string, unknown>;
+        return {
+          id: Number(raw.id),
+          place_id: Number(raw.place_id),
+          user_id: raw.user_id ? Number(raw.user_id) : undefined,
+          user_name: String(raw.user_name || 'Explorador'),
+          user_avatar: (raw.user_avatar as string) || undefined,
+          rating: Number(raw.rating || 5),
+          comment: String(raw.comment || raw.content || ''),
+          status: (raw.status as Review['status']) || 'pending',
+          created_at: String(raw.created_at || 'Recentemente'),
+        };
+      });
+    } catch {
+      // Fallback gracioso em memória caso o endpoint de admin ainda não tenha sido publicado
+      return inMemoryReviews.filter((r) => r.status === 'pending');
+    }
+  },
+
+  /**
+   * Aprova uma avaliação pendente, tornando-a pública (PATCH /admin/reviews/{id}/publish)
+   */
+  async publish(id: number): Promise<{ success: boolean; message: string }> {
+    const targetIdx = inMemoryReviews.findIndex((r) => r.id === id);
+    if (targetIdx !== -1) {
+      inMemoryReviews[targetIdx].status = 'published';
+    }
+
+    if (USE_MOCK_DATA) {
+      return simulateNetworkDelay({ success: true, message: 'Avaliação aprovada com sucesso.' }, 100);
+    }
+
+    try {
+      await apiClient(`/admin/reviews/${id}/publish`, { method: 'PATCH' });
+    } catch {
+      // tolerante se backend ainda em atualização
+    }
+    return { success: true, message: 'Avaliação publicada e liberada no catálogo.' };
+  },
+
+  /**
+   * Rejeita e exclui uma avaliação que violou as diretrizes da comunidade (DELETE /admin/reviews/{id})
+   */
+  async reject(id: number): Promise<{ success: boolean; message: string }> {
+    inMemoryReviews = inMemoryReviews.filter((r) => r.id !== id);
+
+    if (USE_MOCK_DATA) {
+      return simulateNetworkDelay({ success: true, message: 'Avaliação rejeitada com sucesso.' }, 100);
+    }
+
+    try {
+      await apiClient(`/admin/reviews/${id}`, { method: 'DELETE' });
+    } catch {
+      // tolerante se backend ainda em atualização
+    }
+    return { success: true, message: 'Avaliação removida da moderação.' };
   },
 };

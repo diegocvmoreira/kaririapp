@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Place, EventItem, BusinessClaim, User, City, Category, EntityStatus, UserRole } from '../types';
+import { Place, EventItem, BusinessClaim, User, City, Category, EntityStatus, UserRole, Review } from '../types';
 import { placesApi } from '../services/api/places';
 import { eventsApi } from '../services/api/events';
 import { businessClaimsApi } from '../services/api/businessClaims';
 import { usersApi } from '../services/api/users';
 import { citiesApi } from '../services/api/cities';
 import { categoriesApi } from '../services/api/categories';
+import { reviewsApi } from '../services/api/reviews';
 import {
   runPlacesDiagnostics,
   EndpointDiagnosticResult,
@@ -56,8 +57,9 @@ export const AdminDashboardPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
-  const [activeTab, setActiveTab] = useState<'places' | 'events' | 'cities' | 'users' | 'claims' | 'diagnostics'>('places');
+  const [activeTab, setActiveTab] = useState<'places' | 'events' | 'cities' | 'users' | 'claims' | 'reviews' | 'diagnostics'>('places');
   const [isLoading, setIsLoading] = useState(true);
 
   // Search & Filter states
@@ -143,13 +145,15 @@ export const AdminDashboardPage: React.FC = () => {
       usersApi.getAll(),
       citiesApi.getAll(),
       categoriesApi.getAll(),
-    ]).then(([placesRes, eventsRes, claimsRes, usersRes, citiesRes, categoriesRes]) => {
+      reviewsApi.getPending(),
+    ]).then(([placesRes, eventsRes, claimsRes, usersRes, citiesRes, categoriesRes, reviewsRes]) => {
       if (placesRes.status === 'fulfilled') setPlaces(placesRes.value);
       if (eventsRes.status === 'fulfilled') setEvents(eventsRes.value);
       if (claimsRes.status === 'fulfilled') setClaims(claimsRes.value);
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value.users);
       if (citiesRes.status === 'fulfilled') setCities(citiesRes.value);
       if (categoriesRes.status === 'fulfilled') setCategories(categoriesRes.value);
+      if (reviewsRes.status === 'fulfilled') setReviews(reviewsRes.value);
       setIsLoading(false);
     });
   };
@@ -331,6 +335,27 @@ export const AdminDashboardPage: React.FC = () => {
       showFeedback('success', `Reivindicação de "${rejectingClaim.place_name}" rejeitada.`);
     } catch (err: unknown) {
       showFeedback('error', 'Falha ao rejeitar reivindicação.');
+    }
+  };
+
+  // Review handlers
+  const handleApproveReview = async (id: number) => {
+    try {
+      const res = await reviewsApi.publish(id);
+      setReviews((prev) => prev.filter((r) => r.id !== id));
+      showFeedback('success', res.message || 'Avaliação aprovada e publicada no catálogo.');
+    } catch {
+      showFeedback('error', 'Falha ao aprovar avaliação.');
+    }
+  };
+
+  const handleRejectReview = async (id: number) => {
+    try {
+      const res = await reviewsApi.reject(id);
+      setReviews((prev) => prev.filter((r) => r.id !== id));
+      showFeedback('success', res.message || 'Avaliação rejeitada com sucesso.');
+    } catch {
+      showFeedback('error', 'Falha ao rejeitar avaliação.');
     }
   };
 
@@ -636,6 +661,22 @@ export const AdminDashboardPage: React.FC = () => {
           <ShieldAlert className="w-3.5 h-3.5" />
           <span>Reivindicações ({claims.length})</span>
           {claims.some((c) => c.status === 'pending') && (
+            <span className="w-2 h-2 rounded-full bg-[#DE1F2A]" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('reviews')}
+          className={`px-4 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'reviews'
+              ? 'bg-black text-white shadow-xs'
+              : 'bg-white text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <Star className="w-3.5 h-3.5 text-amber-500" />
+          <span>Moderação de Reviews ({reviews.length})</span>
+          {reviews.length > 0 && (
             <span className="w-2 h-2 rounded-full bg-[#DE1F2A]" />
           )}
         </button>
@@ -1559,6 +1600,102 @@ export const AdminDashboardPage: React.FC = () => {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ABA: MODERAÇÃO DE AVALIAÇÕES (S4 / P0-04) */}
+      {activeTab === 'reviews' && (
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-xs p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <span>Moderação de Avaliações ({reviews.length} pendentes)</span>
+              </h2>
+              <p className="text-xs text-gray-500">
+                Avaliações de usuários passam por moderação prévia obrigatória antes de aparecer no catálogo público.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={loadAllData}
+              className="text-xs text-[#DE1F2A] hover:underline font-bold flex items-center gap-1 self-start sm:self-auto"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Atualizar Fila</span>
+            </button>
+          </div>
+
+          {reviews.length === 0 ? (
+            <div className="text-center py-12 space-y-2">
+              <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto opacity-70" />
+              <p className="text-xs text-gray-500">
+                Tudo limpo! Não há avaliações aguardando moderação no momento.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {reviews.map((rev) => {
+                const place = places.find((p) => p.id === rev.place_id);
+                return (
+                  <div
+                    key={rev.id}
+                    className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <span className="text-[11px] font-bold text-[#DE1F2A] uppercase">
+                          {place?.name || `Local ID #${rev.place_id}`}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-gray-900">{rev.user_name}</span>
+                          <span className="text-xs text-amber-500 font-bold flex items-center gap-0.5">
+                            ★ {rev.rating}/5
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          Aguardando Curadoria
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-gray-700 bg-white p-3 rounded-xl border border-gray-100 italic">
+                      "{rev.comment}"
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-gray-100 text-xs">
+                      <span className="text-[11px] text-gray-400">
+                        Submetido: {rev.created_at}
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleRejectReview(rev.id)}
+                          className="px-3 py-1.5 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold flex items-center gap-1 transition"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          <span>Rejeitar</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleApproveReview(rev.id)}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 transition shadow-xs"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          <span>Aprovar e Publicar</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

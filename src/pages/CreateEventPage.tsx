@@ -402,10 +402,11 @@ export const CreateEventPage: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                <label htmlFor="create-event-title" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                   Nome / Título do Evento <span className="text-[#DE1F2A]">*</span>
                 </label>
                 <input
+                  id="create-event-title"
                   type="text"
                   required
                   value={title}
@@ -417,10 +418,11 @@ export const CreateEventPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-event-city" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Município <span className="text-[#DE1F2A]">*</span>
                   </label>
                   <select
+                    id="create-event-city"
                     value={cityId}
                     onChange={(e) => setCityId(Number(e.target.value))}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
@@ -434,10 +436,11 @@ export const CreateEventPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-event-category" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Categoria Cultural <span className="text-[#DE1F2A]">*</span>
                   </label>
                   <select
+                    id="create-event-category"
                     value={categoryId}
                     onChange={(e) => setCategoryId(Number(e.target.value))}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
@@ -453,10 +456,11 @@ export const CreateEventPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-event-place" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Espaço / Estabelecimento Parceiro
                   </label>
                   <select
+                    id="create-event-place"
                     value={placeId}
                     onChange={(e) => handlePlaceSelect(e.target.value)}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
@@ -471,10 +475,11 @@ export const CreateEventPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-event-place-name" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Nome do Espaço (se não listado)
                   </label>
                   <input
+                    id="create-event-place-name"
                     type="text"
                     value={placeName}
                     onChange={(e) => setPlaceName(e.target.value)}
@@ -485,10 +490,11 @@ export const CreateEventPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                <label htmlFor="create-event-address" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                   Endereço do Evento
                 </label>
                 <input
+                  id="create-event-address"
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -498,10 +504,11 @@ export const CreateEventPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                <label htmlFor="create-event-description" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                   Descrição do Evento
                 </label>
                 <textarea
+                  id="create-event-description"
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}

@@ -12,11 +12,10 @@ return [
     |
     */
 
-    // Cobre rotas diretas de API e caminhos com subpastas (ex: https://kariri.app.br/kariri-api-core/public/index.php/api/* e https://api.kariri.app.br/api/*)
+    // Rotas da API e autenticação Sanctum (sem wildcard '*' para prevenir conflitos com credenciais)
     'paths' => [
         'api/*',
         'sanctum/csrf-cookie',
-        '*',
     ],
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -34,10 +33,10 @@ return [
         'http://127.0.0.1:5173',
     ],
 
+    // Padrões sem delimitadores '#' (o Laravel internamente aplica preg_match('#' . $pattern . '#'))
     'allowed_origins_patterns' => [
-        // Suporte a qualquer subdomínio do Cloud Run do projeto AI Studio
-        '#^https://ais-[a-z0-9\-]+\.run\.app$#',
-        '#^https://.*\.kariri\.app\.br$#',
+        'ais-[a-z0-9\-\.]+\.run\.app',
+        '.*\.kariri\.app\.br',
     ],
 
     'allowed_headers' => [

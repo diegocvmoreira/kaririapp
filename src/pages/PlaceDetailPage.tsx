@@ -195,25 +195,29 @@ export const PlaceDetailPage: React.FC = () => {
         comment: reviewComment.trim(),
       });
 
-      // Avaliação publicada com sucesso
-      analytics.track('review_published', {
-        place_id: place.id,
-        place_slug: place.slug,
-        rating: reviewRating,
-      });
+      // Se a avaliação foi publicada imediatamente, registra review_published
+      if (newRev.status === 'published') {
+        analytics.track('review_published', {
+          place_id: place.id,
+          place_slug: place.slug,
+          rating: reviewRating,
+          has_title: false,
+        });
+      }
 
       setPlace((prev) =>
         prev
           ? {
               ...prev,
-              reviews_count: prev.reviews_count + 1,
+              // Mantém contagem pública inalterada se a avaliação estiver pendente de curadoria
+              reviews_count: newRev.status === 'published' ? prev.reviews_count + 1 : prev.reviews_count,
               reviews: [newRev, ...(prev.reviews || [])],
             }
           : prev
       );
       setReviewComment('');
       setReviewSuccess(true);
-      setTimeout(() => setReviewSuccess(false), 3000);
+      setTimeout(() => setReviewSuccess(false), 4500);
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 403) {
         setReviewError('Acesso restrito: Confirme seu endereço de e-mail para publicar avaliações.');
@@ -837,12 +841,12 @@ export const PlaceDetailPage: React.FC = () => {
 
             <div className="flex items-center justify-between pt-1">
               {reviewSuccess ? (
-                <span className="text-xs text-emerald-600 font-bold">
-                  Avaliação publicada com sucesso!
+                <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                  Avaliação enviada! Será publicada após aprovação da curadoria.
                 </span>
               ) : (
                 <span className="text-[11px] text-gray-500">
-                  Avaliações passam por diretrizes da comunidade
+                  Avaliações passam por moderação prévia da comunidade
                 </span>
               )}
 
@@ -852,7 +856,7 @@ export const PlaceDetailPage: React.FC = () => {
                 className="px-4 py-2 bg-[#DE1F2A] hover:bg-[#C51620] active:scale-95 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition disabled:opacity-40"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>{isSubmittingReview ? 'Enviando...' : 'Publicar Avaliação'}</span>
+                <span>{isSubmittingReview ? 'Enviando...' : 'Enviar Avaliação'}</span>
               </button>
             </div>
           </form>
@@ -874,6 +878,11 @@ export const PlaceDetailPage: React.FC = () => {
                       className="w-7 h-7 rounded-full object-cover"
                     />
                     <span className="text-xs font-bold text-gray-800">{rev.user_name}</span>
+                    {rev.status === 'pending' && (
+                      <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-semibold">
+                        Em moderação
+                      </span>
+                    )}
                   </div>
                   <Rating value={rev.rating} size="sm" showCount={false} />
                 </div>

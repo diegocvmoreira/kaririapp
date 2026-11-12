@@ -16,6 +16,9 @@ Route::middleware(['throttle:6,1'])->group(function () {
 // 2. Rotas administrativas protegidas (Sanctum)
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/places/import', [App\Http\Controllers\Api\Admin\AdminPlaceImportController::class, 'import']);
+    Route::get('/reviews/pending', [App\Http\Controllers\Api\ReviewController::class, 'pending']);
+    Route::patch('/reviews/{id}/publish', [App\Http\Controllers\Api\ReviewController::class, 'publish']);
+    Route::delete('/reviews/{id}', [App\Http\Controllers\Api\ReviewController::class, 'destroy']);
 });
 
 // 3. Avaliações (Reviews): Leitura pública + Publicação autenticada com Rate Limiting

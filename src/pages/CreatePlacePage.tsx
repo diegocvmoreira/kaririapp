@@ -380,10 +380,11 @@ export const CreatePlacePage: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                <label htmlFor="create-place-name" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                   Nome do Local <span className="text-[#DE1F2A]">*</span>
                 </label>
                 <input
+                  id="create-place-name"
                   type="text"
                   required
                   value={name}
@@ -395,10 +396,11 @@ export const CreatePlacePage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-place-city" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Município <span className="text-[#DE1F2A]">*</span>
                   </label>
                   <select
+                    id="create-place-city"
                     value={cityId}
                     onChange={(e) => setCityId(Number(e.target.value))}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
@@ -412,10 +414,11 @@ export const CreatePlacePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-place-category" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Categoria <span className="text-[#DE1F2A]">*</span>
                   </label>
                   <select
+                    id="create-place-category"
                     value={categoryId}
                     onChange={(e) => setCategoryId(Number(e.target.value))}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
@@ -430,10 +433,11 @@ export const CreatePlacePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                <label htmlFor="create-place-short-desc" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                   Chamada Curta (uma frase que define o local)
                 </label>
                 <input
+                  id="create-place-short-desc"
                   type="text"
                   value={shortDescription}
                   onChange={(e) => setShortDescription(e.target.value)}
@@ -443,10 +447,11 @@ export const CreatePlacePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                <label htmlFor="create-place-price" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                   Faixa de Preço
                 </label>
                 <select
+                  id="create-place-price"
                   value={priceLevel}
                   onChange={(e) => setPriceLevel(Number(e.target.value) as 1 | 2 | 3 | 4)}
                   className="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-[#DE1F2A]"
@@ -459,10 +464,11 @@ export const CreatePlacePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                <label htmlFor="create-place-description" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                   Descrição Completa (opcional)
                 </label>
                 <textarea
+                  id="create-place-description"
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -490,10 +496,11 @@ export const CreatePlacePage: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-place-address" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Endereço Completo
                   </label>
                   <input
+                    id="create-place-address"
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
@@ -503,10 +510,11 @@ export const CreatePlacePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-place-neighborhood" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Bairro
                   </label>
                   <input
+                    id="create-place-neighborhood"
                     type="text"
                     value={neighborhood}
                     onChange={(e) => setNeighborhood(e.target.value)}
@@ -546,10 +554,11 @@ export const CreatePlacePage: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-place-whatsapp" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     WhatsApp Comercial
                   </label>
                   <input
+                    id="create-place-whatsapp"
                     type="text"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
@@ -559,10 +568,11 @@ export const CreatePlacePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-place-instagram" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Instagram (@)
                   </label>
                   <input
+                    id="create-place-instagram"
                     type="text"
                     value={instagram}
                     onChange={(e) => setInstagram(e.target.value)}
@@ -574,10 +584,11 @@ export const CreatePlacePage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-place-phone" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Telefone Fixo
                   </label>
                   <input
+                    id="create-place-phone"
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -587,10 +598,11 @@ export const CreatePlacePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
+                  <label htmlFor="create-place-website" className="block font-bold text-gray-700 mb-1 text-xs sm:text-sm">
                     Website Oficial (se houver)
                   </label>
                   <input
+                    id="create-place-website"
                     type="url"
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
